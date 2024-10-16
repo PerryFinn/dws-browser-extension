@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 
 import { useStorage } from "@plasmohq/storage/hook";
 
+// import { AnimatedTooltip } from "@/components/complex-ui/animated-tooltip";
 import { CountButton } from "@/components/count-button";
 import { storage } from "@/storages";
 import { getGitlabEmail, type GitlabFrequentProjectMeta } from "@/utils/gitlab";
@@ -63,7 +64,8 @@ const PlasmoOverlay = () => {
 
   if (!enabled) return null;
   return (
-    <div className="">
+    <div className="flex flex-row items-center justify-center mb-10 w-full">
+      {/* <AnimatedTooltip items={people} /> */}
       <CountButton />
     </div>
   );
