@@ -3,17 +3,10 @@ import React from "react";
 import { Storage } from "@plasmohq/storage";
 
 import { Button } from "@/components/ui/button";
-import { storage } from "@/storages";
+import { resetLocalStorage, storage } from "@/storages";
 
 const resetStorage = async () => {
-  // await storage.set("enabled", false);
-  storage.clear();
-  await Promise.all([
-    storage.set("verifiedIpList", []),
-    storage.set("processInfo", []),
-    storage.set("isRunningTask", false),
-    storage.set("taskResult", { success: [], failed: [], error: [] })
-  ]);
+  await resetLocalStorage();
   alert("storage 已重置");
 };
 

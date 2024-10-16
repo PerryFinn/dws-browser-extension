@@ -4,41 +4,12 @@ import type { PlasmoCSConfig } from "plasmo";
 import { sendToBackground } from "@plasmohq/messaging";
 
 import type { OpenOrReplaceTabReqBody, OpenOrReplaceTabResBody } from "@/background/messages/openOrReplaceTab";
-import { storage } from "@/storages";
+import { initLocalStorage, storage } from "@/storages";
 import { LoginManager, type UserPasswordPair } from "@/utils/hikCrypto";
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
   run_at: "document_end"
-};
-
-const initStorage = async () => {
-  console.log("storage.getAll() :>> ", await storage.getAll());
-  if (!(await storage.get("verifiedIpList"))) {
-    await storage.set("verifiedIpList", []);
-  }
-  if (!(await storage.get("processInfo"))) {
-    await storage.set("processInfo", []);
-  }
-
-  if (!(await storage.get("isRunningTask"))) {
-    await storage.set("isRunningTask", false);
-  }
-
-  if (!(await storage.get("taskResult"))) {
-    await storage.set("taskResult", { success: [], failed: [], error: [] });
-  }
-};
-
-const resetStorage = async () => {
-  // await storage.set("enabled", false);
-  storage.clear();
-  await Promise.all([
-    storage.set("verifiedIpList", []),
-    storage.set("processInfo", []),
-    storage.set("isRunningTask", false),
-    storage.set("taskResult", { success: [], failed: [], error: [] })
-  ]);
 };
 
 const accounts: Array<UserPasswordPair> = [
@@ -68,17 +39,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.name === "toggleEnabled") {
     const { enabled } = message.body;
     await storage.set("enabled", enabled);
-    // const tab = await sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({ name: "getActiveTab" });
-    // console.log("tab :>> ", tab);
-    // const activeHost = new URL(tab.url).host;
-    // const groupList = groupBy(cloneAccounts, (item) => item.ip);
-    // console.log("groupList :>> ", groupList);
-
     if (enabled) {
-      await resetStorage();
-      // await runTask();
+      console.log("扩展已启用");
     } else {
-      console.log("扩展已禁用，不执行任何操作");
+      console.log("扩展已禁用");
     }
   }
 });
@@ -121,18 +85,13 @@ const runTask = async () => {
   const finalResult = await storage.get("processInfo");
   const finalStorage = await storage.getAll();
   console.log("================= 任务执行完毕 ================= :>> \n", finalResult, finalStorage);
-  resetStorage();
 };
 
 const main = async () => {
-  const value = await storage.get("enabled");
-  if (!value) return;
+  const enabled = await storage.get("enabled");
+  if (!enabled) return;
   console.warn("=============== content script called ===============");
-  // await resetStorage();
-  await initStorage();
-  // if (await storage.get("isRunningTask")) {
-  //   runTask();
-  // }
+  await initLocalStorage();
 };
 
 main();

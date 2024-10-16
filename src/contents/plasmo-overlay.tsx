@@ -52,6 +52,7 @@ const PlasmoOverlay = () => {
       console.log(`【${ip}}】isSuc :>> `, isSuc);
     }
   };
+  if (!enabled) return null;
   return (
     <div className="z-50 flex fixed top-32 right-8">
       <CountButton onClick={handleClick} />
