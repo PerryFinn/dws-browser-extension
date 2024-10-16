@@ -1,11 +1,22 @@
-import type { PlasmoCSConfig } from "plasmo";
+import cssText from "data-text:@/style.css";
+import type { PlasmoCSConfig, PlasmoGetOverlayAnchor } from "plasmo";
+import React, { useEffect } from "react";
 
+import { useStorage } from "@plasmohq/storage/hook";
+
+import { CountButton } from "@/components/count-button";
 import { storage } from "@/storages";
 import { getGitlabEmail, type GitlabFrequentProjectMeta } from "@/utils/gitlab";
 
 export const config: PlasmoCSConfig = {
   matches: ["https://gitlab.gz.cvte.cn/*"],
   run_at: "document_end"
+};
+
+export const getStyle = () => {
+  const style = document.createElement("style");
+  style.textContent = cssText;
+  return style;
 };
 
 const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProjectMeta> => {
@@ -22,7 +33,7 @@ const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProje
   }
 };
 
-const main: VoidFunction = async () => {
+const init: VoidFunction = async () => {
   const enabled = await storage.get("enabled");
   if (!enabled) return;
 
@@ -39,4 +50,23 @@ const main: VoidFunction = async () => {
   console.log("projects :>> ", projects);
 };
 
-// main();
+export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
+  document.getElementById("super-sidebar-context-header");
+
+const PlasmoOverlay = () => {
+  const [enabled] = useStorage({ key: "enabled", instance: storage }, false);
+
+  useEffect(() => {
+    if (!enabled) return;
+    init();
+  }, [enabled]);
+
+  if (!enabled) return null;
+  return (
+    <div className="">
+      <CountButton />
+    </div>
+  );
+};
+
+export default PlasmoOverlay;
