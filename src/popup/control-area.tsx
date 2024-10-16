@@ -20,7 +20,7 @@ interface IProps {
 function ControlArea(props: IProps) {
   const { storage, onReset } = props;
   const switchId = useId();
-  const [enabled, setEnabled, enabledSetter] = useStorage("enabled", false);
+  const [enabled, setEnabled, enabledSetter] = useStorage({ key: "enabled", instance: storage }, false);
 
   const handleToggle = useCallback(async () => {
     const finalEnabled = !enabled;

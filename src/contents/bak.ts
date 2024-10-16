@@ -2,17 +2,15 @@ import { groupBy, merge, mergeWith } from "lodash-es";
 import type { PlasmoCSConfig } from "plasmo";
 
 import { sendToBackground } from "@plasmohq/messaging";
-import { Storage } from "@plasmohq/storage";
 
 import type { OpenOrReplaceTabReqBody, OpenOrReplaceTabResBody } from "@/background/messages/openOrReplaceTab";
+import { storage } from "@/storages";
 import { LoginManager, type UserPasswordPair } from "@/utils/hikCrypto";
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
   run_at: "document_end"
 };
-
-const storage = new Storage();
 
 const initStorage = async () => {
   console.log("storage.getAll() :>> ", await storage.getAll());

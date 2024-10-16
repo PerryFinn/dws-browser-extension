@@ -1,6 +1,5 @@
-import { Storage } from "@plasmohq/storage";
+import { storage } from "@/storages";
 
-const storage = new Storage();
 chrome.runtime.onStartup.addListener(async function () {
   console.log("用户打开浏览器时，插件会被启动。插件可以在这个阶段初始化数据，设置默认状态等");
 });
@@ -39,7 +38,7 @@ const cloneAccounts = structuredClone(accounts);
 // chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 //   if (message.name === "toggleEnabled") {
 //     const { enabled } = message.body;
-//     await storage.set("enabled", enabled);
+//     await localStorage.set("enabled", enabled);
 //     const tab = await sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({ name: "getActiveTab" });
 //     console.log("tab :>> ", tab);
 //     const activeHost = new URL(tab.url).host;

@@ -3,8 +3,7 @@ import React from "react";
 import { Storage } from "@plasmohq/storage";
 
 import { Button } from "@/components/ui/button";
-
-const storage = new Storage();
+import { storage } from "@/storages";
 
 const resetStorage = async () => {
   // await storage.set("enabled", false);

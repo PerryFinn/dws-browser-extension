@@ -15,7 +15,7 @@ export const config: PlasmoCSConfig = {
   run_at: "document_start"
 };
 
-const storage = new Storage();
+const storage = new Storage({ area: "local" });
 
 const accounts: Array<UserPasswordPair> = [
   { username: "admin", host: "172.20.124.200", passwords: ["1qaz@WSX"] },
@@ -39,7 +39,7 @@ export const getStyle = () => {
 };
 
 const PlasmoOverlay = () => {
-  const [enabled] = useStorage("enabled");
+  const [enabled] = useStorage({ key: "enabled", instance: storage }, false);
   const handleClick = async () => {
     const ips = new Set(accounts.map((account) => account.host));
     for (const ip of ips) {

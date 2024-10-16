@@ -25,17 +25,26 @@ import ControlArea from "./control-area";
 import Header from "./header";
 import TableList from "./table-list";
 
-const storage = new Storage();
+const storage = new Storage({ area: "local" });
 
 function IndexPopup() {
-  const [enabled] = useStorage<boolean>("enabled", false);
-  const [isRunningTask, setIsRunningTask, isRunningTaskSetter] = useStorage<boolean>("isRunningTask", false);
-  const [processInfo, setProcessInfo, processInfoSetter] = useStorage<Array<parseXlsxInfo>>("processInfo", []);
-  const [taskResult, setTaskResult, taskResultSetter] = useStorage<TaskResult>("taskResult", {
-    error: [],
-    failed: [],
-    success: []
-  });
+  const [enabled] = useStorage<boolean>({ key: "enabled", instance: storage }, false);
+  const [isRunningTask, setIsRunningTask, isRunningTaskSetter] = useStorage<boolean>(
+    { key: "isRunningTask", instance: storage },
+    false
+  );
+  const [processInfo, setProcessInfo, processInfoSetter] = useStorage<Array<parseXlsxInfo>>(
+    { key: "processInfo", instance: storage },
+    []
+  );
+  const [taskResult, setTaskResult, taskResultSetter] = useStorage<TaskResult>(
+    { key: "taskResult", instance: storage },
+    {
+      error: [],
+      failed: [],
+      success: []
+    }
+  );
   const [file, setFile] = useState<File | null>(null);
   const uploadId = useId();
   const accountsRef = useRef<Array<UserPasswordPair>>([]);
