@@ -25,9 +25,7 @@ export interface parseXlsxInfo {
 const sanitizeObject = (obj: parseXlsxInfo) => {
   const newObj = {} as parseXlsxInfo;
   for (const key of Object.keys(obj)) {
-    if (typeof obj[key] === "string") {
-      newObj[key] = sanitizeString(obj[key]);
-    }
+    newObj[key] = sanitizeString(`${obj[key]}`);
   }
   return newObj;
 };
