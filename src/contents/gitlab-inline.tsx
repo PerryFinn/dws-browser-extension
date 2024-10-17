@@ -1,14 +1,11 @@
 import cssText from "data-text:@/style.css";
 import { sortBy } from "lodash-es";
-import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor } from "plasmo";
+import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
 import React, { useEffect, useMemo, useState } from "react";
 
 import { useStorage } from "@plasmohq/storage/hook";
 
-import { FamilyButton } from "@/components/complex-ui/family-button";
 // import { AnimatedTooltip } from "@/components/complex-ui/animated-tooltip";
-import { CountButton } from "@/components/count-button";
-import { MusicPlayerExample } from "@/components/test";
 import { storage } from "@/storages";
 import { getGitlabEmail, type GitlabFrequentProjectMeta } from "@/utils/gitlab";
 
@@ -19,7 +16,7 @@ export const config: PlasmoCSConfig = {
   run_at: "document_end"
 };
 
-export const getStyle = () => {
+export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style");
   style.textContent = cssText;
   return style;
@@ -88,14 +85,16 @@ const GitlabInline = () => {
 
   if (!enabled) return null;
   return (
-    <div className="flex flex-col items-center justify-center mb-10 w-full">
-      {renderList.map((project) => {
-        return (
-          <a key={project.id} href={project.webUrl}>
-            {project.name}
-          </a>
-        );
-      })}
+    <div className="relative w-full h-full max-h-[200px] overflow-y-scroll border-dashed border-2 border-indigo-600">
+      <div className="flex flex-col items-center justify-center h-full">
+        {renderList.map((project) => {
+          return (
+            <a key={project.id} href={project.webUrl}>
+              {project.name}
+            </a>
+          );
+        })}
+      </div>
     </div>
   );
 };
