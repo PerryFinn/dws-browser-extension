@@ -24,7 +24,7 @@ chrome.runtime.onSuspend.addListener(async function () {
   console.log("用户关闭浏览器时，插件会被停止。插件可以监听chrome.runtime.onSuspend事件，保存数据，清理资源等");
 });
 
-chrome.runtime.setUninstallURL("https://xxx_website.com/uninstall");
+chrome.runtime.setUninstallURL("https://dws.seewo.com/");
 
 const accounts = [
   { username: "admin", ip: "172.20.124.200", passwords: ["1qaz@WSX"] },
