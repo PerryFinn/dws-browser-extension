@@ -90,7 +90,6 @@ const runTask = async () => {
 const main = async () => {
   const enabled = await storage.get("enabled");
   if (!enabled) return;
-  console.warn("=============== content script called ===============");
   await initLocalStorage();
 };
 

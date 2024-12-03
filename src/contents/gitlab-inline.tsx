@@ -71,7 +71,6 @@ const init = async () => {
   // ==============end: 初始化 gitlabUsername ==============
   const gitlabUsername = await storage.get("gitlabUserName");
   const projects = getFrequentProjects(`${gitlabUsername}/frequent-projects`);
-  console.log("projects :>> ", projects);
   return projects;
 };
 
@@ -109,7 +108,7 @@ const GitlabInline = () => {
     <div className="relative w-full h-full max-h-[220px] border-dashed border border-indigo-600">
       <div className="relative w-full h-full max-h-[220px] overflow-y-scroll ">
         <div className="flex flex-col items-center justify-center h-full mt-2">
-          <ul role="list">
+          <ul>
             {renderList.map((project, index) => {
               const isLast = index === renderList.length - 1;
               return (

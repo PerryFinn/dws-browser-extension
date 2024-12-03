@@ -24,7 +24,7 @@
     "framer-motion": "^11.11.8",
     "lodash-es": "^4.17.21",
     "lucide-react": "^0.451.0",
-    "plasmo": "0.89.3",
+    "plasmo": "0.89.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-toastify": "^10.0.5",
