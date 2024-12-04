@@ -1,4 +1,5 @@
 import cssText from "data-text:@/style.css";
+import { Expandable, ExpandableTrigger } from "@/components/complex-ui/expandable";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import React from "react";
 
@@ -25,7 +26,21 @@ export const getStyle = () => {
 };
 
 function DwsConfigInline() {
-  return <div className="fixed top-1 left-1 bg-white bg-opacity-70 z-[9999]">D</div>;
+  return (
+    <Expandable
+      expandDirection="both"
+      expandBehavior="replace"
+      initialDelay={0.2}
+      onExpandStart={() => console.log("flow Expanding meeting card...")}
+      onExpandEnd={() => console.log("flow Meeting card expanded!")}
+    >
+      {({ isExpanded }) => (
+        <ExpandableTrigger>
+          <div className="fixed top-1 left-1 bg-white bg-opacity-70 z-[9999]">D</div>
+        </ExpandableTrigger>
+      )}
+    </Expandable>
+  );
 }
 
 export default DwsConfigInline;
