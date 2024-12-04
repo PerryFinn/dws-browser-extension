@@ -6,7 +6,7 @@ import { useStorage } from "@plasmohq/storage/hook";
 import { storage } from "@/storages";
 
 export const config: PlasmoCSConfig = {
-  matches: ["http://*/*"],
+  // matches: ["http://*/*"],
   run_at: "document_end"
 };
 
