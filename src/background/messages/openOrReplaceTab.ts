@@ -1,6 +1,6 @@
-import { sendToBackground, type PlasmoMessaging } from "@plasmohq/messaging";
+import { type PlasmoMessaging, sendToBackground } from "@plasmohq/messaging";
 
-import { getActiveTab, type ActiveTabIdReqBody, type ActiveTabIdResBody } from "./getActiveTab";
+import { type ActiveTabIdReqBody, type ActiveTabIdResBody, getActiveTab } from "./getActiveTab";
 
 export type OpenOrReplaceTabReqBody = { host: string };
 export type OpenOrReplaceTabResBody = chrome.tabs.Tab;

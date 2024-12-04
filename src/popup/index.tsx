@@ -1,6 +1,6 @@
 import { Download, TriangleAlert, Upload } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState, type ChangeEventHandler } from "react";
-import { toast, ToastContainer } from "react-toastify";
+import { type ChangeEventHandler, useEffect, useId, useMemo, useRef, useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
 
 import { sendToBackground, sendToContentScript } from "@plasmohq/messaging";
 import { Storage } from "@plasmohq/storage";
@@ -172,7 +172,8 @@ function IndexPopup() {
           <div
             className={cn("flex items-center justify-center p-2 border-2 border-dashed rounded-md", {
               "cursor-not-allowed": !enabled
-            })}>
+            })}
+          >
             <Upload className="mr-2" />
             <span>{file ? file.name : "导入 XLSX 文件"}</span>
           </div>

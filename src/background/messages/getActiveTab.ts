@@ -6,7 +6,7 @@ export type ActiveTabIdResBody = chrome.tabs.Tab;
 export const getActiveTab = () => {
   chrome.tabs.getCurrent();
   return new Promise<chrome.tabs.Tab>((resolve) => {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       resolve(tabs[0]);
     });
   });

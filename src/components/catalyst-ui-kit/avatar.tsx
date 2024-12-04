@@ -34,12 +34,14 @@ export function Avatar({
         "outline outline-1 -outline-offset-1 outline-black/[--ring-opacity] dark:outline-white/[--ring-opacity]",
         // Add the correct border radius
         square ? "rounded-[--avatar-radius] *:rounded-[--avatar-radius]" : "rounded-full *:rounded-full"
-      )}>
+      )}
+    >
       {initials && (
         <svg
           className="size-full select-none fill-current p-[5%] text-[48px] font-medium uppercase"
           viewBox="0 0 100 100"
-          aria-hidden={alt ? undefined : "true"}>
+          aria-hidden={alt ? undefined : "true"}
+        >
           <title>{alt ?? "unknownAlt"}</title>
           <text x="50%" y="50%" alignmentBaseline="middle" dominantBaseline="middle" textAnchor="middle" dy=".125em">
             {initials}

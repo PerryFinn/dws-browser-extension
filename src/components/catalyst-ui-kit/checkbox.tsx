@@ -127,12 +127,14 @@ export function Checkbox({
     <Headless.Checkbox
       data-slot="control"
       {...props}
-      className={clsx(className, "group inline-flex focus:outline-none")}>
+      className={clsx(className, "group inline-flex focus:outline-none")}
+    >
       <span className={clsx([base, colors[color]])}>
         <svg
           className="size-4 stroke-[--checkbox-check] opacity-0 group-data-[checked]:opacity-100 sm:h-3.5 sm:w-3.5"
           viewBox="0 0 14 14"
-          fill="none">
+          fill="none"
+        >
           <title>checkIcon</title>
           {/* Checkmark icon */}
           <path

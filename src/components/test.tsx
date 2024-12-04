@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import useMeasure from "react-use-measure";
 
@@ -16,7 +16,7 @@ export function FamilyButtonDemo() {
   );
 }
 
-let tabs = [
+const tabs = [
   { id: 0, label: "Apple" },
   { id: 1, label: "Spotify" }
 ];
@@ -77,12 +77,14 @@ export function MusicPlayerExample() {
       <div className="flex space-x-1 border border-none rounded-[8px] cursor-pointer bg-neutral-700  px-[3px] py-[3.2px] shadow-inner-shadow">
         {tabs.map((tab, i) => (
           <button
+            type="button"
             key={`${tab.id}-i-${i}`}
             onClick={() => handleTabClick(tab.id)}
             className={`${
               activeTab === tab.id ? "text-white " : "hover:text-neutral-300/60"
             } relative rounded-[5px] px-3 py-1.5 text-xs sm:text-sm font-medium text-neutral-600  transition focus-visible:outline-1 focus-visible:ring-1 focus-visible:ring-blue-light focus-visible:outline-none`}
-            style={{ WebkitTapHighlightColor: "transparent" }}>
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          >
             {activeTab === tab.id && (
               <motion.span
                 layoutId="family-bubble"
@@ -99,7 +101,8 @@ export function MusicPlayerExample() {
         <motion.div
           className="relative mx-auto my-[10px] w-[60px] md:w-[150px] overflow-hidden"
           initial={false}
-          animate={{ height: bounds.height }}>
+          animate={{ height: bounds.height }}
+        >
           <div className="md:p-6 p-2" ref={ref}>
             <AnimatePresence custom={direction} mode="popLayout" onExitComplete={() => setIsAnimating(false)}>
               <motion.div
@@ -110,7 +113,8 @@ export function MusicPlayerExample() {
                 exit="exit"
                 custom={direction}
                 onAnimationStart={() => setIsAnimating(true)}
-                onAnimationComplete={() => setIsAnimating(false)}>
+                onAnimationComplete={() => setIsAnimating(false)}
+              >
                 {content}
               </motion.div>
             </AnimatePresence>

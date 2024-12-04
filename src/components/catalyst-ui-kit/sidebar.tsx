@@ -122,7 +122,8 @@ export const SidebarItem = forwardRef(function SidebarItem(
           {...props}
           className={classes}
           data-current={current ? "true" : undefined}
-          ref={ref}>
+          ref={ref}
+        >
           <TouchTarget>{children}</TouchTarget>
         </Headless.CloseButton>
       ) : (
@@ -130,7 +131,8 @@ export const SidebarItem = forwardRef(function SidebarItem(
           {...props}
           className={clsx("cursor-default", classes)}
           data-current={current ? "true" : undefined}
-          ref={ref}>
+          ref={ref}
+        >
           <TouchTarget>{children}</TouchTarget>
         </Headless.Button>
       )}

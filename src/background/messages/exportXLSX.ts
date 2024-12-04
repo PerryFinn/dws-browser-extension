@@ -1,6 +1,6 @@
-import { sendToContentScript, type PlasmoMessaging } from "@plasmohq/messaging";
+import { type PlasmoMessaging, sendToContentScript } from "@plasmohq/messaging";
 
-import { LoginManager, type AccountInfo, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
+import { type AccountInfo, LoginManager, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
 
 import * as XLSX from "../libs/xlsx/index.js";
 

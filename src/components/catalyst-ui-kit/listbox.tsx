@@ -39,7 +39,8 @@ export function Listbox<T>({
           "after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-inset after:ring-transparent after:data-[focus]:ring-2 after:data-[focus]:ring-blue-500",
           // Disabled state
           "data-[disabled]:opacity-50 before:data-[disabled]:bg-zinc-950/5 before:data-[disabled]:shadow-none"
-        ])}>
+        ])}
+      >
         <Headless.ListboxSelectedOption
           as="span"
           options={options}
@@ -68,7 +69,8 @@ export function Listbox<T>({
             className="size-5 stroke-zinc-500 group-data-[disabled]:stroke-zinc-600 sm:size-4 dark:stroke-zinc-400 forced-colors:stroke-[CanvasText]"
             viewBox="0 0 16 16"
             aria-hidden="true"
-            fill="none">
+            fill="none"
+          >
             <path d="M5.75 10.75L8 13L10.25 10.75" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
             <path d="M10.25 5.25L8 3L5.75 5.25" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -92,7 +94,8 @@ export function Listbox<T>({
           "shadow-lg ring-1 ring-zinc-950/10 dark:ring-inset dark:ring-white/10",
           // Transitions
           "transition-opacity duration-100 ease-in data-[transition]:pointer-events-none data-[closed]:data-[leave]:opacity-0"
-        )}>
+        )}
+      >
         {options}
       </Headless.ListboxOptions>
     </Headless.Listbox>
@@ -138,12 +141,14 @@ export function ListboxOption<T>({
               "forced-color-adjust-none forced-colors:data-[focus]:bg-[Highlight] forced-colors:data-[focus]:text-[HighlightText]",
               // Disabled
               "data-[disabled]:opacity-50"
-            )}>
+            )}
+          >
             <svg
               className="relative hidden size-5 self-center stroke-current group-data-[selected]/option:inline sm:size-4"
               viewBox="0 0 16 16"
               fill="none"
-              aria-hidden="true">
+              aria-hidden="true"
+            >
               <path d="M4 8.5l3 3L12 4" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span className={clsx(className, sharedClasses, "col-start-2")}>{children}</span>
@@ -165,7 +170,8 @@ export function ListboxDescription({ className, children, ...props }: React.Comp
       className={clsx(
         className,
         "flex flex-1 overflow-hidden text-zinc-500 before:w-2 before:min-w-0 before:shrink group-data-[focus]/option:text-white dark:text-zinc-400"
-      )}>
+      )}
+    >
       <span className="flex-1 truncate">{children}</span>
     </span>
   );

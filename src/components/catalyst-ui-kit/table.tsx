@@ -105,7 +105,8 @@ export function TableCell({ className, children, ...props }: React.ComponentProp
         grid && "border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5",
         dense ? "py-2.5" : "py-4",
         !bleed && "sm:first:pl-1 sm:last:pr-1"
-      )}>
+      )}
+    >
       {href && (
         <Link
           data-row-link

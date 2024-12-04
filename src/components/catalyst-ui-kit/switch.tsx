@@ -171,7 +171,8 @@ export function Switch({
         "dark:data-[disabled]:bg-white/15 dark:data-[disabled]:data-[checked]:bg-white/15 dark:data-[disabled]:data-[checked]:ring-white/15",
         // Color specific styles
         colors[color]
-      )}>
+      )}
+    >
       <span
         aria-hidden="true"
         className={clsx(

@@ -96,10 +96,11 @@ export const BackgroundBeamsWithCollision = ({
       className={cn(
         "h-full bg-gradient-to-b from-white to-neutral-100 dark:from-neutral-950 dark:to-neutral-800 relative flex items-center w-full justify-center overflow-hidden",
         className
-      )}>
+      )}
+    >
       {beams.map((beam) => (
         <CollisionMechanism
-          key={beam.initialX + "beam-idx"}
+          key={`${beam.initialX}beam-idx`}
           beamOptions={beam}
           containerRef={containerRef}
           parentRef={parentRef}
@@ -113,7 +114,8 @@ export const BackgroundBeamsWithCollision = ({
         style={{
           boxShadow:
             "0 0 24px rgba(34, 42, 53, 0.06), 0 1px 1px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(34, 42, 53, 0.04), 0 0 4px rgba(34, 42, 53, 0.08), 0 16px 68px rgba(47, 48, 55, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1) inset"
-        }}></div>
+        }}
+      />
     </div>
   );
 };
@@ -208,7 +210,7 @@ const CollisionMechanism = React.forwardRef<
         }}
         transition={{
           duration: beamOptions.duration || 8,
-          repeat: Infinity,
+          repeat: Number.POSITIVE_INFINITY,
           repeatType: "loop",
           ease: "linear",
           delay: beamOptions.delay || 0,
@@ -254,7 +256,8 @@ const Explosion = ({ ...props }: React.HTMLProps<HTMLDivElement>) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
-        className="absolute -inset-x-10 top-0 m-auto h-2 w-10 rounded-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent blur-sm"></motion.div>
+        className="absolute -inset-x-10 top-0 m-auto h-2 w-10 rounded-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent blur-sm"
+      />
       {spans.map((span) => (
         <motion.span
           key={span.id}
