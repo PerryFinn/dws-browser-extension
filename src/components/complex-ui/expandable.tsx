@@ -1,10 +1,9 @@
-"use client";
-
 import { cn } from "@/utils";
 import {
   AnimatePresence,
   type AnimationControls,
   type HTMLMotionProps,
+  type SpringOptions,
   type Target,
   type TargetAndTransition,
   type VariantLabels,
@@ -15,32 +14,32 @@ import {
 import React, { type ReactNode, createContext, useContext, useEffect, useState } from "react";
 import useMeasure from "react-use-measure";
 
-const springConfig = { stiffness: 200, damping: 20, bounce: 0.2 };
+const springConfig: SpringOptions = { stiffness: 200, damping: 20, bounce: 0.2 };
 
 interface ExpandableContextType {
-  isExpanded: boolean; // Indicates whether the component is expanded
-  toggleExpand: () => void; // Function to toggle the expanded state
-  expandDirection: "vertical" | "horizontal" | "both"; // Direction of expansion
-  expandBehavior: "replace" | "push"; // How the expansion affects surrounding content
-  transitionDuration: number; // Duration of the expansion/collapse animation
-  easeType: string; // Easing function for the animation
-  initialDelay: number; // Delay before the animation starts
-  onExpandEnd?: () => void; // Callback function when expansion ends
-  onCollapseEnd?: () => void; // Callback function when collapse ends
+  isExpanded: boolean; // 指示组件是否展开
+  toggleExpand: () => void; // 切换展开状态的函数
+  expandDirection: "vertical" | "horizontal" | "both"; // 展开的方向
+  expandBehavior: "replace" | "push"; // 展开如何影响周围内容
+  transitionDuration: number; // 展开/折叠动画的持续时间
+  easeType: string; // 动画的缓动函数
+  initialDelay: number; // 动画开始前的延迟
+  onExpandEnd?: () => void; // 展开结束时的回调函数
+  onCollapseEnd?: () => void; // 折叠结束时的回调函数
 }
 
-// Create a context with default values
+// 创建一个具有默认值的上下文
 const ExpandableContext = createContext<ExpandableContextType>({
   isExpanded: false,
   toggleExpand: () => {},
-  expandDirection: "vertical", // 'vertical' | 'horizontal' | 'both' // Direction of expansion
-  expandBehavior: "replace", // How the expansion affects surrounding content
-  transitionDuration: 0.3, // Duration of the expansion/collapse animation
-  easeType: "easeInOut", // Easing function for the animation
-  initialDelay: 0
+  expandDirection: "vertical", // 展开的方向：'vertical' | 'horizontal' | 'both'
+  expandBehavior: "replace", // 展开如何影响周围内容
+  transitionDuration: 0.3, // 展开/折叠动画的持续时间
+  easeType: "easeInOut", // 动画的缓动函数
+  initialDelay: 0 // 动画开始前的延迟
 });
 
-// Custom hook to use the ExpandableContext
+// 使用 ExpandableContext 的自定义钩子
 const useExpandable = () => useContext(ExpandableContext);
 
 type ExpandablePropsBase = Omit<HTMLMotionProps<"div">, "children">;
@@ -59,7 +58,7 @@ interface ExpandableProps extends ExpandablePropsBase {
   onCollapseStart?: () => void;
   onCollapseEnd?: () => void;
 }
-// ROOT Expand component
+// 根 Expand 组件
 const Expandable = React.forwardRef<HTMLDivElement, ExpandableProps>(
   (
     {
@@ -79,16 +78,16 @@ const Expandable = React.forwardRef<HTMLDivElement, ExpandableProps>(
     },
     ref
   ) => {
-    // Internal state for expansion when the component is uncontrolled
+    // 当组件未受控时，内部的展开状态
     const [isExpandedInternal, setIsExpandedInternal] = useState(false);
 
-    // Use the provided expanded prop if available, otherwise use internal state
+    // 如果提供了 expanded 属性，则使用它，否则使用内部状态
     const isExpanded = expanded !== undefined ? expanded : isExpandedInternal;
 
-    // Use the provided onToggle function if available, otherwise use internal toggle function
+    // 如果提供了 onToggle 函数，则使用它，否则使用内部切换函数
     const toggleExpand = onToggle || (() => setIsExpandedInternal((prev) => !prev));
 
-    // Effect to call onExpandStart or onCollapseStart when isExpanded changes
+    // 当 isExpanded 变化时调用 onExpandStart 或 onCollapseStart 的效果
     useEffect(() => {
       if (isExpanded) {
         onExpandStart?.();
@@ -97,7 +96,7 @@ const Expandable = React.forwardRef<HTMLDivElement, ExpandableProps>(
       }
     }, [isExpanded, onExpandStart, onCollapseStart]);
 
-    // Create the context value to be provided to child components
+    // 创建要提供给子组件的上下文值
     const contextValue: ExpandableContextType = {
       isExpanded,
       toggleExpand,
@@ -124,7 +123,7 @@ const Expandable = React.forwardRef<HTMLDivElement, ExpandableProps>(
           }}
           {...props}
         >
-          {/* Render children as a function if provided, otherwise render as is */}
+          {/* 如果提供了 children 作为函数，则渲染它，否则按原样渲染 */}
           {typeof children === "function" ? children({ isExpanded }) : children}
         </motion.div>
       </ExpandableContext.Provider>
@@ -132,7 +131,7 @@ const Expandable = React.forwardRef<HTMLDivElement, ExpandableProps>(
   }
 );
 
-// Predefined animation presets
+// 预定义的动画预设
 const ANIMATION_PRESETS = {
   fade: {
     initial: { opacity: 0 },
@@ -196,15 +195,15 @@ const ANIMATION_PRESETS = {
   }
 };
 
-// Props for defining custom animations
+// 定义自定义动画的属性
 interface AnimationProps {
-  initial?: boolean | Target | VariantLabels; // Initial state of the animation
-  animate?: AnimationControls | TargetAndTransition | VariantLabels | boolean; // Final state of the animation
-  exit?: TargetAndTransition | VariantLabels; // State when component is removed
-  transition?: object; // Transition properties
+  initial?: boolean | Target | VariantLabels; // 动画的初始状态
+  animate?: AnimationControls | TargetAndTransition | VariantLabels | boolean; // 动画的最终状态
+  exit?: TargetAndTransition | VariantLabels; // 组件移除时的状态
+  transition?: object; // 过渡属性
 }
 
-// Wrap this around items in the card that you want to be hidden then animated in on expansion
+// 将此组件包裹在卡片中希望在展开时隐藏然后动画显示的项目周围
 const ExpandableContent = React.forwardRef<
   HTMLDivElement,
   Omit<HTMLMotionProps<"div">, "ref"> & {
@@ -221,15 +220,15 @@ const ExpandableContent = React.forwardRef<
     ref
   ) => {
     const { isExpanded, transitionDuration, easeType } = useExpandable();
-    // useMeasure is used to measure the height of the content
+    // useMeasure 用于测量内容的高度
     const [measureRef, { height: measuredHeight }] = useMeasure();
-    // useMotionValue creates a value that can be animated smoothly
+    // useMotionValue 创建一个可以平滑动画的值
     const animatedHeight = useMotionValue(0);
-    // useSpring applies a spring animation to the height value
+    // useSpring 将弹簧动画应用于高度值
     const smoothHeight = useSpring(animatedHeight, springConfig);
 
     useEffect(() => {
-      // Animate the height based on whether the content is expanded or collapsed
+      // 根据内容是展开还是折叠来动画高度
       if (isExpanded) {
         animatedHeight.set(measuredHeight);
       } else {
@@ -245,7 +244,7 @@ const ExpandableContent = React.forwardRef<
     const combinedAnimateOut = animateOut || combinedAnimateIn;
 
     return (
-      // This motion.div animates the height of the content
+      // 这个 motion.div 动画内容的高度
       <motion.div
         ref={ref}
         style={{
@@ -255,10 +254,10 @@ const ExpandableContent = React.forwardRef<
         transition={{ duration: transitionDuration, ease: easeType }}
         {...props}
       >
-        {/* AnimatePresence handles the entering and exiting of components */}
+        {/* AnimatePresence 处理组件的进入和退出 */}
         <AnimatePresence initial={false}>
           {(isExpanded || keepMounted) && (
-            // This motion.div handles the animation of the content itself
+            // 这个 motion.div 处理内容本身的动画
             <motion.div
               ref={measureRef}
               initial={combinedAnimateIn.initial}
@@ -267,7 +266,7 @@ const ExpandableContent = React.forwardRef<
               transition={{ duration: transitionDuration, ease: easeType }}
             >
               {stagger ? (
-                // If stagger is true, we apply a staggered animation to the children
+                // 如果 stagger 为 true，我们对子组件应用交错动画
                 <motion.div
                   variants={{
                     hidden: {},
@@ -306,11 +305,11 @@ const ExpandableContent = React.forwardRef<
 interface ExpandableCardProps {
   children: ReactNode;
   className?: string;
-  collapsedSize?: { width?: number; height?: number }; // Size when collapsed
-  expandedSize?: { width?: number; height?: number }; // Size when expanded
-  hoverToExpand?: boolean; // Whether to expand on hover
-  expandDelay?: number; // Delay before expanding
-  collapseDelay?: number; // Delay before collapsing
+  collapsedSize?: { width?: number; height?: number }; // 折叠时的尺寸
+  expandedSize?: { width?: number; height?: number }; // 展开时的尺寸
+  hoverToExpand?: boolean; // 是否在悬停时展开
+  expandDelay?: number; // 展开前的延迟
+  collapseDelay?: number; // 折叠前的延迟
 }
 
 const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
@@ -327,21 +326,21 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
     },
     ref
   ) => {
-    // Get the expansion state and toggle function from the ExpandableContext
+    // 从 ExpandableContext 获取展开状态和切换函数
     const { isExpanded, toggleExpand, expandDirection } = useExpandable();
 
-    // Use useMeasure hook to get the dimensions of the content
+    // 使用 useMeasure 钩子获取内容的尺寸
     const [measureRef, { width, height }] = useMeasure();
 
-    // Create motion values for width and height
+    // 创建宽度和高度的运动值
     const animatedWidth = useMotionValue(collapsedSize.width || 0);
     const animatedHeight = useMotionValue(collapsedSize.height || 0);
 
-    // Apply spring animation to the motion values
+    // 对运动值应用弹簧动画
     const smoothWidth = useSpring(animatedWidth, springConfig);
     const smoothHeight = useSpring(animatedHeight, springConfig);
 
-    // Effect to update the animated dimensions when expansion state changes
+    // 在展开状态变化时更新动画尺寸的效果
     useEffect(() => {
       if (isExpanded) {
         animatedWidth.set(expandedSize.width || width);
@@ -352,14 +351,12 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
       }
     }, [isExpanded, collapsedSize, expandedSize, width, height, animatedWidth, animatedHeight]);
 
-    // Handler for hover start event
     const handleHover = () => {
       if (hoverToExpand && !isExpanded) {
         setTimeout(toggleExpand, expandDelay);
       }
     };
 
-    // Handler for hover end event
     const handleHoverEnd = () => {
       if (hoverToExpand && isExpanded) {
         setTimeout(toggleExpand, collapseDelay);
@@ -371,7 +368,7 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
         ref={ref}
         className={cn("cursor-pointer", className)}
         style={{
-          // Set width and height based on expansion direction
+          // 根据展开方向设置宽度和高度
           width: expandDirection === "vertical" ? collapsedSize.width : smoothWidth,
           height: expandDirection === "horizontal" ? collapsedSize.height : smoothHeight
         }}
@@ -380,27 +377,8 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
         onHoverEnd={handleHoverEnd}
         {...props}
       >
-        <div
-          className={cn(
-            "grid grid-cols-1 rounded-lg sm:rounded-xl md:rounded-[2rem]",
-            "shadow-[inset_0_0_1px_1px_#ffffff4d] sm:shadow-[inset_0_0_2px_1px_#ffffff4d]",
-            "ring-1 ring-black/5",
-            "max-w-[calc(100%-1rem)] sm:max-w-[calc(100%-2rem)] md:max-w-[calc(100%-4rem)]",
-            "mx-auto w-full",
-            "transition-all duration-300 ease-in-out"
-          )}
-        >
-          {/* Nested divs purely for styling and layout (the shadow ring around the card) */}
-          <div className="grid grid-cols-1 rounded-lg sm:rounded-xl md:rounded-[2rem] p-1 sm:p-1.5 md:p-2 shadow-md shadow-black/5">
-            <div className="rounded-md sm:rounded-lg md:rounded-3xl bg-white p-2 sm:p-3 md:p-4 shadow-xl ring-1 ring-black/5">
-              <div className="w-full h-full overflow-hidden">
-                {/* Ref for measuring content dimensions (so we can let framer know to animate into the dimensions) */}
-                <div ref={measureRef} className="flex flex-col h-full">
-                  {children}
-                </div>
-              </div>
-            </div>
-          </div>
+        <div ref={measureRef} className="flex flex-col h-full">
+          {children}
         </div>
       </motion.div>
     );
@@ -409,7 +387,6 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
 
 ExpandableCard.displayName = "ExpandableCard";
 
-// I'm telling you we just have to expand 🤌💵
 const ExpandableTrigger = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ children, ...props }, ref) => {
     const { toggleExpand } = useExpandable();

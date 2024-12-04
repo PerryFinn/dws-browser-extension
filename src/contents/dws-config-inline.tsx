@@ -1,7 +1,9 @@
 import cssText from "data-text:@/style.css";
-import { Expandable, ExpandableTrigger } from "@/components/complex-ui/expandable";
+import { Expandable, ExpandableCard, ExpandableContent, ExpandableTrigger } from "@/components/complex-ui/expandable";
+import { cn } from "@/utils";
+import { Info, MapPin } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
-import React from "react";
+import React, { useCallback } from "react";
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -11,7 +13,8 @@ export const config: PlasmoCSConfig = {
     "https://dws-ops.test.seewo.com/*",
     "https://dws-dev.test.seewo.com/*"
   ],
-  run_at: "document_end"
+  run_at: "document_end",
+  world: "MAIN"
 };
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = async () => ({
@@ -21,22 +24,48 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = async () => ({
 
 export const getStyle = () => {
   const style = document.createElement("style");
-  style.textContent = cssText;
+  style.textContent = cssText.replaceAll(":root", ":host(plasmo-csui)");
+  // style.textContent = cssText;
   return style;
 };
 
 function DwsConfigInline() {
+  const handleExpandStart = useCallback(async () => {
+    console.log("window.parent.config :>> ", window.config);
+  }, []);
+
   return (
     <Expandable
       expandDirection="both"
       expandBehavior="replace"
       initialDelay={0.2}
-      onExpandStart={() => console.log("flow Expanding meeting card...")}
+      onExpandStart={handleExpandStart}
       onExpandEnd={() => console.log("flow Meeting card expanded!")}
+      className="fixed top-1 right-1 z-[9999]"
     >
       {({ isExpanded }) => (
         <ExpandableTrigger>
-          <div className="fixed top-1 left-1 bg-white bg-opacity-70 z-[9999]">D</div>
+          <ExpandableCard
+            className="w-full bg-white bg-opacity-70 rounded-sm"
+            collapsedSize={{ width: 24, height: 24 }}
+            expandedSize={{ width: 300, height: 150 }}
+            expandDelay={200}
+            collapseDelay={500}
+          >
+            <div className={cn("flex", { "justify-center": isExpanded })}>
+              <Info />
+              <ExpandableContent preset="blur-md">
+                <span className="m-2 font-bold">window.config</span>
+              </ExpandableContent>
+            </div>
+
+            <ExpandableContent preset="blur-md">
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span>Conference Room A</span>
+              </div>
+            </ExpandableContent>
+          </ExpandableCard>
         </ExpandableTrigger>
       )}
     </Expandable>
