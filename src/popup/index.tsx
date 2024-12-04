@@ -114,7 +114,7 @@ function IndexPopup() {
       const { success, processInfo: taskResult, error } = resp;
       if (!success) {
         console.error("error :>> ", error);
-        toast.error("验证失败: " + error);
+        toast.error(`验证失败: ${error}`);
         return;
       }
       setTaskResult(taskResult);
@@ -127,12 +127,12 @@ function IndexPopup() {
 
   const handleExportJSON = async () => {
     const cloneTaskResult = structuredClone(taskResult);
-    Object.keys(cloneTaskResult).forEach((key) => {
+    for (const key of Object.keys(cloneTaskResult)) {
       cloneTaskResult[key] = cloneTaskResult[key].map((item) => {
         const target = processInfo.find((originItem) => originItem.host === item.host);
         return { ...item, name: target?.name };
       });
-    });
+    }
     sendToBackground<downloadReqBody, downloadResBody>({
       name: "download",
       body: {

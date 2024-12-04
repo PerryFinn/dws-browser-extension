@@ -21,12 +21,12 @@ export function xhrRequest<T = unknown>({
     xhr.responseType = responseType as XMLHttpRequestResponseType;
 
     // 设置请求头
-    for (let key in headers) {
+    for (const key in headers) {
       xhr.setRequestHeader(key, headers[key]);
     }
 
     // 处理响应
-    xhr.onload = function () {
+    xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.response);
       } else {
@@ -35,9 +35,9 @@ export function xhrRequest<T = unknown>({
     };
 
     // 处理请求错误
-    xhr.onerror = function (e) {
+    xhr.onerror = (e) => {
       console.error("xhr.onerror :>> ", e);
-      reject(new Error(`Network error or CORS issue.`));
+      reject(new Error("Network error or CORS issue."));
     };
 
     // 发送请求

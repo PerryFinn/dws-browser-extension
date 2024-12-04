@@ -11,8 +11,6 @@ import { storage } from "@/storages";
 import { cn } from "@/utils";
 import { getGitlabEmail, type GitlabFrequentProjectMeta } from "@/utils/gitlab";
 
-// import { FamilyButtonDemo, MusicPlayerExample } from "./components/test";
-
 import packageJSON from "../../package.json";
 
 export const config: PlasmoCSConfig = {
@@ -25,6 +23,9 @@ export const getStyle: PlasmoGetStyle = () => {
   style.textContent = cssText;
   return style;
 };
+
+// export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
+//   document.querySelector("#super-sidebar-context-header");
 
 const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProjectMeta> => {
   try {
@@ -91,8 +92,8 @@ const GitlabInline = () => {
   useEffect(() => {
     if (!enabled) return;
     init()
-      .then((list) => {
-        setProjectList(list);
+      .then((projectList) => {
+        setProjectList(projectList);
       })
       .catch((error) => {
         console.error("GitlabInline error :>> ", error);

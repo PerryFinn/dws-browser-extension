@@ -1,6 +1,7 @@
-import { storage } from "@/storages";
+import { initLocalStorage, storage } from "@/storages";
 
 chrome.runtime.onStartup.addListener(async () => {
+  initLocalStorage();
   console.log("用户打开浏览器时，插件会被启动。插件可以在这个阶段初始化数据，设置默认状态等");
 });
 
@@ -9,9 +10,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     console.log("第一次安装!");
   } else if (details.reason === "update") {
     console.log(`更新版本 ${details.previousVersion} 到 ${chrome.runtime.getManifest().version}!`);
-    const enabled = await storage.get<boolean | undefined>("enabled");
-    chrome.action.setBadgeText({ text: enabled ? "ON" : "OFF" });
   }
+  const enabled = await storage.get<boolean | undefined>("enabled");
+  chrome.action.setBadgeText({ text: enabled ? "ON" : "OFF" });
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -25,14 +26,6 @@ chrome.runtime.onSuspend.addListener(async () => {
 });
 
 chrome.runtime.setUninstallURL("https://dws.seewo.com/");
-
-const accounts = [
-  { username: "admin", ip: "172.20.124.200", passwords: ["1qaz@WSX"] },
-  { username: "user1", ip: "172.20.124.200", passwords: ["password1", "pwd4"] },
-  { username: "admin", ip: "192.168.42.162", passwords: ["password2", "Kindlink"] }
-];
-
-const cloneAccounts = structuredClone(accounts);
 
 // 使用 chrome.runtime.onMessage 来监听消息
 // chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
