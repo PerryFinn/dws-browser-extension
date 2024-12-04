@@ -36,6 +36,7 @@
     "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@ianvs/prettier-plugin-sort-imports": "4.4.0",
     "@types/chrome": "0.0.287",
     "@types/lodash-es": "^4.17.12",

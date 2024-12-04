@@ -1,5 +1,5 @@
 import cssText from "data-text:@/style.css";
-import type { PlasmoCSConfig, PlasmoGetOverlayAnchor } from "plasmo";
+import type { PlasmoCSConfig } from "plasmo";
 
 import { useStorage } from "@plasmohq/storage/hook";
 

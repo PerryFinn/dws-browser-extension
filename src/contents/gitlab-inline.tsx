@@ -1,7 +1,7 @@
 import cssText from "data-text:@/style.css";
 import { sortBy } from "lodash-es";
-import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
-import React, { useEffect, useMemo, useState } from "react";
+import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
+import { useEffect, useMemo, useState } from "react";
 
 import { useStorage } from "@plasmohq/storage/hook";
 
@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // import { AnimatedTooltip } from "@/components/complex-ui/animated-tooltip";
 import { storage } from "@/storages";
 import { cn } from "@/utils";
-import { getGitlabEmail, type GitlabFrequentProjectMeta } from "@/utils/gitlab";
+import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 
 import packageJSON from "../../package.json";
 
@@ -123,7 +123,8 @@ const GitlabInline = () => {
                         <span
                           className={cn(
                             "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300"
-                          )}>
+                          )}
+                        >
                           <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
                             <AvatarImage draggable={false} src={project.avatarUrl} />
                             <AvatarFallback>
