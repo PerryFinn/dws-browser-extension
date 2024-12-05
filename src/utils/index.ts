@@ -1,4 +1,4 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -12,7 +12,9 @@ export function parseXMLtoObject(xmlString: string) {
   let match: RegExpExecArray | null;
 
   // 使用正则表达式匹配每个标签和值
-  while ((match = tagPattern.exec(xmlString)) !== null) {
+  while (true) {
+    match = tagPattern.exec(xmlString);
+    if (match === null) break;
     const [, tag, value] = match;
     obj[tag] = value;
   }
@@ -52,3 +54,85 @@ export function jsonToBase64(jsonObject: Object) {
   const base64String = btoa(String.fromCharCode(...utf8Bytes));
   return base64String;
 }
+
+type CopyFunction = (text: string) => Promise<boolean>;
+/**
+ * 将提供的文本复制到剪贴板。
+ *
+ * 此函数尝试使用现代的 Clipboard API 将文本复制到剪贴板。
+ * 如果 Clipboard API 不可用，则回退到使用临时的 textarea 元素。
+ *
+ * 不适用于移动端。
+ *
+ * @param text - 要复制到剪贴板的文本。
+ * @returns 当文本成功复制时返回一个已解决的 promise，否则返回一个带有错误的拒绝 promise。
+ */
+export const copyToClipboard: CopyFunction = (() => {
+  // 检查 navigator.clipboard API
+  if (typeof navigator.clipboard?.writeText === "function") {
+    return async (text: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (err) {
+        console.error("复制失败:", err);
+        throw err;
+      }
+    };
+  }
+
+  // 降级方案：使用 document.execCommand
+  return async (text: string) => {
+    const textarea = document.createElement("textarea");
+    try {
+      textarea.value = text;
+      // 样式优化：确保完全隐藏且不影响布局
+      Object.assign(textarea.style, {
+        position: "fixed",
+        top: "-9999px",
+        left: "-9999px",
+        opacity: "0",
+        width: "1px",
+        height: "1px",
+        padding: "0",
+        border: "none",
+        pointerEvents: "none"
+      });
+      // 安全性和可访问性优化
+      textarea.setAttribute("readonly", "");
+      textarea.setAttribute("aria-hidden", "true");
+      textarea.setAttribute("tabindex", "-1"); // 防止键盘焦点
+      textarea.setAttribute("data-temp-clipboard", "true"); // 标记临时元素
+      document.body.appendChild(textarea);
+      textarea.select();
+      const result = document.execCommand("copy");
+      return Promise.resolve(result);
+    } catch (err) {
+      console.error("复制失败:", err);
+      return Promise.reject(err);
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
+})();
+
+const DEV_PORTS = [];
+const WEBPACK_HMR_PATH = "/__webpack_hmr";
+const WEBPACK_DEV_SERVER_SELECTOR = 'script[src*="webpack-dev-server"]';
+
+/**
+ * 检查当前是否为开发环境
+ * @returns {boolean} 是否为开发环境
+ */
+export const isDevelopmentMode = (): boolean => {
+  try {
+    const hasHMR = Boolean(new EventSource(WEBPACK_HMR_PATH));
+    const hasDevServer = Boolean(document.querySelector(WEBPACK_DEV_SERVER_SELECTOR));
+    const isDevPort = DEV_PORTS.includes(window.location.port);
+
+    return hasHMR || hasDevServer || isDevPort;
+  } catch {
+    // EventSource 可能会抛出异常，需要处理
+    return false;
+  }
+};
