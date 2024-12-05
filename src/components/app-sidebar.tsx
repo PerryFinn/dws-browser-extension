@@ -1,5 +1,6 @@
 import { GalleryVerticalEnd } from "lucide-react";
 import type * as React from "react";
+import packageJson from "../../package.json";
 
 import {
   Sidebar,
@@ -167,8 +168,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">Documentation</span>
-                  <span className="">v1.0.0</span>
+                  <span className="font-semibold truncate">{packageJson.displayName}</span>
+                  <span className="">{packageJson.version}</span>
                 </div>
               </a>
             </SidebarMenuButton>
