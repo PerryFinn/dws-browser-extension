@@ -40,7 +40,7 @@ function ControlArea(props: IProps) {
       storage.set("taskResult", { success: [], failed: [], error: [] })
     ]);
     onReset?.();
-  }, [storage]);
+  }, [storage, onReset]);
 
   const handleDownloadTemplate = useCallback(async () => {
     await sendToBackground<downloadReqBody, downloadResBody>({

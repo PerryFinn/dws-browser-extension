@@ -1,7 +1,7 @@
 import cssText from "data-text:@/style.css";
 import { Expandable, ExpandableCard, ExpandableContent, ExpandableTrigger } from "@/components/complex-ui/expandable";
 import { Button } from "@/components/ui/button";
-import { cn, copyToClipboard, isDevelopmentMode } from "@/utils";
+import { cn, copyToClipboard } from "@/utils";
 import { Check, Copy, Info } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import type React from "react";
@@ -64,8 +64,6 @@ function DwsConfigInline() {
   const handleExpandStart = useCallback(async () => {
     setCommitInfo(window.config.commitInfo);
   }, []);
-
-  const isSiteInDevMode = useMemo(isDevelopmentMode, []);
 
   return (
     <Expandable
