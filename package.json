@@ -6,9 +6,8 @@
   "author": "chenpengfei@cvte.com",
   "scripts": {
     "watch-routes": "tsr watch",
-    "generate-routes": "tsr generate",
-    "dev": "plasmo dev",
-    "build": "pnpm run generate-routes && plasmo build",
+    "dev": "concurrently \"tsr watch\" \"plasmo dev\"",
+    "build": "tsr generate && plasmo build",
     "package": "plasmo package"
   },
   "dependencies": {
@@ -52,6 +51,7 @@
     "@types/react-dom": "18.3.1",
     "@types/spark-md5": "^3.0.5",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
     "daisyui": "^4.12.14",
     "postcss": "8.4.49",
     "prettier": "3.4.1",

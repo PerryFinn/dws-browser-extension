@@ -39,7 +39,7 @@ function RouteComponent() {
 
   return (
     <div>
-      <div>Hello "/posts/$postId"!</div>
+      <div>Hello "/posts/$postId" wow!</div>
       <div>postId: {postId}</div>
     </div>
   );
