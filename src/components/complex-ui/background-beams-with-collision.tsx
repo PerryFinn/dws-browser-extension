@@ -77,8 +77,9 @@ export const BackgroundBeamsWithCollision = ({
     }
   ]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const w = parentRef.current.offsetWidth;
+    const w = parentRef.current?.offsetWidth ?? 0;
     const newBeam = beams.map((beam) => {
       const x = getRandInt(0, w);
       return {
@@ -88,7 +89,7 @@ export const BackgroundBeamsWithCollision = ({
       };
     });
     setBeams(newBeam);
-  }, [beams]);
+  }, []);
 
   return (
     <div
@@ -149,6 +150,7 @@ const CollisionMechanism = React.forwardRef<
   const [beamKey, setBeamKey] = useState(0);
   const [cycleCollisionDetected, setCycleCollisionDetected] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const checkCollision = () => {
       if (beamRef.current && containerRef.current && parentRef.current && !cycleCollisionDetected) {

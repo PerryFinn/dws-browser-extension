@@ -3,6 +3,9 @@
   "cSpell.words": ["Encryptor", "Plasmo", "rtsp"],
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true
+  },
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit",
     "source.fixAll.biome": "explicit",
