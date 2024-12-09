@@ -10,29 +10,30 @@ type LinkPreviewProps = {
   className?: string;
   width?: number;
   height?: number;
-  quality?: number;
-  layout?: string;
+  type: "img" | "video";
   side?: "left" | "right" | "top" | "bottom";
   align?: "center" | "end" | "start";
   desc?: string;
-} & ({ isStatic: true; imageSrc: string } | { isStatic?: false; imageSrc?: never });
+  isStatic?: boolean;
+  loop?: boolean;
+};
 
 export const LinkPreview = ({
   children,
   url,
   className,
   width = 200,
+  type = "img",
   height = 125,
-  quality = 50,
-  layout = "fixed",
   isStatic = false,
-  imageSrc = "",
   side = "right",
   align = "center",
-  desc = "图片描述"
+  desc = "图片描述",
+  loop = true
 }: LinkPreviewProps) => {
+  const isImg = type === "img";
   let src: string | undefined;
-  if (!isStatic) {
+  if (!isStatic && isImg) {
     const params = encode({
       url,
       screenshot: true,
@@ -46,7 +47,7 @@ export const LinkPreview = ({
     });
     src = `https://api.microlink.io/?${params}`;
   } else {
-    src = imageSrc;
+    src = url;
   }
 
   const [isOpen, setOpen] = React.useState(false);
@@ -70,9 +71,9 @@ export const LinkPreview = ({
 
   return (
     <>
-      {isMounted ? (
+      {isMounted && isImg ? (
         <div className="hidden">
-          <img src={isStatic ? imageSrc : src} width={width} height={height} alt={desc} />
+          <img src={src} width={width} height={height} alt={desc} />
         </div>
       ) : null}
 
@@ -109,7 +110,22 @@ export const LinkPreview = ({
                 className="shadow-xl rounded-xl z-50"
                 style={{ x: translateX }}
               >
-                <img src={isStatic ? imageSrc : src} width={width} height={height} className="rounded-lg" alt={desc} />
+                {isImg ? (
+                  <img src={src} width={width} height={height} className="rounded-lg" alt={desc} />
+                ) : (
+                  <video
+                    src={src}
+                    width={width}
+                    height={height}
+                    className="rounded-lg"
+                    controls={false}
+                    muted
+                    autoPlay
+                    loop={loop}
+                  >
+                    <track kind="captions" />
+                  </video>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

@@ -20,8 +20,10 @@ interface Window {
 }
 
 type Config = {
-  // 是否开启项目基本信息弹窗
+  /** 是否开启项目基本信息弹窗 */
   isOpenWindowConfig: boolean;
+  /** 是否开启 Gitlab 快捷访问列表 */
+  isOpenGitlabProjects: boolean;
 };
 
 declare module "*.png" {
@@ -45,6 +47,11 @@ declare module "*.svg" {
 }
 
 declare module "*.gif" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.mp4" {
   const content: string;
   export default content;
 }

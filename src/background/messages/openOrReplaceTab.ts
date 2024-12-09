@@ -1,6 +1,6 @@
-import { type PlasmoMessaging, sendToBackground } from "@plasmohq/messaging";
+import { sendToBackground, type PlasmoMessaging } from "@plasmohq/messaging";
 
-import { type ActiveTabIdReqBody, type ActiveTabIdResBody, getActiveTab } from "./getActiveTab";
+import { getActiveTab, type ActiveTabIdReqBody, type ActiveTabIdResBody } from "./getActiveTab";
 
 export type OpenOrReplaceTabReqBody = { host: string };
 export type OpenOrReplaceTabResBody = chrome.tabs.Tab;
@@ -42,6 +42,7 @@ const handler: PlasmoMessaging.MessageHandler<OpenOrReplaceTabReqBody, OpenOrRep
     response.send(tab);
   } catch (error) {
     console.error("openOrReplaceTab error :>> ", error);
+    throw error;
   }
 };
 

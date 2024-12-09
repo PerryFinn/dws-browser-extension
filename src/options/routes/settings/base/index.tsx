@@ -1,10 +1,11 @@
+import windowConfigPreviewVideo from "raw:assets/previews/dws-window-config.mp4";
+import gitlabProjectsVideo from "raw:assets/previews/gitlab-projects.mp4";
 import { Description, Label } from "@/components/catalyst-ui-kit/fieldset";
 import { Switch, SwitchField } from "@/components/catalyst-ui-kit/switch";
 import { LinkPreview } from "@/components/complex-ui/link-preview";
 import { localStorageInitialValue, storage } from "@/storages";
 import { useStorage } from "@plasmohq/storage/hook";
 import { createFileRoute } from "@tanstack/react-router";
-import windowConfigPreviewGif from "assets/previews/dws-window-config.gif";
 import { CircleHelp } from "lucide-react";
 
 export const Route = createFileRoute("/settings/base/")({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/settings/base/")({
 
 const {
   config: {
-    defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig }
+    defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig, isOpenGitlabProjects: defaultOpenGitlabProjects }
   }
 } = localStorageInitialValue;
 
@@ -22,8 +23,15 @@ function RouteComponent() {
     { key: "isOpenWindowConfig", instance: storage },
     defaultOpenWindowConfig
   );
+  const [isOpenGitlabProjects, , isOpenGitlabProjectsSetter] = useStorage<boolean>(
+    { key: "isOpenGitlabProjects", instance: storage },
+    defaultOpenGitlabProjects
+  );
   const handleOpenWindowConfigChange = (checked: boolean) => {
     isOpenWindowConfigSetter.setStoreValue(checked);
+  };
+  const handleOpenGitlabProjectsChange = (checked: boolean) => {
+    isOpenGitlabProjectsSetter.setStoreValue(checked);
   };
 
   return (
@@ -32,17 +40,43 @@ function RouteComponent() {
         <div>功能开关</div>
         <SwitchField>
           <Label className="flex items-center gap-2 cursor-pointer">
-            项目基本信息弹窗
+            <del>项目基本信息弹窗</del>
             <LinkPreview
               isStatic
+              type="video"
               // imageSrc="https://pro-ali-dws.cvtestatic.com/dws-model/uwiwjuvohjxyjhnuhoyjypwkymhhihhh.png"
-              imageSrc={windowConfigPreviewGif}
+              url={windowConfigPreviewVideo}
             >
               <CircleHelp size={20} />
             </LinkPreview>
           </Label>
           <Description>展示项目基本信息的弹窗</Description>
-          <Switch name="isOpenWindowConfig" checked={isOpenWindowConfig} onChange={handleOpenWindowConfigChange} />
+          <Switch
+            disabled
+            name="isOpenWindowConfig"
+            checked={isOpenWindowConfig}
+            onChange={handleOpenWindowConfigChange}
+          />
+        </SwitchField>
+
+        <SwitchField>
+          <Label className="flex items-center gap-2 cursor-pointer">
+            Gitlab 项目快捷访问
+            <LinkPreview
+              type="video"
+              isStatic
+              // imageSrc="https://pro-ali-dws.cvtestatic.com/dws-model/uwiwjuvohjxyjhnuhoyjypwkymhhihhh.png"
+              url={gitlabProjectsVideo}
+            >
+              <CircleHelp size={20} />
+            </LinkPreview>
+          </Label>
+          <Description>快速访问已访问过的项目列表，按照访问次数降序排序</Description>
+          <Switch
+            name="isOpenGitlabProjects"
+            checked={isOpenGitlabProjects}
+            onChange={handleOpenGitlabProjectsChange}
+          />
         </SwitchField>
       </div>
     </div>

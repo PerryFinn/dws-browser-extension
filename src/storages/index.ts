@@ -4,7 +4,17 @@ export const storage = new Storage({ area: "local" });
 export const sessionStorage = new Storage({ area: "session" });
 export const syncStorage = new Storage({ area: "sync" });
 
+export type StorageType = typeof storage.area;
+export const storageMap = new Map<StorageType, Storage>([
+  ["local", storage],
+  ["session", sessionStorage],
+  ["sync", syncStorage]
+]);
+
 export const localStorageInitialValue = {
+  enabled: {
+    defaultValue: true
+  },
   gitlabUserName: {
     defaultValue: ""
   },
@@ -22,12 +32,13 @@ export const localStorageInitialValue = {
   },
   config: {
     defaultValue: {
-      isOpenWindowConfig: true
+      isOpenWindowConfig: true, // 该配置在 MAIN 不可用
+      isOpenGitlabProjects: true
     } as Config
   }
 };
 
-export type LocalStorageKey = keyof typeof localStorageInitialValue & "enabled";
+export type LocalStorageKey = keyof typeof localStorageInitialValue;
 
 export const initLocalStorage = async () => {
   for (const [key, { defaultValue }] of Object.entries(localStorageInitialValue)) {

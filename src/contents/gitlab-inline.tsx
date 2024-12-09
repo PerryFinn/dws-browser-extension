@@ -1,15 +1,12 @@
 import cssText from "data-text:@/style.css";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { localStorageInitialValue, storage } from "@/storages";
+import { cn } from "@/utils";
+import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
+import { useStorage } from "@plasmohq/storage/hook";
 import { sortBy } from "lodash-es";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
 import { useEffect, useMemo, useState } from "react";
-
-import { useStorage } from "@plasmohq/storage/hook";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// import { AnimatedTooltip } from "@/components/complex-ui/animated-tooltip";
-import { storage } from "@/storages";
-import { cn } from "@/utils";
-import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 
 import packageJSON from "../../package.json";
 
@@ -82,13 +79,24 @@ const init = async () => {
 //   return document.getElementById("pinned");
 // };
 
+const {
+  enabled: { defaultValue: defaultEnabled },
+  config: {
+    defaultValue: { isOpenGitlabProjects: defaultOpenGitlabProjects }
+  }
+} = localStorageInitialValue;
+
 export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
   element: document.getElementById("pinned") || document.body,
   insertPosition: "beforeend"
 });
 
 const GitlabInline = () => {
-  const [enabled] = useStorage({ key: "enabled", instance: storage }, false);
+  const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
+  const [isOpenGitlabProjects] = useStorage(
+    { key: "isOpenGitlabProjects", instance: storage },
+    defaultOpenGitlabProjects
+  );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
 
   useEffect(() => {
@@ -99,6 +107,7 @@ const GitlabInline = () => {
       })
       .catch((error) => {
         console.error("GitlabInline error :>> ", error);
+        throw error;
       });
   }, [enabled]);
 
@@ -106,7 +115,7 @@ const GitlabInline = () => {
     return sortBy(projectList, "frequency").reverse();
   }, [projectList]);
 
-  if (!enabled) return null;
+  if (!enabled || !isOpenGitlabProjects) return null;
   return (
     <div className="relative w-full h-full max-h-[220px] border-dashed border border-indigo-600">
       <div className="relative w-full h-full max-h-[220px] overflow-y-scroll ">
