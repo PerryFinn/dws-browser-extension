@@ -1,16 +1,10 @@
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { OptionPageSidebar } from "@/options/components/sidebar";
-import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
+import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const Route = createRootRoute({
   component: () => (
@@ -43,6 +37,7 @@ export const Route = createRootRoute({
         </SidebarInset>
       </SidebarProvider>
       <TanStackRouterDevtools />
+      <ToastContainer limit={6} />
     </div>
   )
 });
