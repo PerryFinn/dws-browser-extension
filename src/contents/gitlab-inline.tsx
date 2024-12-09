@@ -31,6 +31,7 @@ export const getStyle: PlasmoGetStyle = () => {
 const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProjectMeta> => {
   try {
     const stringifyData = window.localStorage.getItem(localStorageKey);
+    if (!stringifyData) return [];
     const projects = JSON.parse(stringifyData);
     if (!Array.isArray(projects)) {
       throw new Error(`${localStorageKey}'data is not an array`);
@@ -81,8 +82,8 @@ const init = async () => {
 //   return document.getElementById("pinned");
 // };
 
-export const getInlineAnchor: PlasmoGetInlineAnchor = async () => ({
-  element: document.getElementById("pinned"),
+export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
+  element: document.getElementById("pinned") || document.body,
   insertPosition: "beforeend"
 });
 
@@ -93,7 +94,7 @@ const GitlabInline = () => {
   useEffect(() => {
     if (!enabled) return;
     init()
-      .then((projectList) => {
+      .then((projectList = []) => {
         setProjectList(projectList);
       })
       .catch((error) => {
@@ -127,7 +128,7 @@ const GitlabInline = () => {
                           )}
                         >
                           <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
-                            <AvatarImage draggable={false} src={project.avatarUrl} />
+                            <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
                             <AvatarFallback>
                               <div className="flex items-center justify-center rounded-full h-full w-full text-sm text-black">
                                 {project.name.substring(0, 1).toLocaleUpperCase()}
