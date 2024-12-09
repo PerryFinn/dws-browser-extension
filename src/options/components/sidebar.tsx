@@ -15,19 +15,13 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from "@/components/ui/sidebar";
-import { Link, useMatch, useMatchRoute, useMatches, useRouter } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
-import { routeTree } from "../routeTree.gen";
+import { Link, useMatch, useMatchRoute, useMatches } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const matches = useMatches();
-  // const router = useRouter();
 
   const match = useMatch({ strict: false });
-
-  useEffect(() => {
-    console.log("matches :>> ", matches, routeTree, match);
-  }, [matches, match]);
 
   const activeRoute = useMemo(() => {
     const len = matches.length;
