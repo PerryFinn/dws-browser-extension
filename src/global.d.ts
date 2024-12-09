@@ -18,3 +18,33 @@ interface Window {
     dwsToken: string;
   }>;
 }
+
+type Config = {
+  // 是否开启项目基本信息弹窗
+  isOpenWindowConfig: boolean;
+};
+
+declare module "*.png" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.jpg" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.jpeg" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.svg" {
+  const content: React.FunctionComponent<React.SVGAttributes<SVGElement>>;
+  export default content;
+}
+
+declare module "*.gif" {
+  const content: string;
+  export default content;
+}

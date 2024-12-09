@@ -1,10 +1,18 @@
 {
   "extends": "plasmo/templates/tsconfig.base",
   "exclude": ["node_modules"],
-  "include": [".plasmo/index.d.ts", "./**/*.ts", "./**/*.tsx", "node_modules/@types"],
+  "include": [
+    ".plasmo/index.d.ts",
+    "./**/*.ts",
+    "./**/*.tsx",
+    "node_modules/@types",
+    "assets/**/*", // 添加 assets 目录
+    "./src/global.d.ts"
+  ],
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "assets/*": ["./assets/*"] // 添加 assets 路径别名
     },
     "strictNullChecks": true,
     "baseUrl": "."

@@ -2,8 +2,7 @@ import { Download, TriangleAlert, Upload } from "lucide-react";
 import { type ChangeEventHandler, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 
-import { sendToBackground, sendToContentScript } from "@plasmohq/messaging";
-import { Storage } from "@plasmohq/storage";
+import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
 
 import "react-toastify/dist/ReactToastify.css";
@@ -12,7 +11,6 @@ import "@/style.css";
 import type { downloadReqBody, downloadResBody } from "@/background/messages/download";
 import type { parseXlsxInfo, parsingXLSXReqBody, parsingXLSXResBody } from "@/background/messages/parsingXLSX";
 import type { ValidateHikReqBody, ValidateHikResBody } from "@/background/messages/validateHikAccounts";
-import { BackgroundBeamsWithCollision } from "@/components/complex-ui/background-beams-with-collision";
 import { TextGenerateEffect } from "@/components/complex-ui/text-generate-effect";
 import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
@@ -21,30 +19,32 @@ import { Label } from "@/components/ui/label";
 import { cn, jsonToBase64 } from "@/utils";
 import { LoginManager, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
 
+import { localStorageInitialValue, storage } from "@/storages";
 import ControlArea from "./control-area";
 import Header from "./header";
 import TableList from "./table-list";
 
-const storage = new Storage({ area: "local" });
+const {
+  isRunningTask: { defaultValue: defaultRunningTask },
+  processInfo: { defaultValue: defaultProcessInfo },
+  taskResult: { defaultValue: defaultTaskResult }
+} = localStorageInitialValue;
 
 function IndexPopup() {
   const [enabled] = useStorage<boolean>({ key: "enabled", instance: storage }, false);
   const [isRunningTask, setIsRunningTask, isRunningTaskSetter] = useStorage<boolean>(
     { key: "isRunningTask", instance: storage },
-    false
+    defaultRunningTask
   );
   const [processInfo, setProcessInfo, processInfoSetter] = useStorage<Array<parseXlsxInfo>>(
     { key: "processInfo", instance: storage },
-    []
+    defaultProcessInfo
   );
   const [taskResult, setTaskResult, taskResultSetter] = useStorage<TaskResult>(
     { key: "taskResult", instance: storage },
-    {
-      error: [],
-      failed: [],
-      success: []
-    }
+    defaultTaskResult
   );
+
   const [file, setFile] = useState<File | null>(null);
   const uploadId = useId();
   const accountsRef = useRef<Array<UserPasswordPair>>([]);
@@ -53,7 +53,8 @@ function IndexPopup() {
     if (file) {
       const fr = new FileReader();
       fr.onload = async (e) => {
-        const ab = e.target.result as ArrayBuffer;
+        const ab = e.target?.result as ArrayBuffer;
+        if (!ab) throw new Error("file read error no e.target?.result");
         const data = Array.from(new Uint8Array(ab));
         const {
           success,
