@@ -62,7 +62,7 @@ function DwsConfigInline() {
   const [commitInfo, setCommitInfo] = useState<typeof window.config.commitInfo | null>(null);
 
   const handleExpandStart = useCallback(async () => {
-    setCommitInfo(window.config.commitInfo);
+    setCommitInfo(window.config?.commitInfo);
   }, []);
 
   return (
@@ -79,7 +79,7 @@ function DwsConfigInline() {
           <ExpandableCard
             className={cn("w-full bg-white bg-opacity-90 rounded-sm", { "overflow-y-auto": isExpanded })}
             collapsedSize={{ width: 24, height: 24 }}
-            expandedSize={{ width: 300, height: 280 }}
+            expandedSize={{ width: 300, height: 290 }}
             expandDelay={200}
             collapseDelay={500}
           >
