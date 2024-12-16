@@ -42,8 +42,8 @@ importers:
         specifier: ^1.1.4
         version: 1.1.4(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-router':
-        specifier: ^1.85.5
-        version: 1.86.0(@tanstack/router-generator@1.86.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 1.90.0
+        version: 1.90.0(@tanstack/router-generator@1.87.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       axios:
         specifier: ^1.7.8
         version: 1.7.9
@@ -109,11 +109,11 @@ importers:
         specifier: 4.4.0
         version: 4.4.0(@vue/compiler-sfc@3.3.4)(prettier@3.4.1)
       '@tanstack/router-cli':
-        specifier: ^1.85.3
-        version: 1.86.0
+        specifier: 1.87.7
+        version: 1.87.7
       '@tanstack/router-devtools':
-        specifier: ^1.85.5
-        version: 1.86.0(@tanstack/react-router@1.86.0(@tanstack/router-generator@1.86.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: 1.90.0
+        version: 1.90.0(@tanstack/react-router@1.90.0(@tanstack/router-generator@1.87.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/chrome':
         specifier: 0.0.287
         version: 0.0.287
@@ -2112,15 +2112,15 @@ packages:
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
 
-  '@tanstack/history@1.85.3':
-    resolution: {integrity: sha512-62z1qXIILvjdkQyMTVPFQedHOc6kQgunz9GHV9jSy2z1ixsDqyI9GxNj3AWx8Ucmhjwd5/P+v3XN10bsb+FzRA==}
+  '@tanstack/history@1.90.0':
+    resolution: {integrity: sha512-riNhDGm+fAwxgZRJ0J/36IZis1UDHsDCNIxfEodbw6BgTWJr0ah+G20V4HT91uBXiCqYFvX3somlfTLhS5yHDA==}
     engines: {node: '>=12'}
 
-  '@tanstack/react-router@1.86.0':
-    resolution: {integrity: sha512-ywjRtykCoNv539s9ExcBuMEwyCLccBrrOOuZfR3ZVEHdkInmANa57WtSRPhzf7OzysNm80gTRPayDI7dVRODog==}
+  '@tanstack/react-router@1.90.0':
+    resolution: {integrity: sha512-BpNDRk3YRlYHisF5SwHRCwbuuwZe2TsadRkOc6p3kbcscwhyWcHx7F79eIk8TbK/GwZJoqOxzkvCmmo9dVn07w==}
     engines: {node: '>=12'}
     peerDependencies:
-      '@tanstack/router-generator': ^1.86.0
+      '@tanstack/router-generator': ^1.87.7
       react: '>=18'
       react-dom: '>=18'
     peerDependenciesMeta:
@@ -2139,21 +2139,21 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@tanstack/router-cli@1.86.0':
-    resolution: {integrity: sha512-aA3RGiXnpk1zJ67pKKZ2bIDLpmj+xVOOCxCLGRwtniUoYv+8UU3ifjlbZ6VYo0dqHOVw5aAOe4gmlmDmu5O2YQ==}
+  '@tanstack/router-cli@1.87.7':
+    resolution: {integrity: sha512-xpN/BJC0LKv2mwBiQs5E3YLjllnugXtZTGXleQ0skzIsFzCnR38EZLDmVK8baXRJcHb+cINT3cw71OdrOr/6Zw==}
     engines: {node: '>=12'}
     hasBin: true
 
-  '@tanstack/router-devtools@1.86.0':
-    resolution: {integrity: sha512-bgFVzz6+T4Iz3H9TYc3p7VbDJZLgzfOy5ZJH4cPUQ8tvVuStc9SKGk85FMLQwnZwmKMbGZ9+z5wnbuv0LCQXmA==}
+  '@tanstack/router-devtools@1.90.0':
+    resolution: {integrity: sha512-l2w6n56ky6XRa28IQ+fsCwclkSxNcy6ylJadUklyNw5q4MlvoyNp812R2/VRW8oX7avHDaymMnVTZQ6KwPPqHw==}
     engines: {node: '>=12'}
     peerDependencies:
-      '@tanstack/react-router': ^1.86.0
+      '@tanstack/react-router': ^1.90.0
       react: '>=18'
       react-dom: '>=18'
 
-  '@tanstack/router-generator@1.86.0':
-    resolution: {integrity: sha512-6UrQmysjRNZZp1KnAR4aghqrHJKz+5TwGpq8w+kjVWj7ac6OLekqaWbF+LvfwRs03rLiRNxI9VYHmrSkCvIF+A==}
+  '@tanstack/router-generator@1.87.7':
+    resolution: {integrity: sha512-w9Px1C6DM0YNVXvu1VjUuZ5el0ykOeofEmEZBW83VUTzvCXFpcjPCHncU9FO9uXup8NFIxNfGz+xpwf93GoFnQ==}
     engines: {node: '>=12'}
 
   '@tanstack/store@0.6.0':
@@ -2162,8 +2162,8 @@ packages:
   '@tanstack/virtual-core@3.10.9':
     resolution: {integrity: sha512-kBknKOKzmeR7lN+vSadaKWXaLS0SZZG+oqpQ/k80Q6g9REn6zRHS/ZYdrIzHnpHgy/eWs00SujveUN/GJT2qTw==}
 
-  '@tanstack/virtual-file-routes@1.81.9':
-    resolution: {integrity: sha512-jV5mWJrsh3QXHpb/by6udSqwva0qK50uYHpIXvKsLaxnlbjbLfflfPjFyRWXbMtZsnzCjSUqp5pm5/p+Wpaerg==}
+  '@tanstack/virtual-file-routes@1.87.6':
+    resolution: {integrity: sha512-PTpeM8SHL7AJM0pJOacFvHribbUODS51qe9NsMqku4mogh6BWObY1EeVmeGnp9o3VngAEsf+rJMs2zqIVz3WFA==}
     engines: {node: '>=12'}
 
   '@trysound/sax@0.2.0':
@@ -3782,6 +3782,11 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
+  prettier@3.4.2:
+    resolution: {integrity: sha512-e9MewbtFo+Fevyuxn/4rrcDAaq0IYxPGLvObpQjiZBMAzB9IGmzlnG9RZy3FFas+eBMu2vA0CszMeduow5dIuQ==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   process@0.11.10:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
     engines: {node: '>= 0.6.0'}
@@ -4387,8 +4392,8 @@ packages:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
 
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+  zod@3.24.1:
+    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
 
@@ -6604,11 +6609,11 @@ snapshots:
     dependencies:
       defer-to-connect: 2.0.1
 
-  '@tanstack/history@1.85.3': {}
+  '@tanstack/history@1.90.0': {}
 
-  '@tanstack/react-router@1.86.0(@tanstack/router-generator@1.86.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@tanstack/react-router@1.90.0(@tanstack/router-generator@1.87.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@tanstack/history': 1.85.3
+      '@tanstack/history': 1.90.0
       '@tanstack/react-store': 0.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       jsesc: 3.0.2
       react: 18.3.1
@@ -6616,7 +6621,7 @@ snapshots:
       tiny-invariant: 1.3.3
       tiny-warning: 1.0.3
     optionalDependencies:
-      '@tanstack/router-generator': 1.86.0
+      '@tanstack/router-generator': 1.87.7
 
   '@tanstack/react-store@0.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -6631,15 +6636,15 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@tanstack/router-cli@1.86.0':
+  '@tanstack/router-cli@1.87.7':
     dependencies:
-      '@tanstack/router-generator': 1.86.0
+      '@tanstack/router-generator': 1.87.7
       chokidar: 3.6.0
       yargs: 17.7.2
 
-  '@tanstack/router-devtools@1.86.0(@tanstack/react-router@1.86.0(@tanstack/router-generator@1.86.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@tanstack/router-devtools@1.90.0(@tanstack/react-router@1.90.0(@tanstack/router-generator@1.87.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@tanstack/react-router': 1.86.0(@tanstack/router-generator@1.86.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tanstack/react-router': 1.90.0(@tanstack/router-generator@1.87.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       clsx: 2.1.1
       goober: 2.1.16(csstype@3.1.3)
       react: 18.3.1
@@ -6647,18 +6652,18 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
-  '@tanstack/router-generator@1.86.0':
+  '@tanstack/router-generator@1.87.7':
     dependencies:
-      '@tanstack/virtual-file-routes': 1.81.9
-      prettier: 3.4.1
+      '@tanstack/virtual-file-routes': 1.87.6
+      prettier: 3.4.2
       tsx: 4.19.2
-      zod: 3.23.8
+      zod: 3.24.1
 
   '@tanstack/store@0.6.0': {}
 
   '@tanstack/virtual-core@3.10.9': {}
 
-  '@tanstack/virtual-file-routes@1.81.9': {}
+  '@tanstack/virtual-file-routes@1.87.6': {}
 
   '@trysound/sax@0.2.0': {}
 
@@ -8302,6 +8307,8 @@ snapshots:
 
   prettier@3.4.1: {}
 
+  prettier@3.4.2: {}
+
   process@0.11.10: {}
 
   proto-list@1.2.4: {}
@@ -8922,4 +8929,4 @@ snapshots:
       y18n: 5.0.8
       yargs-parser: 21.1.1
 
-  zod@3.23.8: {}
+  zod@3.24.1: {}
