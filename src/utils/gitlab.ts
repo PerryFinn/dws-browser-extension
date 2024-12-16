@@ -1,6 +1,6 @@
 import packageJSON from "../../package.json";
 
-export interface GitlabFrequentProjectMeta {
+export type GitlabFrequentProjectMeta = {
   avatarUrl: string | null;
   frequency: number;
   id: number;
@@ -8,7 +8,7 @@ export interface GitlabFrequentProjectMeta {
   name: string;
   namespace: string;
   webUrl: string;
-}
+};
 
 export const getGitlabEmail = async (): Promise<string> => {
   try {
@@ -17,7 +17,7 @@ export const getGitlabEmail = async (): Promise<string> => {
     const docDom = parser.parseFromString(res, "text/html");
     const inputDom = docDom.getElementById("user_email") as HTMLInputElement;
     if (!inputDom) {
-      throw new Error(`${packageJSON.name}适配【gitlab】失效，请联系${packageJSON.author}进行修复`);
+      throw new Error(`${packageJSON.name}适配【gitlab】失效，请联系 ${packageJSON.author} 进行修复`);
     }
     return inputDom.value;
   } catch (error) {

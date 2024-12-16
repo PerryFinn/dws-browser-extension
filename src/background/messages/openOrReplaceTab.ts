@@ -42,6 +42,7 @@ const handler: PlasmoMessaging.MessageHandler<OpenOrReplaceTabReqBody, OpenOrRep
     response.send(tab);
   } catch (error) {
     console.error("openOrReplaceTab error :>> ", error);
+    throw error;
   }
 };
 
