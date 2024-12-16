@@ -1,6 +1,6 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging";
 
-import { LoginManager, type AccountInfo, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
+import { type AccountInfo, LoginManager, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
 
 export type ValidateHikReqBody = { accounts: Array<UserPasswordPair> };
 export type ValidateHikResBody = { success: boolean; processInfo: TaskResult; error?: any };

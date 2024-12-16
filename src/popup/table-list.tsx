@@ -60,7 +60,10 @@ function TableList({ totalList: dataList = [], title = "SuccessTable", type = "n
             const password = account.password || "--";
 
             return (
-              <TableRow key={index} className={cn({ [`${stripeColor}`]: index % 2 === 0 })}>
+              <TableRow
+                key={`${account.username}-${account.name}`}
+                className={cn({ [`${stripeColor}`]: index % 2 === 0 })}
+              >
                 <TableCell className="p-1.5">
                   <div className="flex items-center space-x-1">
                     <TooltipProvider>
@@ -102,9 +105,11 @@ function TableList({ totalList: dataList = [], title = "SuccessTable", type = "n
                       </Tooltip>
                     </TooltipProvider>
                     <button
+                      type="button"
                       onClick={() => copyToClipboard(host, "host")}
                       className="flex-shrink-0"
-                      aria-label="Copy host">
+                      aria-label="Copy host"
+                    >
                       <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                     </button>
                   </div>
@@ -138,9 +143,11 @@ function TableList({ totalList: dataList = [], title = "SuccessTable", type = "n
                       </Tooltip>
                     </TooltipProvider>
                     <button
+                      type="button"
                       onClick={() => copyToClipboard(username, "Username")}
                       className="flex-shrink-0"
-                      aria-label="Copy username">
+                      aria-label="Copy username"
+                    >
                       <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                     </button>
                   </div>
@@ -158,9 +165,11 @@ function TableList({ totalList: dataList = [], title = "SuccessTable", type = "n
                       </Tooltip>
                     </TooltipProvider>
                     <button
+                      type="button"
                       onClick={() => copyToClipboard(password, "Password")}
                       className="flex-shrink-0"
-                      aria-label="Copy password">
+                      aria-label="Copy password"
+                    >
                       <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                     </button>
                   </div>
@@ -179,7 +188,8 @@ function TableList({ totalList: dataList = [], title = "SuccessTable", type = "n
         </span>
         <Button
           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}>
+          disabled={currentPage === totalPages}
+        >
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

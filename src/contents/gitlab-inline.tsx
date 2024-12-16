@@ -1,17 +1,12 @@
 import cssText from "data-text:@/style.css";
-import { sortBy } from "lodash-es";
-import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
-import React, { useEffect, useMemo, useState } from "react";
-
-import { useStorage } from "@plasmohq/storage/hook";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// import { AnimatedTooltip } from "@/components/complex-ui/animated-tooltip";
-import { storage } from "@/storages";
+import { localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
-import { getGitlabEmail, type GitlabFrequentProjectMeta } from "@/utils/gitlab";
-
-// import { FamilyButtonDemo, MusicPlayerExample } from "./components/test";
+import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
+import { useStorage } from "@plasmohq/storage/hook";
+import { sortBy } from "lodash-es";
+import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
+import { useEffect, useMemo, useState } from "react";
 
 import packageJSON from "../../package.json";
 
@@ -22,13 +17,18 @@ export const config: PlasmoCSConfig = {
 
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style");
-  style.textContent = cssText;
+  style.textContent = cssText.replaceAll(":root", ":host(plasmo-csui)");
+  // style.textContent = cssText;
   return style;
 };
+
+// export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
+//   document.querySelector("#super-sidebar-context-header");
 
 const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProjectMeta> => {
   try {
     const stringifyData = window.localStorage.getItem(localStorageKey);
+    if (!stringifyData) return [];
     const projects = JSON.parse(stringifyData);
     if (!Array.isArray(projects)) {
       throw new Error(`${localStorageKey}'data is not an array`);
@@ -71,7 +71,6 @@ const init = async () => {
   // ==============end: 初始化 gitlabUsername ==============
   const gitlabUsername = await storage.get("gitlabUserName");
   const projects = getFrequentProjects(`${gitlabUsername}/frequent-projects`);
-  console.log("projects :>> ", projects);
   return projects;
 };
 
@@ -80,23 +79,35 @@ const init = async () => {
 //   return document.getElementById("pinned");
 // };
 
-export const getInlineAnchor: PlasmoGetInlineAnchor = async () => ({
-  element: document.getElementById("pinned"),
+const {
+  enabled: { defaultValue: defaultEnabled },
+  config: {
+    defaultValue: { isOpenGitlabProjects: defaultOpenGitlabProjects }
+  }
+} = localStorageInitialValue;
+
+export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
+  element: document.getElementById("pinned") || document.body,
   insertPosition: "beforeend"
 });
 
 const GitlabInline = () => {
-  const [enabled] = useStorage({ key: "enabled", instance: storage }, false);
+  const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
+  const [isOpenGitlabProjects] = useStorage(
+    { key: "isOpenGitlabProjects", instance: storage },
+    defaultOpenGitlabProjects
+  );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
 
   useEffect(() => {
     if (!enabled) return;
     init()
-      .then((list) => {
-        setProjectList(list);
+      .then((projectList = []) => {
+        setProjectList(projectList);
       })
       .catch((error) => {
         console.error("GitlabInline error :>> ", error);
+        throw error;
       });
   }, [enabled]);
 
@@ -104,12 +115,12 @@ const GitlabInline = () => {
     return sortBy(projectList, "frequency").reverse();
   }, [projectList]);
 
-  if (!enabled) return null;
+  if (!enabled || !isOpenGitlabProjects) return null;
   return (
     <div className="relative w-full h-full max-h-[220px] border-dashed border border-indigo-600">
       <div className="relative w-full h-full max-h-[220px] overflow-y-scroll ">
         <div className="flex flex-col items-center justify-center h-full mt-2">
-          <ul role="list">
+          <ul>
             {renderList.map((project, index) => {
               const isLast = index === renderList.length - 1;
               return (
@@ -123,9 +134,10 @@ const GitlabInline = () => {
                         <span
                           className={cn(
                             "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300"
-                          )}>
+                          )}
+                        >
                           <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
-                            <AvatarImage draggable={false} src={project.avatarUrl} />
+                            <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
                             <AvatarFallback>
                               <div className="flex items-center justify-center rounded-full h-full w-full text-sm text-black">
                                 {project.name.substring(0, 1).toLocaleUpperCase()}
