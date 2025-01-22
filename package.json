@@ -5,9 +5,10 @@
   "description": "数字孪生交付助手",
   "author": "chenpengfei@cvte.com",
   "scripts": {
-    "dev": "concurrently \"tsr watch\" \"plasmo dev\"",
+    "dev": "conc \"tsr watch\" \"plasmo dev\"",
     "build": "tsr generate && plasmo build",
-    "package": "plasmo package"
+    "package": "plasmo package",
+    "lint": "biome check --write ."
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -62,9 +63,7 @@
     "typescript": "5.7.2"
   },
   "manifest": {
-    "host_permissions": [
-      "<all_urls>"
-    ],
+    "host_permissions": ["<all_urls>"],
     "permissions": [
       "storage",
       "unlimitedStorage",
@@ -79,12 +78,8 @@
     ],
     "web_accessible_resources": [
       {
-        "resources": [
-          "src/templates/*/**"
-        ],
-        "matches": [
-          "<all_urls>"
-        ]
+        "resources": ["src/templates/*/**"],
+        "matches": ["<all_urls>"]
       }
     ]
   },

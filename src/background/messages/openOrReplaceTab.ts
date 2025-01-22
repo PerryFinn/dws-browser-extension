@@ -1,6 +1,6 @@
-import { sendToBackground, type PlasmoMessaging } from "@plasmohq/messaging";
+import type { PlasmoMessaging } from "@plasmohq/messaging";
 
-import { getActiveTab, type ActiveTabIdReqBody, type ActiveTabIdResBody } from "./getActiveTab";
+import { getActiveTab } from "./getActiveTab";
 
 export type OpenOrReplaceTabReqBody = { host: string };
 export type OpenOrReplaceTabResBody = chrome.tabs.Tab;
@@ -19,6 +19,9 @@ export const waitWebNavigationCompleted = (tabId: number) => {
 export const openOrReplaceTab = async (host: string) => {
   // 判断当前的 tab 是否是传入的 url，如果是则刷新，否则打开新的 tab
   const activeTab = await getActiveTab();
+  if (!activeTab.url || !activeTab.id) {
+    throw new Error("activeTab.url or activeTab.id is required");
+  }
   const activeHost = new URL(activeTab.url).host;
   const targetHost = host;
   if (targetHost === activeHost) {
@@ -38,7 +41,11 @@ const handler: PlasmoMessaging.MessageHandler<OpenOrReplaceTabReqBody, OpenOrRep
 ) => {
   try {
     console.log("openOrReplaceTab 收到消息：", request);
-    const tab = await openOrReplaceTab(request.body.host);
+    const host = request.body?.host;
+    if (!host) {
+      throw new Error("host is required");
+    }
+    const tab = await openOrReplaceTab(host);
     response.send(tab);
   } catch (error) {
     console.error("openOrReplaceTab error :>> ", error);

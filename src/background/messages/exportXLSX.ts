@@ -1,7 +1,5 @@
 import { type PlasmoMessaging, sendToContentScript } from "@plasmohq/messaging";
 
-import { type AccountInfo, LoginManager, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
-
 import * as XLSX from "../libs/xlsx/index.js";
 
 export type ExportXLSXReqBody = { data: any };
@@ -9,7 +7,10 @@ export type ExportXLSXResBody = { success: boolean; error?: any };
 
 const handler: PlasmoMessaging.MessageHandler<ExportXLSXReqBody, ExportXLSXResBody> = async (request, response) => {
   try {
-    const data = request.body.data;
+    const data = request.body?.data;
+    if (!data) {
+      throw new Error("data is required");
+    }
     // 创建一个新的工作簿
     const workbook = XLSX.utils.book_new();
 
@@ -111,7 +112,7 @@ const handler: PlasmoMessaging.MessageHandler<ExportXLSXReqBody, ExportXLSXResBo
       ]
     };
 
-    var worksheet2 = XLSX.utils.json_to_sheet(data);
+    const worksheet2 = XLSX.utils.json_to_sheet(data);
 
     // 添加工作表到工作簿
     XLSX.utils.book_append_sheet(workbook, worksheet2, "Template");

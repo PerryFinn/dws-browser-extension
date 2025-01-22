@@ -7,9 +7,12 @@ export type fetchResBody = { isSuccess: boolean; data: any; error?: string };
 
 const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = async (req, res) => {
   try {
-    const { url, respType = "json", ...resetConfig } = req.body;
+    const { url, respType = "json", ...resetConfig } = req.body ?? {};
+    if (!url) {
+      throw new Error("url is required");
+    }
     const response = await fetch(url, resetConfig);
-    let data = null;
+    let data: any = null;
     switch (respType) {
       case "json":
         data = await response.json();

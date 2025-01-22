@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -21,7 +21,8 @@ export function parseXMLtoObject(xmlString: string) {
   return obj;
 }
 
-const sanitizeReg = /\s+/g; // https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_expressions#special-white-space
+// https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_expressions#special-white-space
+const sanitizeReg = /\s+/g;
 export function sanitizeString(input: string): string {
   // 使用正则表达式去除不可见字符，如 \t、\n、空格等
   return input.replace(sanitizeReg, "");
@@ -45,7 +46,7 @@ export function base64ToBlob(base64: string, mimeType = "image/png") {
   return new Blob([byteArray], { type: mimeType });
 }
 
-export function jsonToBase64(jsonObject: Object) {
+export function jsonToBase64(jsonObject: Record<string, any>) {
   // 将 JSON 对象转换为字符串
   const jsonString = JSON.stringify(jsonObject);
   // 将字符串转换为 UTF-8 字节数组
@@ -115,24 +116,3 @@ export const copyToClipboard: CopyFunction = (() => {
     }
   };
 })();
-
-const DEV_PORTS = [];
-const WEBPACK_HMR_PATH = "/__webpack_hmr";
-const WEBPACK_DEV_SERVER_SELECTOR = 'script[src*="webpack-dev-server"]';
-
-/**
- * 检查当前是否为开发环境
- * @returns {boolean} 是否为开发环境
- */
-export const isDevelopmentMode = (): boolean => {
-  try {
-    const hasHMR = Boolean(new EventSource(WEBPACK_HMR_PATH));
-    const hasDevServer = Boolean(document.querySelector(WEBPACK_DEV_SERVER_SELECTOR));
-    const isDevPort = DEV_PORTS.includes(window.location.port);
-
-    return hasHMR || hasDevServer || isDevPort;
-  } catch {
-    // EventSource 可能会抛出异常，需要处理
-    return false;
-  }
-};
