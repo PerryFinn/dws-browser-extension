@@ -60,10 +60,13 @@
     "postcss": "8.4.49",
     "prettier": "3.4.1",
     "tailwindcss": "^3.4.15",
+    "tsx": "^4.19.2",
     "typescript": "5.7.2"
   },
   "manifest": {
-    "host_permissions": ["<all_urls>"],
+    "host_permissions": [
+      "<all_urls>"
+    ],
     "permissions": [
       "storage",
       "unlimitedStorage",
@@ -78,8 +81,12 @@
     ],
     "web_accessible_resources": [
       {
-        "resources": ["src/templates/*/**"],
-        "matches": ["<all_urls>"]
+        "resources": [
+          "src/templates/*/**"
+        ],
+        "matches": [
+          "<all_urls>"
+        ]
       }
     ]
   },
