@@ -1,11 +1,23 @@
 import cssText from "data-text:@/style.css";
+import type { ActiveTabIdReqBody, ActiveTabIdResBody } from "@/background/messages/getActiveTab";
+import type { GetWindowConfigReqBody, GetWindowConfigResBody } from "@/background/messages/getWindowConfig";
 import { Expandable, ExpandableCard, ExpandableContent, ExpandableTrigger } from "@/components/complex-ui/expandable";
 import { Button } from "@/components/ui/button";
+import { localStorageInitialValue, storage } from "@/storages";
 import { cn, copyToClipboard } from "@/utils";
+import { sendToBackground } from "@plasmohq/messaging";
+import { useStorage } from "@plasmohq/storage/hook";
 import { Check, Copy, Info } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import type React from "react";
-import { type MouseEventHandler, useCallback, useEffect, useMemo, useState } from "react";
+import { type MouseEventHandler, useCallback, useRef, useState } from "react";
+
+const {
+  enabled: { defaultValue: defaultEnabled },
+  config: {
+    defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig }
+  }
+} = localStorageInitialValue;
 
 export const config: PlasmoCSConfig = {
   matches: [
@@ -15,8 +27,7 @@ export const config: PlasmoCSConfig = {
     "https://dws-ops.test.seewo.com/*",
     "https://dws-dev.test.seewo.com/*"
   ],
-  run_at: "document_end",
-  world: "MAIN"
+  run_at: "document_end"
 };
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = async () => ({
@@ -59,11 +70,28 @@ const CopyButton: React.FC<{ text?: string }> = ({ text }) => {
 };
 
 function DwsConfigInline() {
-  const [commitInfo, setCommitInfo] = useState<typeof window.config.commitInfo | null>(null);
+  const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
+  const [isOpenWindowConfig] = useStorage<boolean>(
+    { key: "isOpenWindowConfig", instance: storage },
+    defaultOpenWindowConfig
+  );
+  const [commitInfo, setCommitInfo] = useState<Partial<CommitInfo> | undefined>();
 
   const handleExpandStart = useCallback(async () => {
-    setCommitInfo(window.config?.commitInfo);
+    const { id } = await sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({
+      name: "getActiveTab"
+    });
+    if (!id) {
+      throw new Error("getActiveTab 获取当前 tab 失败");
+    }
+    const { config } = await sendToBackground<GetWindowConfigReqBody, GetWindowConfigResBody>({
+      name: "getWindowConfig",
+      body: { tabId: id }
+    });
+    setCommitInfo(config?.commitInfo);
   }, []);
+
+  if (!enabled || !isOpenWindowConfig) return null;
 
   return (
     <Expandable
@@ -79,7 +107,7 @@ function DwsConfigInline() {
           <ExpandableCard
             className={cn("w-full bg-white bg-opacity-90 rounded-sm", { "overflow-y-auto": isExpanded })}
             collapsedSize={{ width: 24, height: 24 }}
-            expandedSize={{ width: 300, height: 290 }}
+            expandedSize={{ width: 300, height: 320 }}
             expandDelay={200}
             collapseDelay={500}
           >

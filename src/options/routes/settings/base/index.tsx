@@ -37,12 +37,12 @@ function RouteComponent() {
   };
 
   return (
-    <div className="flex">
-      <div>
+    <div>
+      <div className="max-w-fit">
         <div>功能开关</div>
         <SwitchField>
           <Label className="flex items-center gap-2 cursor-pointer">
-            <del>项目基本信息弹窗</del>
+            项目基本信息弹窗
             <LinkPreview
               isStatic
               type="video"
@@ -53,12 +53,7 @@ function RouteComponent() {
             </LinkPreview>
           </Label>
           <Description>展示项目基本信息的弹窗</Description>
-          <Switch
-            disabled
-            name="isOpenWindowConfig"
-            checked={isOpenWindowConfig}
-            onChange={handleOpenWindowConfigChange}
-          />
+          <Switch name="isOpenWindowConfig" checked={isOpenWindowConfig} onChange={handleOpenWindowConfigChange} />
         </SwitchField>
 
         <SwitchField>
@@ -88,7 +83,7 @@ function RouteComponent() {
             toast("Wow so easy!", { pauseOnHover: true });
           }}
         >
-          123
+          toast it
         </Button>
       </div>
     </div>

@@ -150,9 +150,8 @@ export function Switch({
       data-slot="control"
       {...props}
       className={clsx(
-        className,
         // Base styles
-        "group relative isolate inline-flex h-6 w-10 cursor-default rounded-full p-[3px] sm:h-5 sm:w-8",
+        "group relative isolate inline-flex h-6 w-10 cursor-pointer rounded-full p-[3px] sm:h-5 sm:w-8",
         // Transitions
         "transition duration-0 ease-in-out data-[changing]:duration-200",
         // Outline and background color in forced-colors mode so switch is still visible
@@ -169,6 +168,7 @@ export function Switch({
         // Disabled
         "data-[disabled]:bg-zinc-200 data-[disabled]:data-[checked]:bg-zinc-200 data-[disabled]:opacity-50 data-[disabled]:data-[checked]:ring-black/5",
         "dark:data-[disabled]:bg-white/15 dark:data-[disabled]:data-[checked]:bg-white/15 dark:data-[disabled]:data-[checked]:ring-white/15",
+        className,
         // Color specific styles
         colors[color]
       )}
