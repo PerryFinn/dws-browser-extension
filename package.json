@@ -1,7 +1,7 @@
 {
   "name": "dws-browser-extension",
   "displayName": "数字孪生交付助手",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "数字孪生交付助手",
   "author": "chenpengfei@cvte.com",
   "scripts": {
