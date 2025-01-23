@@ -1,6 +1,6 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
-  "cSpell.words": ["Encryptor", "Plasmo", "rtsp"],
+  "cSpell.words": ["CSTORE", "Encryptor", "Plasmo", "rtsp", "seewo"],
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
   "files.watcherExclude": {
