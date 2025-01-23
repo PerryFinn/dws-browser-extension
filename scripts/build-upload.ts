@@ -44,7 +44,7 @@ async function main() {
   try {
     // 执行构建和打包命令
     console.log("开始构建打包...");
-    const command = "pnpm build";
+    const command = "pnpm build-zip";
     console.log("执行命令: ", command);
     execSync(command, { stdio: "inherit" });
 
