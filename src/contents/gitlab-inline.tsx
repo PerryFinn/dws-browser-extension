@@ -6,9 +6,9 @@ import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 import { useStorage } from "@plasmohq/storage/hook";
 import { sortBy } from "lodash-es";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
-import { useEffect, useMemo, useState } from "react";
+import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
 
-import packageJSON from "../../package.json";
+import packageJson from "../../package.json";
 
 export const config: PlasmoCSConfig = {
   matches: ["https://gitlab.gz.cvte.cn/*"],
@@ -87,7 +87,7 @@ const {
 } = localStorageInitialValue;
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
-  element: document.getElementById("pinned") || document.body,
+  element: document.getElementById("pinned") as Element, // 如果没有则不挂载
   insertPosition: "beforeend"
 });
 
@@ -115,6 +115,23 @@ const GitlabInline = () => {
     return sortBy(projectList, "frequency").reverse();
   }, [projectList]);
 
+  const navigateToProject = useCallback((url: string) => {
+    window.open(url, "_self");
+  }, []);
+
+  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        const ele = event.target as HTMLDivElement;
+        const url = ele.dataset.url;
+        if (url) {
+          navigateToProject(url);
+        }
+      }
+    },
+    [navigateToProject]
+  );
+
   if (!enabled || !isOpenGitlabProjects) return null;
   return (
     <div className="relative w-full h-full max-h-[220px] border-dashed border border-indigo-600">
@@ -131,10 +148,15 @@ const GitlabInline = () => {
                     ) : null}
                     <div className="relative flex space-x-3 items-center">
                       <div>
-                        <span
+                        <div
                           className={cn(
-                            "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300"
+                            "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300 cursor-pointer"
                           )}
+                          onClick={() => {
+                            navigateToProject(project.webUrl);
+                          }}
+                          data-url={project.webUrl}
+                          onKeyDown={handleKeyDown}
                         >
                           <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
                             <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
@@ -144,7 +166,7 @@ const GitlabInline = () => {
                               </div>
                             </AvatarFallback>
                           </Avatar>
-                        </span>
+                        </div>
                       </div>
                       <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
                         <div>
@@ -165,7 +187,7 @@ const GitlabInline = () => {
             })}
           </ul>
           <div className="mt-2 bg-black bg-opacity-20 rounded-sm text-xs w-fit h-fit px-1 pointer-events-none">
-            Powered by {packageJSON.displayName}
+            Powered by {packageJson.displayName}
           </div>
         </div>
       </div>
