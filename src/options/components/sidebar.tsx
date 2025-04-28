@@ -1,6 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react";
-import type * as React from "react";
-import packageJson from "../../../package.json";
+import packageJSON from "../../../package.json";
 
 import {
   Sidebar,
@@ -15,13 +14,11 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from "@/components/ui/sidebar";
-import { Link, useMatch, useMatchRoute, useMatches } from "@tanstack/react-router";
+import { Link, useMatches } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const matches = useMatches();
-
-  const match = useMatch({ strict: false });
 
   const activeRoute = useMemo(() => {
     const len = matches.length;
@@ -46,7 +43,7 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
                 <div className="flex flex-col gap-0.5 leading-none">
                   {/* <span className="font-semibold truncate">{packageJson.displayName}</span> */}
                   <span className="font-semibold truncate">{123123}</span>
-                  <span className="">{packageJson.version}</span>
+                  <span className="">{packageJSON.version}</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -79,6 +76,13 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
               <SidebarMenuButton asChild isActive={activeRoute?.fullPath.startsWith("/comps")}>
                 <Link to="/comps" className="font-medium">
                   组件菜市场
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem key="about">
+              <SidebarMenuButton asChild isActive={activeRoute?.fullPath.startsWith("/about")}>
+                <Link to="/about" className="font-medium">
+                  关于
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
