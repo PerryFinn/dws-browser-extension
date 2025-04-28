@@ -10,7 +10,7 @@ import { useStorage } from "@plasmohq/storage/hook";
 import { Check, Copy, Info } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import type React from "react";
-import { type MouseEventHandler, useCallback, useRef, useState } from "react";
+import { type MouseEventHandler, useCallback, useEffect, useRef, useState } from "react";
 
 const {
   enabled: { defaultValue: defaultEnabled },
@@ -20,13 +20,7 @@ const {
 } = localStorageInitialValue;
 
 export const config: PlasmoCSConfig = {
-  matches: [
-    "https://dws.test.seewo.com/*",
-    "https://dws.seewo.com/*",
-    "http://dws-local.test.seewo.com/*",
-    "https://dws-ops.test.seewo.com/*",
-    "https://dws-dev.test.seewo.com/*"
-  ],
+  matches: ["<all_urls>"],
   run_at: "document_end"
 };
 
@@ -77,21 +71,41 @@ function DwsConfigInline() {
   );
   const [commitInfo, setCommitInfo] = useState<Partial<CommitInfo> | undefined>();
 
-  const handleExpandStart = useCallback(async () => {
-    const { id } = await sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({
+  useEffect(() => {
+    sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({
       name: "getActiveTab"
+    }).then(({ id }) => {
+      if (!id) {
+        throw new Error("getActiveTab 获取当前 tab 失败");
+      }
+      sendToBackground<GetWindowConfigReqBody, GetWindowConfigResBody>({
+        name: "getWindowConfig",
+        body: { tabId: id }
+      })
+        .then(({ config }) => {
+          setCommitInfo(config?.commitInfo);
+        })
+        .catch((error) => {
+          console.error("DwsConfigInline 发生了错误: ", error);
+        });
     });
-    if (!id) {
-      throw new Error("getActiveTab 获取当前 tab 失败");
-    }
-    const { config } = await sendToBackground<GetWindowConfigReqBody, GetWindowConfigResBody>({
-      name: "getWindowConfig",
-      body: { tabId: id }
-    });
-    setCommitInfo(config?.commitInfo);
   }, []);
 
-  if (!enabled || !isOpenWindowConfig) return null;
+  const handleExpandStart = useCallback(async () => {
+    // const { id } = await sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({
+    //   name: "getActiveTab"
+    // });
+    // if (!id) {
+    //   throw new Error("getActiveTab 获取当前 tab 失败");
+    // }
+    // const { config } = await sendToBackground<GetWindowConfigReqBody, GetWindowConfigResBody>({
+    //   name: "getWindowConfig",
+    //   body: { tabId: id }
+    // });
+    // setCommitInfo(config?.commitInfo);
+  }, []);
+
+  if (!enabled || !isOpenWindowConfig || !commitInfo) return null;
 
   return (
     <Expandable
@@ -99,7 +113,6 @@ function DwsConfigInline() {
       expandBehavior="replace"
       initialDelay={0.2}
       onExpandStart={handleExpandStart}
-      onExpandEnd={() => console.log("flow Meeting card expanded!")}
       className="fixed top-1 right-1 z-[9999]"
     >
       {({ isExpanded }) => (
