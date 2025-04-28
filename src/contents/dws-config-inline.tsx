@@ -2,15 +2,15 @@ import cssText from "data-text:@/style.css";
 import type { ActiveTabIdReqBody, ActiveTabIdResBody } from "@/background/messages/getActiveTab";
 import type { GetWindowConfigReqBody, GetWindowConfigResBody } from "@/background/messages/getWindowConfig";
 import { Expandable, ExpandableCard, ExpandableContent, ExpandableTrigger } from "@/components/complex-ui/expandable";
-import { Button } from "@/components/ui/button";
+import CopyButton from "@/components/copy-btn";
 import { localStorageInitialValue, storage } from "@/storages";
-import { cn, copyToClipboard } from "@/utils";
+import { cn } from "@/utils";
 import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
-import { Check, Copy, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import type React from "react";
-import { type MouseEventHandler, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const {
   enabled: { defaultValue: defaultEnabled },
@@ -34,33 +34,6 @@ export const getStyle = () => {
   style.textContent = cssText.replaceAll(":root", ":host(plasmo-csui)");
   // style.textContent = cssText;
   return style;
-};
-
-const CopyButton: React.FC<{ text?: string }> = ({ text }) => {
-  const [copied, setCopiedState] = useState(false);
-  const handleCopy: MouseEventHandler<HTMLButtonElement> = useCallback(
-    async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (copied || typeof text !== "string") return;
-      await copyToClipboard(text);
-      setCopiedState(true);
-      setTimeout(() => {
-        setCopiedState(false);
-      }, 1000);
-    },
-    [text, copied]
-  );
-
-  return (
-    <Button
-      size="icon"
-      className="text-xs/5 text-gray-500 hover:text-gray-700 size-fit bg-transparent hover:bg-transparent"
-      onClick={handleCopy}
-    >
-      {copied ? <Check size={12} /> : <Copy size={12} />}
-    </Button>
-  );
 };
 
 function DwsConfigInline() {
