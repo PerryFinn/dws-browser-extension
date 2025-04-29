@@ -48,7 +48,6 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@tanstack/react-router-devtools": "^1.117.1",
     "@tanstack/router-cli": "^1.117.1",
-    "@tanstack/router-devtools": "1.90.0",
     "@types/adm-zip": "^0.5.7",
     "@types/buffer-to-stream": "^1.0.3",
     "@types/chrome": "^0.0.287",
@@ -106,5 +105,8 @@
   "volta": {
     "node": "22.15.0",
     "pnpm": "9.14.4"
+  },
+  "@parcel/resolver-default": {
+    "packageExports": true
   }
 }
