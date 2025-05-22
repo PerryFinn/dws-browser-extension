@@ -3,17 +3,19 @@ import { resolve } from "pathe";
 // 获取包的根目录路径
 const PACKAGE_ROOT = resolve(__dirname, "../..");
 
+// TODO: 已失效，需要维护
+
 export const DEFAULT_CONFIG = {
-  // enow-cloud_ , 10094 测试环境
-  // enow-cloud_ , 10085 生产环境
-  appId: "10085", // enow-cloud appId
+  // 10394 测试环境
+  // 10334 生产环境
+  appId: "10334", // dws-editor appId
   isTest: false,
   clientIp: "101.1.1.1",
   clientId: "",
   keyPrefix: "", // 默认为空字符串，表示上传到根路径
   host: {
     test: "cstore.test.seewo.com",
-    prod: "myou.cvte.com"
+    prod: "cstore.seewo.com"
   }
 } as const;
 
