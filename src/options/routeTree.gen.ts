@@ -8,118 +8,50 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as SettingsIndexRouteImport } from "./routes/settings/index";
+import { Route as PostsIndexRouteImport } from "./routes/posts/index";
+import { Route as CompsIndexRouteImport } from "./routes/comps/index";
+import { Route as AboutIndexRouteImport } from "./routes/about/index";
+import { Route as PostsPostIdRouteImport } from "./routes/posts/$postId";
+import { Route as SettingsBaseIndexRouteImport } from "./routes/settings/base/index";
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as IndexImport } from "./routes/index";
-import { Route as SettingsIndexImport } from "./routes/settings/index";
-import { Route as PostsIndexImport } from "./routes/posts/index";
-import { Route as CompsIndexImport } from "./routes/comps/index";
-import { Route as AboutIndexImport } from "./routes/about/index";
-import { Route as PostsPostIdImport } from "./routes/posts/$postId";
-import { Route as SettingsBaseIndexImport } from "./routes/settings/base/index";
-
-// Create/Update Routes
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-const SettingsIndexRoute = SettingsIndexImport.update({
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: "/settings/",
   path: "/settings/",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-const PostsIndexRoute = PostsIndexImport.update({
+const PostsIndexRoute = PostsIndexRouteImport.update({
   id: "/posts/",
   path: "/posts/",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-const CompsIndexRoute = CompsIndexImport.update({
+const CompsIndexRoute = CompsIndexRouteImport.update({
   id: "/comps/",
   path: "/comps/",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-const AboutIndexRoute = AboutIndexImport.update({
+const AboutIndexRoute = AboutIndexRouteImport.update({
   id: "/about/",
   path: "/about/",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-const PostsPostIdRoute = PostsPostIdImport.update({
+const PostsPostIdRoute = PostsPostIdRouteImport.update({
   id: "/posts/$postId",
   path: "/posts/$postId",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-const SettingsBaseIndexRoute = SettingsBaseIndexImport.update({
+const SettingsBaseIndexRoute = SettingsBaseIndexRouteImport.update({
   id: "/settings/base/",
   path: "/settings/base/",
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any);
-
-// Populate the FileRoutesByPath interface
-
-declare module "@tanstack/react-router" {
-  interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/posts/$postId": {
-      id: "/posts/$postId";
-      path: "/posts/$postId";
-      fullPath: "/posts/$postId";
-      preLoaderRoute: typeof PostsPostIdImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/about/": {
-      id: "/about/";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutIndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/comps/": {
-      id: "/comps/";
-      path: "/comps";
-      fullPath: "/comps";
-      preLoaderRoute: typeof CompsIndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/posts/": {
-      id: "/posts/";
-      path: "/posts";
-      fullPath: "/posts";
-      preLoaderRoute: typeof PostsIndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/settings/": {
-      id: "/settings/";
-      path: "/settings";
-      fullPath: "/settings";
-      preLoaderRoute: typeof SettingsIndexImport;
-      parentRoute: typeof rootRoute;
-    };
-    "/settings/base/": {
-      id: "/settings/base/";
-      path: "/settings/base";
-      fullPath: "/settings/base";
-      preLoaderRoute: typeof SettingsBaseIndexImport;
-      parentRoute: typeof rootRoute;
-    };
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
@@ -130,7 +62,6 @@ export interface FileRoutesByFullPath {
   "/settings": typeof SettingsIndexRoute;
   "/settings/base": typeof SettingsBaseIndexRoute;
 }
-
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/posts/$postId": typeof PostsPostIdRoute;
@@ -140,9 +71,8 @@ export interface FileRoutesByTo {
   "/settings": typeof SettingsIndexRoute;
   "/settings/base": typeof SettingsBaseIndexRoute;
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
+  __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
   "/posts/$postId": typeof PostsPostIdRoute;
   "/about/": typeof AboutIndexRoute;
@@ -151,7 +81,6 @@ export interface FileRoutesById {
   "/settings/": typeof SettingsIndexRoute;
   "/settings/base/": typeof SettingsBaseIndexRoute;
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
@@ -182,7 +111,6 @@ export interface FileRouteTypes {
     | "/settings/base/";
   fileRoutesById: FileRoutesById;
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   PostsPostIdRoute: typeof PostsPostIdRoute;
@@ -191,6 +119,60 @@ export interface RootRouteChildren {
   PostsIndexRoute: typeof PostsIndexRoute;
   SettingsIndexRoute: typeof SettingsIndexRoute;
   SettingsBaseIndexRoute: typeof SettingsBaseIndexRoute;
+}
+
+declare module "@tanstack/react-router" {
+  interface FileRoutesByPath {
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/settings/": {
+      id: "/settings/";
+      path: "/settings";
+      fullPath: "/settings";
+      preLoaderRoute: typeof SettingsIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/posts/": {
+      id: "/posts/";
+      path: "/posts";
+      fullPath: "/posts";
+      preLoaderRoute: typeof PostsIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/comps/": {
+      id: "/comps/";
+      path: "/comps";
+      fullPath: "/comps";
+      preLoaderRoute: typeof CompsIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/about/": {
+      id: "/about/";
+      path: "/about";
+      fullPath: "/about";
+      preLoaderRoute: typeof AboutIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/posts/$postId": {
+      id: "/posts/$postId";
+      path: "/posts/$postId";
+      fullPath: "/posts/$postId";
+      preLoaderRoute: typeof PostsPostIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/settings/base/": {
+      id: "/settings/base/";
+      path: "/settings/base";
+      fullPath: "/settings/base";
+      preLoaderRoute: typeof SettingsBaseIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -202,47 +184,6 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsIndexRoute: SettingsIndexRoute,
   SettingsBaseIndexRoute: SettingsBaseIndexRoute,
 };
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>();
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/posts/$postId",
-        "/about/",
-        "/comps/",
-        "/posts/",
-        "/settings/",
-        "/settings/base/"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/posts/$postId": {
-      "filePath": "posts/$postId.tsx"
-    },
-    "/about/": {
-      "filePath": "about/index.tsx"
-    },
-    "/comps/": {
-      "filePath": "comps/index.tsx"
-    },
-    "/posts/": {
-      "filePath": "posts/index.tsx"
-    },
-    "/settings/": {
-      "filePath": "settings/index.tsx"
-    },
-    "/settings/base/": {
-      "filePath": "settings/base/index.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

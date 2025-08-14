@@ -1,6 +1,6 @@
 {
-  "name": "dws-browser-extension",
-  "displayName": "数字孪生交付助手",
+  "name": "efficiency-assistant-extension",
+  "displayName": "提效助手",
   "version": "0.1.1",
   "description": "提效工具",
   "author": "chenpengfei@cvte.com",
