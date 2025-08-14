@@ -1,12 +1,12 @@
 import cssText from "data-text:@/style.css";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { localStorageInitialValue, storage } from "@/storages";
-import { cn } from "@/utils";
-import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 import { useStorage } from "@plasmohq/storage/hook";
 import { sortBy } from "lodash-es";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { localStorageInitialValue, storage } from "@/storages";
+import { cn } from "@/utils";
+import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 
 import packageJson from "../../package.json";
 

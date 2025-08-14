@@ -1,4 +1,4 @@
-import { type PlasmoMessaging, sendToContentScript } from "@plasmohq/messaging";
+import type { PlasmoMessaging } from "@plasmohq/messaging";
 
 import * as XLSX from "../libs/xlsx/index.js";
 

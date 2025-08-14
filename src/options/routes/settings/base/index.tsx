@@ -1,14 +1,14 @@
 import windowConfigPreviewVideo from "raw:assets/previews/dws-window-config.mp4";
 import gitlabProjectsVideo from "raw:assets/previews/gitlab-projects.mp4";
+import { useStorage } from "@plasmohq/storage/hook";
+import { createFileRoute } from "@tanstack/react-router";
+import { CircleHelp } from "lucide-react";
+import { toast } from "react-toastify";
 import { Button } from "@/components/catalyst-ui-kit/button";
 import { Description, Label } from "@/components/catalyst-ui-kit/fieldset";
 import { Switch, SwitchField } from "@/components/catalyst-ui-kit/switch";
 import { LinkPreview } from "@/components/complex-ui/link-preview";
 import { localStorageInitialValue, storage } from "@/storages";
-import { useStorage } from "@plasmohq/storage/hook";
-import { createFileRoute } from "@tanstack/react-router";
-import { CircleHelp } from "lucide-react";
-import { toast } from "react-toastify";
 
 export const Route = createFileRoute("/settings/base/")({
   component: RouteComponent

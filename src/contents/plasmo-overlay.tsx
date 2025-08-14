@@ -1,7 +1,6 @@
 import cssText from "data-text:@/style.css";
-import type { PlasmoCSConfig } from "plasmo";
-
 import { useStorage } from "@plasmohq/storage/hook";
+import type { PlasmoCSConfig } from "plasmo";
 
 import { storage } from "@/storages";
 

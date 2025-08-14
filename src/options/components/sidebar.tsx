@@ -1,6 +1,6 @@
+import { Link, useMatches } from "@tanstack/react-router";
 import { GalleryVerticalEnd } from "lucide-react";
-import packageJSON from "../../../package.json";
-
+import { useMemo } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,8 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from "@/components/ui/sidebar";
-import { Link, useMatches } from "@tanstack/react-router";
-import { useMemo } from "react";
+import packageJSON from "../../../package.json";
 
 export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const matches = useMatches();

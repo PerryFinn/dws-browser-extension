@@ -1,6 +1,5 @@
-import clsx from "clsx";
-
 import * as Headless from "@headlessui/react";
+import clsx from "clsx";
 
 export function RadioGroup({
   className,

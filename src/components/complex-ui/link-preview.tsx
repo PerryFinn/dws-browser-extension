@@ -1,8 +1,8 @@
-import { cn } from "@/utils";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
 import { encode } from "qss";
 import React from "react";
+import { cn } from "@/utils";
 
 type LinkPreviewProps = {
   children: React.ReactNode;

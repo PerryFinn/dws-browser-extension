@@ -1,8 +1,8 @@
 import "@/style.css";
-import { resetLocalStorage, storage } from "@/storages";
 import { Storage } from "@plasmohq/storage";
-import { Link, RouterProvider, createHashHistory, createRouter } from "@tanstack/react-router";
+import { createHashHistory, createRouter, Link, RouterProvider } from "@tanstack/react-router";
 import React from "react";
+import { resetLocalStorage, storage } from "@/storages";
 import { routeTree } from "./routeTree.gen";
 
 const hashHistory = createHashHistory();

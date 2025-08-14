@@ -15,7 +15,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   chrome.action.setBadgeText({ text: enabled ? "ON" : "OFF" });
 });
 
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (_, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.active) {
     console.log("插件被启动后，就进入了运行阶段。在这个阶段，插件可以响应用户操作，监听和处理浏览器事件，提供各种功能");
   }

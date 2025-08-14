@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
-import { DEFAULT_CONFIG, Uploader } from "@/utils/upload";
-import { readFile, readdir } from "fs-extra";
+import { readdir, readFile } from "fs-extra";
 import { resolve } from "pathe";
+import { DEFAULT_CONFIG, Uploader } from "@/utils/upload";
 import packageJson from "../package.json";
 
 async function findZipFile(): Promise<string | null> {

@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { copyToClipboard } from "@/utils";
 import { Check, Copy } from "lucide-react";
 import { type MouseEventHandler, useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { copyToClipboard } from "@/utils";
 
 const CopyButton: React.FC<{ text?: string }> = ({ text }) => {
   const [copied, setCopiedState] = useState(false);

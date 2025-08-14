@@ -1,8 +1,8 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { BackgroundBeamsWithCollision } from "@/components/complex-ui/background-beams-with-collision";
 import { FamilyButton } from "@/components/complex-ui/family-button";
 import { TextGenerateEffect } from "@/components/complex-ui/text-generate-effect";
 import { Divider } from "@/components/ui/divider";
-import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/comps/")({
   component: RouteComponent

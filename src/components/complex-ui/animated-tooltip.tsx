@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import React, { useState } from "react";
+import { type MouseEventHandler, useState } from "react";
 
 export const demoData = [
   {
@@ -61,17 +61,19 @@ export const AnimatedTooltip = ({
   const x = useMotionValue(0);
   const rotate = useSpring(useTransform(x, [-100, 100], [-45, 45]), springConfig);
   const translateX = useSpring(useTransform(x, [-100, 100], [-50, 50]), springConfig);
-  const handleMouseMove = (event: any) => {
+  const handleMouseMove: MouseEventHandler<HTMLImageElement> = (event) => {
+    if (!(event.target instanceof HTMLImageElement)) return;
     const halfWidth = event.target.offsetWidth / 2;
     x.set(event.nativeEvent.offsetX - halfWidth);
   };
 
   return (
     <>
-      {items.map((item, idx) => (
+      {items.map((item) => (
         <div
           className="-mr-4  relative group"
           key={item.name}
+          role="tooltip"
           onMouseEnter={() => setHoveredIndex(item.id)}
           onMouseLeave={() => setHoveredIndex(null)}
         >

@@ -1,18 +1,18 @@
-import { cn } from "@/utils";
 import {
   AnimatePresence,
   type AnimationControls,
   type HTMLMotionProps,
+  motion,
   type SpringOptions,
   type Target,
   type TargetAndTransition,
-  type VariantLabels,
-  motion,
   useMotionValue,
-  useSpring
+  useSpring,
+  type VariantLabels
 } from "framer-motion";
-import React, { type ReactNode, createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 import useMeasure from "react-use-measure";
+import { cn } from "@/utils";
 
 const springConfig: SpringOptions = { stiffness: 200, damping: 20, bounce: 0.2 };
 

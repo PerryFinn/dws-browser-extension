@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Copy } from "lucide-react";
-import React, { useState, type ReactNode } from "react";
+import React, { type ReactNode, useState } from "react";
 import { toast } from "react-toastify";
 
 import type { parseXlsxInfo } from "@/background/messages/parsingXLSX";

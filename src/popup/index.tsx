@@ -1,9 +1,8 @@
+import { sendToBackground } from "@plasmohq/messaging";
+import { useStorage } from "@plasmohq/storage/hook";
 import { Download, TriangleAlert, Upload } from "lucide-react";
 import { type ChangeEventHandler, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-
-import { sendToBackground } from "@plasmohq/messaging";
-import { useStorage } from "@plasmohq/storage/hook";
 
 import "react-toastify/dist/ReactToastify.css";
 import "@/style.css";
@@ -16,10 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/ui/divider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { localStorageInitialValue, storage } from "@/storages";
 import { cn, jsonToBase64 } from "@/utils";
 import { LoginManager, type TaskResult, type UserPasswordPair } from "@/utils/hikCrypto";
-
-import { localStorageInitialValue, storage } from "@/storages";
 import ControlArea from "./control-area";
 import Header from "./header";
 import TableList from "./table-list";
