@@ -20,8 +20,9 @@ export const getGitlabEmail = async (): Promise<string> => {
       throw new Error(`${packageJson.name}适配【gitlab】失效，请联系 ${packageJson.author} 进行修复`);
     }
     return inputDom.value;
-  } catch (error) {
-    console.error("getGitlabEmail error :>> ", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("getGitlabEmail error :>> ", message);
     return "";
   }
 };

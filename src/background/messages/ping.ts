@@ -21,7 +21,7 @@ export const ping = async (url: string, timeout = 1000): Promise<boolean> => {
 
   // 设置一个超时的 Promise
   const timeoutPromise = new Promise<never>((_, reject) => {
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       controller.abort(); // 超时后中止请求
       reject(new Error(`Request timed out after ${timeout}ms`));
     }, timeout);
@@ -34,8 +34,9 @@ export const ping = async (url: string, timeout = 1000): Promise<boolean> => {
     const res = await Promise.race([fetchPromise, timeoutPromise]);
     await res.text(); // 假设你需要处理响应的文本
     return true;
-  } catch (error) {
-    console.error(`ping 【${url}】 error :>> `, error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`ping 【${url}】 error :>> `, message);
     return false;
   }
 };

@@ -47,12 +47,16 @@ export const parsingXLSX = async (ab: Uint8Array) => {
 const handler: PlasmoMessaging.MessageHandler<parsingXLSXReqBody, parsingXLSXResBody> = async (request, response) => {
   console.log("parsingXLSX 收到消息：", request);
   try {
-    const data = request.body.data;
+    const data = request.body?.data;
+    if (!data) {
+      throw new Error("data is required");
+    }
     const result = await parsingXLSX(Uint8Array.from(data));
     response.send({ success: true, data: result });
-  } catch (error) {
-    console.error("parsingXLSX error :>> ", error);
-    response.send({ success: false, data: [], message: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("parsingXLSX error :>> ", message);
+    response.send({ success: false, data: [], message });
   }
 };
 

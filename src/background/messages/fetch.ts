@@ -3,7 +3,7 @@ import type { PlasmoMessaging } from "@plasmohq/messaging";
 type respType = "json" | "text" | "blob" | "arrayBuffer";
 
 export type fetchReqBody = { url: string | URL | Request; respType: respType } & RequestInit;
-export type fetchResBody = { isSuccess: boolean; data: any; error?: string };
+export type fetchResBody = { isSuccess: boolean; data: unknown; error?: string };
 
 const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = async (req, res) => {
   try {
@@ -12,7 +12,7 @@ const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = asyn
       throw new Error("url is required");
     }
     const response = await fetch(url, resetConfig);
-    let data: any = null;
+    let data: unknown = null;
     switch (respType) {
       case "json":
         data = await response.json();
@@ -31,9 +31,10 @@ const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = asyn
         break;
     }
     res.send({ isSuccess: true, data });
-  } catch (error) {
-    console.error("fetch error :>> ", error);
-    res.send({ isSuccess: false, error: error.message, data: null });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("fetch error :>> ", message);
+    res.send({ isSuccess: false, error: message, data: null });
   }
 };
 

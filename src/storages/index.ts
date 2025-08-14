@@ -4,7 +4,7 @@ export const storage = new Storage({ area: "local" });
 export const sessionStorage = new Storage({ area: "session" });
 export const syncStorage = new Storage({ area: "sync" });
 
-export type StorageType = typeof storage.area;
+export type StorageType = "local" | "session" | "sync";
 export const storageMap = new Map<StorageType, Storage>([
   ["local", storage],
   ["session", sessionStorage],
@@ -42,8 +42,9 @@ export type LocalStorageKey = keyof typeof localStorageInitialValue;
 
 export const initLocalStorage = async () => {
   for (const [key, { defaultValue }] of Object.entries(localStorageInitialValue)) {
-    if (!(typeof (await storage.get(key)) === "undefined")) {
-      await storage.set(key, defaultValue);
+    const currentValue = await storage.get(key);
+    if (typeof currentValue === "undefined") {
+      await storage.set(key as keyof typeof localStorageInitialValue, defaultValue);
     }
   }
 };

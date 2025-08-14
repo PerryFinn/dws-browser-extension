@@ -1,11 +1,7 @@
-import { clamp, groupBy } from "lodash-es";
+import { groupBy } from "lodash-es";
 import SparkMD5 from "spark-md5";
 
-import { sendToBackground } from "@plasmohq/messaging";
-
-import type { fetchReqBody, fetchResBody } from "@/background/messages/fetch";
-import { ping, type PingReqBody, type PingResBody } from "@/background/messages/ping";
-import { xhrRequest } from "@/services";
+import { ping } from "@/background/messages/ping";
 
 import { parseXMLtoObject } from ".";
 
@@ -61,7 +57,9 @@ function SHA256(a: string) {
         r,
         u,
         w;
+      // @ts-ignore
       a[e >> 5] |= 128 << (24 - (e % 32));
+      // @ts-ignore
       a[(((e + 64) >> 9) << 4) + 15] = e;
       for (s = 0; s < a.length; s += 16) {
         o = h[0];
@@ -105,6 +103,7 @@ function SHA256(a: string) {
       return h;
     })(
       (function (a) {
+        // @ts-ignore
         for (var b = [], c = 0; c < a.length * 8; c += 8) b[c >> 5] |= (a.charCodeAt(c / 8) & 255) << (24 - (c % 32));
         return b;
       })(a),

@@ -34,8 +34,9 @@ const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProje
       throw new Error(`${localStorageKey}'data is not an array`);
     }
     return projects;
-  } catch (error) {
-    console.error("getFrequentProjects error :>> ", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("getFrequentProjects error :>> ", message);
     return [];
   }
 };
@@ -119,10 +120,10 @@ const GitlabInline = () => {
     window.open(url, "_self");
   }, []);
 
-  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = useCallback(
+  const handleKeyDown: KeyboardEventHandler<HTMLElement> = useCallback(
     (event) => {
-      if (event.key === "Enter") {
-        const ele = event.target as HTMLDivElement;
+      if (event.key === "Enter" || event.key === " ") {
+        const ele = event.currentTarget as HTMLElement;
         const url = ele.dataset.url;
         if (url) {
           navigateToProject(url);
@@ -148,7 +149,8 @@ const GitlabInline = () => {
                     ) : null}
                     <div className="relative flex space-x-3 items-center">
                       <div>
-                        <div
+                        <button
+                          type="button"
                           className={cn(
                             "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300 cursor-pointer"
                           )}
@@ -157,6 +159,7 @@ const GitlabInline = () => {
                           }}
                           data-url={project.webUrl}
                           onKeyDown={handleKeyDown}
+                          aria-label={`Open ${project.name}`}
                         >
                           <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
                             <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
@@ -166,7 +169,7 @@ const GitlabInline = () => {
                               </div>
                             </AvatarFallback>
                           </Avatar>
-                        </div>
+                        </button>
                       </div>
                       <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
                         <div>
