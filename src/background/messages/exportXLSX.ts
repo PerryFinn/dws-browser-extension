@@ -2,117 +2,31 @@ import type { PlasmoMessaging } from "@plasmohq/messaging";
 
 import * as XLSX from "../libs/xlsx/index.js";
 
-export type ExportXLSXReqBody = { data: any };
-export type ExportXLSXResBody = { success: boolean; error?: any };
+export interface ExportXlsxRow {
+  name?: string;
+  ip?: string;
+  username?: string;
+  password?: string;
+  count?: number;
+  rtsp_address?: string;
+  device_id?: string;
+}
+
+export type ExportXLSXReqBody = { data: ExportXlsxRow[] };
+export type ExportXLSXResBody = { success: boolean; error?: string };
 
 const handler: PlasmoMessaging.MessageHandler<ExportXLSXReqBody, ExportXLSXResBody> = async (request, response) => {
   try {
     const data = request.body?.data;
-    if (!data) {
+    if (!data || !Array.isArray(data)) {
       throw new Error("data is required");
     }
     // 创建一个新的工作簿
     const workbook = XLSX.utils.book_new();
 
-    // 创建一个新的工作表
-    const worksheet: XLSX.WorkSheet = {
-      "!ref": "A1:G14",
-      A1: {
-        t: "s",
-        v: "注意事项：\n1. 多个password使用“/”分割\n",
-        r: '<t xml:space="preserve">注意事项：&#10;1. 多个password使用“/”分割&#10;</t>',
-        h: "注意事项：<br/>1. 多个password使用“/”分割<br/>",
-        w: "注意事项：\n1. 多个password使用“/”分割\n",
-        s: {
-          alignment: {
-            horizontal: "left",
-            vertical: "top"
-          },
-          fill: {
-            bgColor: {
-              rgb: "FFFF00"
-            }
-          }
-        }
-      },
-      A2: {
-        t: "s",
-        v: "name",
-        r: "<t>name</t>",
-        h: "name",
-        w: "name"
-      },
-      B2: {
-        t: "s",
-        v: "ip",
-        r: "<t>ip</t>",
-        h: "ip",
-        w: "ip"
-      },
-      C2: {
-        t: "s",
-        v: "username",
-        r: "<t>username</t>",
-        h: "username",
-        w: "username"
-      },
-      D2: {
-        t: "s",
-        v: "password",
-        r: "<t>password</t>",
-        h: "password",
-        w: "password"
-      },
-      E2: {
-        t: "s",
-        v: "count",
-        r: "<t>count</t>",
-        h: "count",
-        w: "count"
-      },
-      F2: {
-        t: "s",
-        v: "rtsp_address",
-        r: "<t>rtsp_address</t>",
-        h: "rtsp_address",
-        w: "rtsp_address"
-      },
-      G2: {
-        t: "s",
-        v: "device_id",
-        r: "<t>device_id</t>",
-        h: "device_id",
-        w: "device_id"
-      },
-      "!margins": {
-        left: 0.75,
-        right: 0.75,
-        top: 1,
-        bottom: 1,
-        header: 0.5,
-        footer: 0.5
-      },
-      "!merges": [
-        {
-          s: {
-            c: 0,
-            r: 0
-          },
-          e: {
-            c: 6,
-            r: 0
-          }
-        }
-      ],
-      "!rows": [
-        {
-          hpx: 62,
-          hpt: 62
-        }
-      ]
-    };
+    // 此处原有示例化静态表头对象未被使用，已移除以避免未使用变量告警
 
-    const worksheet2 = XLSX.utils.json_to_sheet(data);
+    const worksheet2 = XLSX.utils.json_to_sheet<ExportXlsxRow>(data);
 
     // 添加工作表到工作簿
     XLSX.utils.book_append_sheet(workbook, worksheet2, "Template");
@@ -141,9 +55,10 @@ const handler: PlasmoMessaging.MessageHandler<ExportXLSXReqBody, ExportXLSXResBo
     //   });
 
     response.send({ success: true });
-  } catch (error) {
-    console.error("exportXLSX error :>> ", error);
-    response.send({ success: false, error });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("exportXLSX error :>> ", message);
+    response.send({ success: false, error: message });
   }
 };
 
