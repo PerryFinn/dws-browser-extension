@@ -59,9 +59,6 @@ const getRandomWarmColor = (): string => {
 };
 
 const init = async () => {
-  const enabled = await storage.get("enabled");
-  if (!enabled) return;
-
   // ==============start: 初始化 gitlabUsername ==============
   const initialUsername = await storage.get("gitlabUserName");
   if (!initialUsername) {
@@ -103,8 +100,8 @@ const GitlabInline = () => {
   useEffect(() => {
     if (!enabled) return;
     init()
-      .then((projectList = []) => {
-        setProjectList(projectList);
+      .then((projectList) => {
+        setProjectList(projectList ?? []);
       })
       .catch((error) => {
         console.error("GitlabInline error :>> ", error);

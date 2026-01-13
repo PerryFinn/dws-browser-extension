@@ -1,7 +1,7 @@
 import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
 import { Clipboard, ClipboardCheck, RefreshCcw, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 
 import "react-toastify/dist/ReactToastify.css";
@@ -12,14 +12,14 @@ import type {
   SwqaGetInterfaceDetailReqBody,
   SwqaGetInterfaceDetailResBody
 } from "@/background/messages/swqaGetInterfaceDetail";
+import { Code } from "@/components/catalyst-ui-kit/text";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { storage } from "@/storages";
 import { cn } from "@/utils";
-import { cleanSwqaInterfaceDetail, type CleanedSwqaInterfaceDetail } from "./swqa/clean";
+import { type CleanedSwqaInterfaceDetail, cleanSwqaInterfaceDetail } from "./swqa/clean";
 import { buildPrompt, defaultPromptTemplate } from "./swqa/prompt";
-import { parseSwqaInterfaceUrl, type ParsedSwqaUrl } from "./swqa/url";
-import { Code } from "@/components/catalyst-ui-kit/text";
+import { type ParsedSwqaUrl, parseSwqaInterfaceUrl } from "./swqa/url";
 
 type ExtractState = "idle" | "loading" | "success" | "error";
 
@@ -34,7 +34,7 @@ function IndexPopup() {
     defaultPromptTemplate
   );
 
-  const refreshActiveTab = async () => {
+  const refreshActiveTab = useCallback(async () => {
     setError(null);
     setCleaned(null);
     try {
@@ -52,11 +52,11 @@ function IndexPopup() {
       setError(message);
       setParsedUrl(null);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void refreshActiveTab();
-  }, []);
+  }, [refreshActiveTab]);
 
   const cleanedJsonText = useMemo(() => {
     if (!cleaned) return "";
@@ -208,13 +208,9 @@ function IndexPopup() {
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">{error}</div>}
 
-      <ToastContainer  autoClose={1500} />
+      <ToastContainer autoClose={1500} />
     </div>
   );
 }
