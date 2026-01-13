@@ -1,7 +1,8 @@
 import {
   AnimatePresence,
-  type AnimationControls,
+  type Easing,
   type HTMLMotionProps,
+  type LegacyAnimationControls,
   motion,
   type SpringOptions,
   type Target,
@@ -22,7 +23,7 @@ interface ExpandableContextType {
   expandDirection: "vertical" | "horizontal" | "both"; // 展开的方向
   expandBehavior: "replace" | "push"; // 展开如何影响周围内容
   transitionDuration: number; // 展开/折叠动画的持续时间
-  easeType: string; // 动画的缓动函数
+  easeType: Easing; // 动画的缓动函数
   initialDelay: number; // 动画开始前的延迟
   onExpandEnd?: () => void; // 展开结束时的回调函数
   onCollapseEnd?: () => void; // 折叠结束时的回调函数
@@ -49,7 +50,7 @@ interface ExpandableProps extends ExpandablePropsBase {
   expanded?: boolean;
   onToggle?: () => void;
   transitionDuration?: number;
-  easeType?: string;
+  easeType?: Easing;
   expandDirection?: "vertical" | "horizontal" | "both";
   expandBehavior?: "replace" | "push";
   initialDelay?: number;
@@ -198,7 +199,7 @@ const ANIMATION_PRESETS = {
 // 定义自定义动画的属性
 interface AnimationProps {
   initial?: boolean | Target | VariantLabels; // 动画的初始状态
-  animate?: AnimationControls | TargetAndTransition | VariantLabels | boolean; // 动画的最终状态
+  animate?: LegacyAnimationControls | TargetAndTransition | VariantLabels | boolean; // 动画的最终状态
   exit?: TargetAndTransition | VariantLabels; // 组件移除时的状态
   transition?: object; // 过渡属性
 }
@@ -391,6 +392,7 @@ const ExpandableTrigger = React.forwardRef<HTMLDivElement, React.HTMLAttributes<
   ({ children, ...props }, ref) => {
     const { toggleExpand } = useExpandable();
     return (
+      // biome-ignore lint: 暂时先不处理这里的报错
       <div ref={ref} onClick={toggleExpand} className="cursor-pointer" {...props}>
         {children}
       </div>

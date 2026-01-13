@@ -3,8 +3,8 @@ import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
 import { Info } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
-import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+
 import type { ActiveTabIdReqBody, ActiveTabIdResBody } from "@/background/messages/getActiveTab";
 import type { GetWindowConfigReqBody, GetWindowConfigResBody } from "@/background/messages/getWindowConfig";
 import { Expandable, ExpandableCard, ExpandableContent, ExpandableTrigger } from "@/components/complex-ui/expandable";

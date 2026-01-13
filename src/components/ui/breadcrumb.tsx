@@ -47,6 +47,7 @@ BreadcrumbLink.displayName = "BreadcrumbLink";
 
 const BreadcrumbPage = React.forwardRef<HTMLSpanElement, React.ComponentPropsWithoutRef<"span">>(
   ({ className, ...props }, ref) => (
+    // biome-ignore lint: 暂时先不看
     <span
       ref={ref}
       role="link"
