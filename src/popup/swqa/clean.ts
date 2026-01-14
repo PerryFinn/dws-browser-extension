@@ -105,9 +105,7 @@ const isEmptyObjectPlaceholder = (value: unknown) => {
  * 将 SWQA 接口详情返回数据清洗成精简 JSON。
  * 逻辑来源于 src/demo.js，增加了类型校验与错误提示，方便维护。
  */
-export const cleanSwqaInterfaceDetail = (
-  raw: RawSwqaDetailResponse,
-): CleanedSwqaInterfaceDetail => {
+export const cleanSwqaInterfaceDetail = (raw: RawSwqaDetailResponse): CleanedSwqaInterfaceDetail => {
   const detail = raw?.detail;
   if (!detail || typeof detail !== "object") {
     throw new Error("Missing detail field in response");
