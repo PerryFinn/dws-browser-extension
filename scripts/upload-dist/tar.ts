@@ -2,7 +2,7 @@ import { createWriteStream, readFileSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { createGzip } from "node:zlib";
 import ignore from "ignore";
-import { join, relative } from "pathe";
+import { basename, join, relative } from "pathe";
 import { pack } from "tar-stream";
 
 export class TarArchive {
@@ -98,9 +98,74 @@ export class TarArchive {
   }
 }
 
+export class TarSingleFileArchive {
+  private archiveFiles: string[] = [];
+
+  constructor(
+    private filePath: string,
+    private entryName?: string,
+    private outputFileName = "dist.tgz"
+  ) {}
+
+  private async addFileToTar(packer: ReturnType<typeof pack>, filePath: string, entryName: string) {
+    const content = await readFile(filePath);
+    const stats = await stat(filePath);
+
+    return new Promise<void>((resolve, reject) => {
+      packer.entry(
+        {
+          name: entryName,
+          size: stats.size,
+          mode: stats.mode,
+          mtime: stats.mtime
+        },
+        content,
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+  }
+
+  async createArchive(): Promise<string[]> {
+    console.log("【开始】使用 tar-stream 进行压缩");
+
+    const packer = pack();
+    const gzip = createGzip();
+    const writeStream = createWriteStream(this.outputFileName);
+
+    packer.pipe(gzip).pipe(writeStream);
+
+    try {
+      const entryName = this.entryName?.trim() ? this.entryName : basename(this.filePath);
+      await this.addFileToTar(packer, this.filePath, entryName);
+      packer.finalize();
+
+      await new Promise((resolve, reject) => {
+        writeStream.on("finish", () => resolve(void 0));
+        writeStream.on("error", reject);
+      });
+
+      console.log("【完成】tar-stream 压缩完成");
+      this.archiveFiles = [this.filePath];
+      return this.archiveFiles;
+    } catch (error) {
+      console.error("压缩过程中出错：", error);
+      throw error;
+    }
+  }
+}
+
+// biome-ignore lint/complexity/noStaticOnlyClass: simple factory wrapper
 export class TarFactory {
   static createTar(resourceDirPath: string, cdnIgnorePath?: string) {
     console.log("使用 tar-stream 进行压缩");
     return new TarArchive(resourceDirPath, cdnIgnorePath);
+  }
+
+  static createTarFromFile(filePath: string, entryName?: string, outputFileName = "dist.tgz") {
+    console.log("使用 tar-stream 进行压缩");
+    return new TarSingleFileArchive(filePath, entryName, outputFileName);
   }
 }

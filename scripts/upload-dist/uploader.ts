@@ -1,6 +1,6 @@
-import { existsSync, readFile, statSync, unlink } from "fs";
-import { resolve } from "pathe";
-import { promisify } from "util";
+import { existsSync, readFile, statSync, unlink } from "node:fs";
+import { promisify } from "node:util";
+import { basename, resolve } from "pathe";
 import { TarFactory } from "./tar";
 import type { CdnUploaderOptions, TaskResponse, UploadResponse } from "./types";
 import { formatBytes, sleep } from "./utils";
@@ -14,6 +14,7 @@ const HOST = "http://ccloud.cvte.com/cloud/api/v1/cdn-webpack";
 
 export class CdnUploader {
   private archiveFiles: string[] = [];
+  private archiveFilePath?: string;
   private workingDirPath: string;
   private retryTimes = 1;
 
@@ -39,27 +40,38 @@ export class CdnUploader {
     }
   }
 
+  private validateFilePath(filePath: string) {
+    if (!existsSync(filePath)) {
+      throw new Error("输入的文件不存在: " + filePath);
+    }
+    if (!statSync(filePath).isFile()) {
+      throw new Error("输入的路径不是文件: " + filePath);
+    }
+  }
+
   private async deleteUploadedFiles() {
     if (this.options.removeFiles) {
       await Promise.all(this.archiveFiles.map((filePath) => unlinkAsync(filePath)));
       this.archiveFiles = [];
       console.log("--------已删除被上传的资源文件--------");
-    } else {
-      if (existsSync("dist.tgz")) {
-        console.warn(
-          `[warning]*****请考虑删除已上传CDN的资源文件，这些资源大小共占用流量：${formatBytes(
-            statSync("dist.tgz").size
-          )}*****`
-        );
-      }
+      return;
+    }
+
+    if (this.archiveFilePath && existsSync(this.archiveFilePath)) {
+      console.warn(
+        `[warning]*****请考虑删除已上传CDN的资源文件，这些资源大小共占用流量：${formatBytes(
+          statSync(this.archiveFilePath).size
+        )}*****`
+      );
     }
   }
 
-  private async uploadFile() {
+  private async uploadFile(filePath: string, fileName?: string, cleanupFilePath?: string) {
     try {
       const formData = new FormData();
-      const fileContent = await readFileAsync("dist.tgz");
-      formData.append("file", new Blob([fileContent]), "dist.tgz");
+      const fileContent = await readFileAsync(filePath);
+      const uploadFileName = fileName?.trim() ? fileName : basename(filePath);
+      formData.append("file", new Blob([fileContent]), uploadFileName);
       formData.append("cdnSubPath", this.options.cdnSubPath);
 
       console.log("开始上传...");
@@ -77,7 +89,8 @@ export class CdnUploader {
 
       if (data.code === 0 && data.data) {
         console.log("上传成功!");
-        await this.polling(data.data);
+        console.log("响应 data 如下：\n", data);
+        await this.polling(data.data, cleanupFilePath);
       } else {
         console.warn("上传失败", data.message);
       }
@@ -101,7 +114,7 @@ export class CdnUploader {
     return response.json() as Promise<TaskResponse>;
   }
 
-  private async polling(id: string) {
+  private async polling(id: string, cleanupFilePath?: string) {
     console.log("正在比对上传文件...\n请留意是否有异常信息");
 
     while (true) {
@@ -125,7 +138,12 @@ export class CdnUploader {
 
         if (state === "SUCCESS") {
           console.log("cdn文件资源已上传成功!");
-          await unlinkAsync("./dist.tgz");
+          if (cleanupFilePath && existsSync(cleanupFilePath)) {
+            await unlinkAsync(cleanupFilePath);
+            if (cleanupFilePath === this.archiveFilePath) {
+              this.archiveFilePath = undefined;
+            }
+          }
           break;
         }
 
@@ -163,7 +181,28 @@ export class CdnUploader {
 
       const tarArchive = TarFactory.createTar(resourceDirPath, this.options.cdnigorePath);
       this.archiveFiles = await tarArchive.createArchive();
-      await this.uploadFile();
+      this.archiveFilePath = resolve(process.cwd(), "dist.tgz");
+      await this.uploadFile(this.archiveFilePath, "dist.tgz", this.archiveFilePath);
+    } catch (error) {
+      console.error("error catch: ", error);
+      throw error;
+    }
+  }
+
+  async uploadSingleFile(filePath: string, fileName?: string) {
+    console.log("cdn插件配置: ", this.options);
+    console.log("CDN插件工作目录：", this.workingDirPath);
+
+    try {
+      this.validateOptions();
+      const resolvedFilePath = resolve(this.workingDirPath, filePath);
+      this.validateFilePath(resolvedFilePath);
+      console.log("上传单个文件：", resolvedFilePath);
+
+      const tarArchive = TarFactory.createTarFromFile(resolvedFilePath, fileName);
+      this.archiveFiles = await tarArchive.createArchive();
+      this.archiveFilePath = resolve(process.cwd(), "dist.tgz");
+      await this.uploadFile(this.archiveFilePath, "dist.tgz", this.archiveFilePath);
     } catch (error) {
       console.error("error catch: ", error);
       throw error;

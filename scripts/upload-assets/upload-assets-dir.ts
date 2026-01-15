@@ -17,7 +17,7 @@ export async function uploadAssetsDir(): Promise<void> {
   console.log("正在部署到cdn...", resourcePath);
   const cdnUploader = new CdnUploader({
     cdnSubPath, // cdn 上传目录，若未创建，后台会自动创建。建议路径格式是  /{产品名称}/{应用名称}/[版本号],
-    resourcePath, // 可选参数，支持上传指定文件夹 & 单个文件。默认设置为webapack output.path 选项指定的目录。
+    resourcePath, // 可选参数，支持上传指定文件夹 & 单个文件。默认设置为 webpack output.path 选项指定的目录。
     ignoreUploadFail: false, // 可选参数， 默认值为false, 即如果出现上传异常，会中断webpack打包进程
     removeFiles: false // 可选参数， 默认值为false, 是否在上传了cdn后，删除已上传的资源，这样可以有效减小镜像大小和推包时间，而且也能有效减小流量费用
   });
