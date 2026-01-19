@@ -13,9 +13,9 @@ import type {
   SwqaGetInterfaceDetailResBody
 } from "@/background/messages/swqaGetInterfaceDetail";
 import { Code } from "@/components/catalyst-ui-kit/text";
-import { UpdateNotice } from "@/components/update-notice";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { UpdateNotice } from "@/components/update-notice";
 import { storage } from "@/storages";
 import { cn } from "@/utils";
 import { type CleanedSwqaInterfaceDetail, cleanSwqaInterfaceDetail } from "./swqa/clean";

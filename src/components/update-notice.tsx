@@ -5,7 +5,7 @@ import type { fetchReqBody, fetchResBody } from "@/background/messages/fetch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { storage } from "@/storages";
-import packageJSON from "../../package.json";
+import { name as pkgName, version as pkgVersion } from "../../package.json";
 
 const VERSION_CHECK_URL = "http://127.0.0.1:3000/version"; // TODO: 改成你的版本检查 IP/URL
 const CHECK_TTL_MS = 6 * 60 * 60 * 1000;
@@ -43,11 +43,8 @@ const parseRemoteInfo = (data: unknown): RemoteVersionInfo | null => {
 };
 
 export function UpdateNotice() {
-  const localVersion = useMemo(() => normalizeVersion(packageJSON.version || ""), []);
-  const [cache, setCache] = useStorage<VersionCheckCache | null>(
-    { key: "versionCheckCache", instance: storage },
-    null
-  );
+  const localVersion = useMemo(() => normalizeVersion(pkgVersion || ""), []);
+  const [cache, setCache] = useStorage<VersionCheckCache | null>({ key: "versionCheckCache", instance: storage }, null);
   const [loading, setLoading] = useState(false);
 
   const cacheMatchesLocal = cache?.localVersion === localVersion;
@@ -56,7 +53,7 @@ export function UpdateNotice() {
   const hasUpdate = Boolean(normalizedRemoteVersion && normalizedRemoteVersion !== localVersion);
 
   const updateUrl = useMemo(() => {
-    const homepage = typeof packageJSON.homepage === "string" ? packageJSON.homepage : undefined;
+    const homepage = typeof pkgName === "string" ? pkgName : undefined;
     if (!cacheMatchesLocal) return homepage;
     return cache?.downloadUrl || homepage;
   }, [cache?.downloadUrl, cacheMatchesLocal]);
@@ -66,10 +63,7 @@ export function UpdateNotice() {
       if (loading) return;
       const now = Date.now();
       const cacheValid =
-        !force &&
-        cache?.checkedAt &&
-        cache?.localVersion === localVersion &&
-        now - cache.checkedAt < CHECK_TTL_MS;
+        !force && cache?.checkedAt && cache?.localVersion === localVersion && now - cache.checkedAt < CHECK_TTL_MS;
 
       if (cacheValid) return;
 
@@ -131,7 +125,7 @@ export function UpdateNotice() {
       <div className="space-y-1">
         <AlertTitle>发现新版本 {remoteVersion}</AlertTitle>
         <AlertDescription>
-          <div>当前版本：{packageJSON.version}</div>
+          <div>当前版本：{pkgVersion}</div>
           {cache?.message && <div className="mt-1">{cache.message}</div>}
         </AlertDescription>
       </div>

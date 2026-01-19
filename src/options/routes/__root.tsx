@@ -1,9 +1,9 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ToastContainer } from "react-toastify";
-import { UpdateNotice } from "@/components/update-notice";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { UpdateNotice } from "@/components/update-notice";
 import { OptionPageSidebar } from "@/options/components/sidebar";
 import "react-toastify/dist/ReactToastify.css";
 
