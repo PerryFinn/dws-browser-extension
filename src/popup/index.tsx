@@ -13,6 +13,7 @@ import type {
   SwqaGetInterfaceDetailResBody
 } from "@/background/messages/swqaGetInterfaceDetail";
 import { Code } from "@/components/catalyst-ui-kit/text";
+import { UpdateNotice } from "@/components/update-notice";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { storage } from "@/storages";
@@ -120,6 +121,7 @@ function IndexPopup() {
 
   return (
     <div className="w-[520px] p-4 space-y-4">
+      <UpdateNotice />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold flex items-center gap-2">

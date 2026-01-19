@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { ToastContainer } from "react-toastify";
+import { UpdateNotice } from "@/components/update-notice";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { OptionPageSidebar } from "@/options/components/sidebar";
@@ -32,6 +33,7 @@ export const Route = createRootRoute({
             </div>
           </header>
           <div className="flex flex-1 flex-col gap-4 p-4">
+            <UpdateNotice />
             <Outlet />
           </div>
         </SidebarInset>
