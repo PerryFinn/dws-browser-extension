@@ -1,6 +1,6 @@
 import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
-import { Clipboard, ClipboardCheck, RefreshCcw, Sparkles } from "lucide-react";
+import { BookOpen, Clipboard, ClipboardCheck, RefreshCcw, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 
@@ -13,7 +13,7 @@ import type {
   SwqaGetInterfaceDetailResBody
 } from "@/background/messages/swqaGetInterfaceDetail";
 import { Code } from "@/components/catalyst-ui-kit/text";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { UpdateNotice } from "@/components/update-notice";
 import { storage } from "@/storages";
@@ -23,6 +23,8 @@ import { buildPrompt, defaultPromptTemplate } from "./swqa/prompt";
 import { type ParsedSwqaUrl, parseSwqaInterfaceUrl } from "./swqa/url";
 
 type ExtractState = "idle" | "loading" | "success" | "error";
+
+const CVTE_KB_LOGIN_URL = "https://kb.cvte.com/pages/viewpage.action?pageId=540149803";
 
 function IndexPopup() {
   const [tab, setTab] = useState<ActiveTabIdResBody | null>(null);
@@ -35,6 +37,7 @@ function IndexPopup() {
     defaultPromptTemplate
   );
 
+  // 同步当前激活标签页并重置状态，不会刷新网页
   const refreshActiveTab = useCallback(async () => {
     setError(null);
     setCleaned(null);
@@ -55,6 +58,7 @@ function IndexPopup() {
     }
   }, []);
 
+  // 弹窗打开时自动同步一次，避免残留上次状态
   useEffect(() => {
     void refreshActiveTab();
   }, [refreshActiveTab]);
@@ -132,9 +136,21 @@ function IndexPopup() {
             仅在 <span className="font-semibold">swqa.gz.cvte.cn/interface/:id</span> 生效
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => void refreshActiveTab()}>
-          <RefreshCcw className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <a
+            href={CVTE_KB_LOGIN_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            title="打开 CVTE 文档"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
+            <BookOpen className="h-4 w-4 mr-1" />
+            使用文档
+          </a>
+          <Button variant="ghost" size="sm" onClick={() => void refreshActiveTab()} title="刷新当前标签页">
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div

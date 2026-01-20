@@ -51,6 +51,7 @@ export function UpdateNotice() {
   const remoteVersion = cacheMatchesLocal ? cache?.remoteVersion : undefined;
   const normalizedRemoteVersion = remoteVersion ? normalizeVersion(remoteVersion) : null;
   const hasUpdate = Boolean(normalizedRemoteVersion && normalizedRemoteVersion !== localVersion);
+  // const hasUpdate = true; // 测试用
 
   const updateUrl = useMemo(() => {
     const homepage = typeof pkgName === "string" ? pkgName : undefined;
