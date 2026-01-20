@@ -6,8 +6,8 @@ export type fetchReqBody = { url: string | URL | Request; respType: respType } &
 export type fetchResBody = { isSuccess: boolean; data: unknown; error?: string };
 
 const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = async (req, res) => {
+  const { url, respType = "json", ...resetConfig } = req.body ?? {};
   try {
-    const { url, respType = "json", ...resetConfig } = req.body ?? {};
     if (!url) {
       throw new Error("url is required");
     }
@@ -33,7 +33,7 @@ const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = asyn
     res.send({ isSuccess: true, data });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("fetch error :>> ", message);
+    console.error(`fetch [url: ${url}] error :>> `, message);
     res.send({ isSuccess: false, error: message, data: null });
   }
 };

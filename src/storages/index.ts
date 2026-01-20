@@ -30,6 +30,12 @@ export const localStorageInitialValue = {
   taskResult: {
     defaultValue: { success: [], failed: [], error: [] }
   },
+  versionCheckUrl: {
+    defaultValue: "http://127.0.0.1:3000/version"
+  },
+  versionCheckTtlMinutes: {
+    defaultValue: 6 * 60
+  },
   config: {
     defaultValue: {
       isOpenWindowConfig: true, // 该配置在 MAIN 不可用
