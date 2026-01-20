@@ -31,7 +31,7 @@ export const localStorageInitialValue = {
     defaultValue: { success: [], failed: [], error: [] }
   },
   versionCheckUrl: {
-    defaultValue: "http://127.0.0.1:3000/version"
+    defaultValue: "http://172.20.124.81:12306/extension/info"
   },
   versionCheckTtlMinutes: {
     defaultValue: 6 * 60

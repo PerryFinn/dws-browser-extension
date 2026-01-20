@@ -12,7 +12,6 @@ const DEFAULT_CHECK_TTL_MINUTES = localStorageInitialValue.versionCheckTtlMinute
 
 type RemoteVersionInfo = {
   version: string;
-  latestVersion?: string;
   downloadUrl?: string;
   message?: string;
 };
@@ -23,7 +22,6 @@ type VersionCheckCache = {
   checkUrl?: string;
   ttlMinutes?: number;
   remoteVersion?: string;
-  latestVersion?: string;
   downloadUrl?: string;
   message?: string;
   error?: string;
@@ -39,13 +37,8 @@ const parseRemoteInfo = (data: unknown): RemoteVersionInfo | null => {
   if (typeof record.version !== "string" || record.version.trim().length === 0) {
     return null;
   }
-  const latestVersion =
-    typeof record.latestVersion === "string" && record.latestVersion.trim().length > 0
-      ? record.latestVersion.trim()
-      : undefined;
   return {
     version: record.version.trim(),
-    latestVersion,
     downloadUrl: typeof record.downloadUrl === "string" ? record.downloadUrl : undefined,
     message: typeof record.message === "string" ? record.message : undefined
   };
@@ -121,7 +114,6 @@ export function UpdateNotice() {
           checkUrl,
           ttlMinutes,
           remoteVersion: info.version,
-          latestVersion: info.latestVersion,
           downloadUrl: info.downloadUrl,
           message: info.message
         });
@@ -134,7 +126,6 @@ export function UpdateNotice() {
           checkUrl,
           ttlMinutes,
           remoteVersion: cache?.remoteVersion,
-          latestVersion: cache?.latestVersion,
           downloadUrl: cache?.downloadUrl,
           message: cache?.message,
           error: message
@@ -163,7 +154,7 @@ export function UpdateNotice() {
         <AlertTitle>发现新版本 {displayRemoteVersion}</AlertTitle>
         <AlertDescription>
           <div>当前版本：{pkgVersion}</div>
-          {cache?.latestVersion && <div>最新版本：{cache.latestVersion}</div>}
+          {cache?.remoteVersion && <div>最新版本：{cache.remoteVersion}</div>}
           {cache?.message && <div className="mt-1">{cache.message}</div>}
         </AlertDescription>
       </div>
