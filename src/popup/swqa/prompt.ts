@@ -8,7 +8,7 @@ export interface BuildPromptParams {
 }
 
 // 默认 Prompt：给大模型的最小上下文模板，可在 Popup 内编辑持久化。
-export const defaultPromptTemplate = `向 \`src/models\` 添加一个新的接口请求，以下是该接口的描述信息：
+export const defaultPromptTemplate = `向 \`src/services/models\` 添加一个新的接口请求，以下是该接口的描述信息：
 \`\`\`json
 {{json}}
 \`\`\`
