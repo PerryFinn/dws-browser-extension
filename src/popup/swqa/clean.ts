@@ -80,8 +80,10 @@ const safeParseJson = (value: unknown, field: string): unknown => {
   try {
     return JSON.parse(value);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Parse ${field} failed: ${message}`);
+    // const message = error instanceof Error ? error.message : String(error);
+    console.error(`safeParseJson error 【${field}】 :>> `, error);
+    // throw new Error(`safeParseJson Parse ${field} failed: ${message}`);
+    return null;
   }
 };
 
@@ -127,6 +129,6 @@ export const cleanSwqaInterfaceDetail = (raw: RawSwqaDetailResponse): CleanedSwq
 
   // 规范化 query，补充 required 布尔与示例值。
   data.req_query = normalizeReqQuery(data.req_query);
-
+  console.log("cleanSwqaInterfaceDetail data :>> ", data);
   return data as CleanedSwqaInterfaceDetail;
 };
