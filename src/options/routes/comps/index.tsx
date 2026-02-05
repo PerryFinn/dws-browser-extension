@@ -12,10 +12,12 @@ function RouteComponent() {
   return (
     <div className="w-full h-full">
       <BackgroundBeamsWithCollision className="flex-col justify-start items-center">
-        <TextGenerateEffect className="text-4xl text-center" words="这里负责测试各种组件，丐版 StoryBook" />
+        {/* <TextGenerateEffect className="text-4xl text-center" words="这里负责测试各种组件，丐版 StoryBook" /> */}
         <Divider />
-        <div>
-          <FamilyButton>点点这里</FamilyButton>
+        <div id="family-button-container">
+          <FamilyButton>
+            <div className="bg-blue-300 text-red-500 h-full w-full">点点这里</div>
+          </FamilyButton>
         </div>
         <Divider />
       </BackgroundBeamsWithCollision>
