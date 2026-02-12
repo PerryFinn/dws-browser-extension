@@ -56,11 +56,11 @@ const SettingsBaseIndexRoute = SettingsBaseIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/posts/$postId": typeof PostsPostIdRoute;
-  "/about": typeof AboutIndexRoute;
-  "/comps": typeof CompsIndexRoute;
-  "/posts": typeof PostsIndexRoute;
-  "/settings": typeof SettingsIndexRoute;
-  "/settings/base": typeof SettingsBaseIndexRoute;
+  "/about/": typeof AboutIndexRoute;
+  "/comps/": typeof CompsIndexRoute;
+  "/posts/": typeof PostsIndexRoute;
+  "/settings/": typeof SettingsIndexRoute;
+  "/settings/base/": typeof SettingsBaseIndexRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
@@ -86,11 +86,11 @@ export interface FileRouteTypes {
   fullPaths:
     | "/"
     | "/posts/$postId"
-    | "/about"
-    | "/comps"
-    | "/posts"
-    | "/settings"
-    | "/settings/base";
+    | "/about/"
+    | "/comps/"
+    | "/posts/"
+    | "/settings/"
+    | "/settings/base/";
   fileRoutesByTo: FileRoutesByTo;
   to:
     | "/"
@@ -133,28 +133,28 @@ declare module "@tanstack/react-router" {
     "/settings/": {
       id: "/settings/";
       path: "/settings";
-      fullPath: "/settings";
+      fullPath: "/settings/";
       preLoaderRoute: typeof SettingsIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/posts/": {
       id: "/posts/";
       path: "/posts";
-      fullPath: "/posts";
+      fullPath: "/posts/";
       preLoaderRoute: typeof PostsIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/comps/": {
       id: "/comps/";
       path: "/comps";
-      fullPath: "/comps";
+      fullPath: "/comps/";
       preLoaderRoute: typeof CompsIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/about/": {
       id: "/about/";
       path: "/about";
-      fullPath: "/about";
+      fullPath: "/about/";
       preLoaderRoute: typeof AboutIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
@@ -168,7 +168,7 @@ declare module "@tanstack/react-router" {
     "/settings/base/": {
       id: "/settings/base/";
       path: "/settings/base";
-      fullPath: "/settings/base";
+      fullPath: "/settings/base/";
       preLoaderRoute: typeof SettingsBaseIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };

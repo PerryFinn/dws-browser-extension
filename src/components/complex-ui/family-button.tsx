@@ -100,9 +100,8 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onC
            */
           <motion.div
             className={cn(
-              "p-[10px] group bg-neutral-200  text-cyan-50 border border-cyan-100/10 shadow-2xl transition-colors duration-200"
+              "p-[10px] group bg-neutral-200 text-cyan-50 border border-cyan-100/10 shadow-2xl transition-colors duration-200 rounded-[24px]"
             )}
-            style={{ borderRadius: 24 }}
             onClick={onClick}
             layoutId="expand-toggle"
             initial={{ rotate: 180 }}
