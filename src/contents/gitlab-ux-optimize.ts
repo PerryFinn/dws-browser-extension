@@ -11,7 +11,9 @@ export const config = {
 } satisfies PlasmoCSConfig;
 
 // 搜索框禁用自动填充
-const searchInput = document.querySelector("input[type='search']");
-if (searchInput) {
-  searchInput.setAttribute("autocomplete", "off");
+const searchInputNodeList = document.querySelectorAll("input[type='search']");
+if (searchInputNodeList.length) {
+  searchInputNodeList.forEach((searchInput) => {
+    searchInput.setAttribute("autocomplete", "off");
+  });
 }

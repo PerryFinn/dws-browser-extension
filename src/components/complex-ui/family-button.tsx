@@ -17,12 +17,21 @@ interface FamilyButtonContainerProps {
   /** 点击切换按钮时的回调 */
   onClick: () => void;
   /** 展开后容器宽度 */
-  containerSize: number;
+  containerWidth: number;
+  containerHeight: number;
   /** 展开后显示的内容 */
   children: ReactNode;
+  className?: string;
 }
 
-const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onClick, containerSize, children }) => {
+const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({
+  isExpanded,
+  onClick,
+  containerWidth,
+  containerHeight,
+  children,
+  className
+}) => {
   return (
     /**
      * 1. 外层容器 —— 控制整体尺寸与展开/收起的弹簧动画
@@ -32,9 +41,10 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onC
      */
     <motion.div
       className={cn(
-        "relative border-red-500 border shadow-lg flex flex-col space-y-1 items-center text-white cursor-pointer z-10",
+        "relative border shadow-lg flex flex-col space-y-1 items-center text-white cursor-pointer z-10",
         // 收起时添加渐变背景，展开时去掉（让内容区域自行展示）
-        !isExpanded ? "bg-gradient-to-b from-neutral-900 to-stone-900 dark:from-stone-700 dark:to-neutral-800/80" : ""
+        !isExpanded ? "bg-gradient-to-b from-neutral-900 to-stone-900 dark:from-stone-700 dark:to-neutral-800/80" : "",
+        className
       )}
       layoutRoot
       layout
@@ -43,8 +53,8 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onC
         isExpanded
           ? {
               borderRadius: 20,
-              width: containerSize,
-              height: containerSize + 50,
+              width: containerWidth,
+              height: containerHeight + 65,
               transition: {
                 type: "spring", // 使用弹簧物理动画
                 damping: 25, // 阻尼系数，控制回弹幅度
@@ -125,7 +135,9 @@ interface FamilyButtonProps {
   /** 展开后要展示的自定义内容 */
   children: React.ReactNode;
   /** 展开后容器宽度，默认 200 */
-  containerSize?: number;
+  containerWidth?: number;
+  containerHeight?: number;
+  className?: string;
 }
 
 /**
@@ -134,14 +146,25 @@ interface FamilyButtonProps {
  * - 点击后展开为一个面板，展示传入的 children 内容
  * - 再次点击关闭按钮（X 图标）收起面板
  */
-const FamilyButton: React.FC<FamilyButtonProps> = ({ children, containerSize = DEFAULT_CONTAINER_SIZE }) => {
+const FamilyButton: React.FC<FamilyButtonProps> = ({
+  children,
+  containerWidth = DEFAULT_CONTAINER_SIZE,
+  containerHeight = DEFAULT_CONTAINER_SIZE,
+  className
+}) => {
   /** 控制当前展开/收起状态 */
   const [isExpanded, setIsExpanded] = useState(false);
   /** 切换展开/收起 */
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
   return (
-    <FamilyButtonContainer isExpanded={isExpanded} onClick={toggleExpand} containerSize={containerSize}>
+    <FamilyButtonContainer
+      isExpanded={isExpanded}
+      onClick={toggleExpand}
+      containerWidth={containerWidth}
+      containerHeight={containerHeight}
+      className={className}
+    >
       {isExpanded ? (
         /**
          * 5. 展开内容的淡入动画
@@ -155,6 +178,8 @@ const FamilyButton: React.FC<FamilyButtonProps> = ({ children, containerSize = D
             opacity: 1,
             transition: { delay: 0.3, duration: 0.4, ease: "easeOut" }
           }}
+          className="w-full"
+          style={{ height: containerHeight }}
         >
           {children}
         </motion.div>

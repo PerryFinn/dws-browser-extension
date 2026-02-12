@@ -20,7 +20,7 @@ const {
 } = localStorageInitialValue;
 
 export const config: PlasmoCSConfig = {
-  matches: ["<all_urls>"],
+  matches: ["http://test.demo.com/*"],
   run_at: "document_end"
 };
 
