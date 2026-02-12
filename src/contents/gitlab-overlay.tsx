@@ -15,7 +15,7 @@ export const config: PlasmoCSConfig = {
   run_at: "document_end"
 };
 
-export const getStyle = () => {
+export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style");
   style.textContent = cssText.replaceAll(":root", ":host(plasmo-csui)");
   // style.textContent = cssText;
