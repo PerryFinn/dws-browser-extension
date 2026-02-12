@@ -13,7 +13,6 @@ import { localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
 
 const {
-  enabled: { defaultValue: defaultEnabled },
   config: {
     defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig }
   }
@@ -37,7 +36,6 @@ export const getStyle = () => {
 };
 
 function DwsConfigInline() {
-  const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
   const [isOpenWindowConfig] = useStorage<boolean>(
     { key: "isOpenWindowConfig", instance: storage },
     defaultOpenWindowConfig
@@ -78,7 +76,7 @@ function DwsConfigInline() {
     // setCommitInfo(config?.commitInfo);
   }, []);
 
-  if (!enabled || !isOpenWindowConfig || !commitInfo) return null;
+  if (!isOpenWindowConfig || !commitInfo) return null;
 
   return (
     <Expandable

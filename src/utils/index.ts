@@ -46,7 +46,7 @@ export function base64ToBlob(base64: string, mimeType = "image/png") {
   return new Blob([byteArray], { type: mimeType });
 }
 
-export function jsonToBase64(jsonObject: Record<string, any>) {
+export function jsonToBase64(jsonObject: Record<string, unknown>) {
   // 将 JSON 对象转换为字符串
   const jsonString = JSON.stringify(jsonObject);
   // 将字符串转换为 UTF-8 字节数组

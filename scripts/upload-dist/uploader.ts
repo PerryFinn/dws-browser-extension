@@ -36,16 +36,16 @@ export class CdnUploader {
       throw new Error("没有输入资源目录");
     }
     if (!existsSync(resourcePath)) {
-      throw new Error("输入的文件目录不存在: " + resourcePath);
+      throw new Error(`输入的文件目录不存在: ${resourcePath}`);
     }
   }
 
   private validateFilePath(filePath: string) {
     if (!existsSync(filePath)) {
-      throw new Error("输入的文件不存在: " + filePath);
+      throw new Error(`输入的文件不存在: ${filePath}`);
     }
     if (!statSync(filePath).isFile()) {
-      throw new Error("输入的路径不是文件: " + filePath);
+      throw new Error(`输入的路径不是文件: ${filePath}`);
     }
   }
 
@@ -179,7 +179,7 @@ export class CdnUploader {
       this.validateResourcePath(resourceDirPath);
       console.log("上传资源目录：", resourceDirPath);
 
-      const tarArchive = TarFactory.createTar(resourceDirPath, this.options.cdnigorePath);
+      const tarArchive = TarFactory.createTar(resourceDirPath, this.options.cdnIgnorePath);
       this.archiveFiles = await tarArchive.createArchive();
       this.archiveFilePath = resolve(process.cwd(), "dist.tgz");
       await this.uploadFile(this.archiveFilePath, "dist.tgz", this.archiveFilePath);

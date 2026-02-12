@@ -2,7 +2,7 @@ export interface CdnUploaderOptions {
   workingDirPath?: string;
   resourcePath?: string;
   cdnSubPath: string;
-  cdnigorePath?: string;
+  cdnIgnorePath?: string;
   removeFiles?: boolean;
   ignoreUploadFail?: boolean;
   archive?: "system-tar" | "node-tar";

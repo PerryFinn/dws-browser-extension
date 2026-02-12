@@ -78,7 +78,6 @@ const init = async () => {
 // };
 
 const {
-  enabled: { defaultValue: defaultEnabled },
   gitlabProjectsDisplayMode: { defaultValue: defaultGitlabProjectsDisplayMode }
 } = localStorageInitialValue;
 
@@ -90,7 +89,6 @@ const {
 export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => document.querySelector("body") as Element;
 
 const GitlabInline = () => {
-  const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
   const [gitlabProjectsDisplayMode] = useStorage<GitlabProjectsDisplayMode>(
     { key: "gitlabProjectsDisplayMode", instance: storage },
     defaultGitlabProjectsDisplayMode
@@ -98,7 +96,7 @@ const GitlabInline = () => {
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
 
   useEffect(() => {
-    if (!enabled || gitlabProjectsDisplayMode !== "overlay") return;
+    if (gitlabProjectsDisplayMode !== "overlay") return;
     init()
       .then((projectList) => {
         setProjectList(projectList ?? []);
@@ -107,7 +105,7 @@ const GitlabInline = () => {
         console.error("GitlabInline error :>> ", error);
         throw error;
       });
-  }, [enabled, gitlabProjectsDisplayMode]);
+  }, [gitlabProjectsDisplayMode]);
 
   const renderList = useMemo(() => {
     return sortBy(projectList, "frequency").reverse();
@@ -130,7 +128,7 @@ const GitlabInline = () => {
     [navigateToProject]
   );
 
-  if (!enabled || gitlabProjectsDisplayMode !== "overlay") return null;
+  if (gitlabProjectsDisplayMode !== "overlay") return null;
   return (
     <FamilyButton containerWidth={300} containerHeight={300} className="fixed bottom-20 right-20 bg-white">
       <div className="w-full h-full flex flex-col items-center text-gray-700 pt-2">

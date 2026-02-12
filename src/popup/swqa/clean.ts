@@ -1,5 +1,3 @@
-import type { ParsedSwqaUrl } from "./url";
-
 export interface RawSwqaDetailResponse {
   detail?: RawSwqaDetail;
   [key: string]: unknown;

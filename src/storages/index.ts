@@ -13,9 +13,6 @@ export const storageMap = new Map<StorageType, Storage>([
 ]);
 
 export const localStorageInitialValue = {
-  enabled: {
-    defaultValue: true
-  },
   gitlabUserName: {
     defaultValue: ""
   },

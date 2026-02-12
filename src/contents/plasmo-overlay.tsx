@@ -1,8 +1,5 @@
 import cssText from "data-text:@/style.css";
-import { useStorage } from "@plasmohq/storage/hook";
 import type { PlasmoCSConfig } from "plasmo";
-
-import { storage } from "@/storages";
 
 export const config: PlasmoCSConfig = {
   matches: ["http://test.demo.com/*"],
@@ -19,9 +16,6 @@ export const getStyle = () => {
 //   document.querySelector("#super-sidebar-context-header");
 
 const PlasmoOverlay = () => {
-  const [enabled] = useStorage({ key: "enabled", instance: storage }, false);
-
-  if (!enabled) return null;
   return null;
   // return (
   //   <div className="z-50 flex fixed top-32 right-8">

@@ -1,8 +1,5 @@
 import "@/style.css";
-import { Storage } from "@plasmohq/storage";
 import { createHashHistory, createRouter, Link, RouterProvider } from "@tanstack/react-router";
-import React from "react";
-import { resetLocalStorage, storage } from "@/storages";
 import { routeTree } from "./routeTree.gen";
 
 const hashHistory = createHashHistory();
@@ -30,11 +27,6 @@ declare module "@tanstack/react-router" {
   // 强制静态数据
   interface StaticDataRouteOption {}
 }
-
-const resetStorage = async () => {
-  await resetLocalStorage();
-  alert("storage 已重置");
-};
 
 function Options() {
   return (

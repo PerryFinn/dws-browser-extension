@@ -65,6 +65,7 @@ const SidebarProvider = React.forwardRef<
       }
 
       // 设置 cookie 来保持侧边栏状态
+      // biome-ignore lint/suspicious/noDocumentCookie: 暂时先不处理
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open]

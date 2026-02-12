@@ -3,15 +3,7 @@ import fs from "fs-extra";
 import { join, parse } from "pathe";
 import { CdnUploader } from "../upload-dist/index";
 import { ASSETS_CONFIG } from "./config";
-import type { UploadOptions } from "./types";
 import { calculateMD5, copyDir, ensureDir, removeDir, writeJsonFile, zipDirectory } from "./utils";
-
-interface ZipAssetsOptions extends UploadOptions {
-  sourceDir?: string;
-  tempDir?: string;
-  zipPath?: string;
-  infoFileName?: string;
-}
 
 export async function zipAssetsAndUpload(): Promise<void> {
   const sourceDir = ASSETS_CONFIG.defaultDir;
