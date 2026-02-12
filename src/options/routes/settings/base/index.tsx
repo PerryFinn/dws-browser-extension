@@ -1,5 +1,4 @@
 import windowConfigPreviewVideo from "raw:assets/previews/dws-window-config.mp4";
-import gitlabProjectsVideo from "raw:assets/previews/gitlab-projects.mp4";
 import { useStorage } from "@plasmohq/storage/hook";
 import { createFileRoute } from "@tanstack/react-router";
 import { CircleHelp } from "lucide-react";
@@ -7,9 +6,10 @@ import { toast } from "react-toastify";
 import { Button } from "@/components/catalyst-ui-kit/button";
 import { Description, Field, FieldGroup, Fieldset, Label, Legend } from "@/components/catalyst-ui-kit/fieldset";
 import { Input } from "@/components/catalyst-ui-kit/input";
+import { Select } from "@/components/catalyst-ui-kit/select";
 import { Switch, SwitchField } from "@/components/catalyst-ui-kit/switch";
 import { LinkPreview } from "@/components/complex-ui/link-preview";
-import { localStorageInitialValue, storage } from "@/storages";
+import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 
 export const Route = createFileRoute("/settings/base/")({
   component: RouteComponent
@@ -17,8 +17,9 @@ export const Route = createFileRoute("/settings/base/")({
 
 const {
   config: {
-    defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig, isOpenGitlabProjects: defaultOpenGitlabProjects }
+    defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig }
   },
+  gitlabProjectsDisplayMode: { defaultValue: defaultGitlabProjectsDisplayMode },
   versionCheckUrl: { defaultValue: defaultVersionCheckUrl },
   versionCheckTtlMinutes: { defaultValue: defaultVersionCheckTtlMinutes }
 } = localStorageInitialValue;
@@ -28,9 +29,9 @@ function RouteComponent() {
     { key: "isOpenWindowConfig", instance: storage },
     defaultOpenWindowConfig
   );
-  const [isOpenGitlabProjects, , isOpenGitlabProjectsSetter] = useStorage<boolean>(
-    { key: "isOpenGitlabProjects", instance: storage },
-    defaultOpenGitlabProjects
+  const [gitlabProjectsDisplayMode, , gitlabProjectsDisplayModeSetter] = useStorage<GitlabProjectsDisplayMode>(
+    { key: "gitlabProjectsDisplayMode", instance: storage },
+    defaultGitlabProjectsDisplayMode
   );
   const [versionCheckUrl, , versionCheckUrlSetter] = useStorage<string>(
     { key: "versionCheckUrl", instance: storage },
@@ -43,8 +44,10 @@ function RouteComponent() {
   const handleOpenWindowConfigChange = (checked: boolean) => {
     isOpenWindowConfigSetter.setStoreValue(checked);
   };
-  const handleOpenGitlabProjectsChange = (checked: boolean) => {
-    isOpenGitlabProjectsSetter.setStoreValue(checked);
+  const handleGitlabProjectsDisplayModeChange = (value: string) => {
+    const nextMode: GitlabProjectsDisplayMode =
+      value === "inline" || value === "overlay" || value === "off" ? value : "overlay";
+    gitlabProjectsDisplayModeSetter.setStoreValue(nextMode);
   };
   const handleVersionCheckUrlChange = (value: string) => {
     versionCheckUrlSetter.setStoreValue(value);
@@ -79,25 +82,20 @@ function RouteComponent() {
           <Switch name="isOpenWindowConfig" checked={isOpenWindowConfig} onChange={handleOpenWindowConfigChange} />
         </SwitchField>
 
-        <SwitchField>
-          <Label className="flex items-center gap-2 cursor-pointer">
-            Gitlab 项目快捷访问
-            <LinkPreview
-              type="video"
-              isStatic
-              // imageSrc="https://pro-ali-dws.cvtestatic.com/dws-model/uwiwjuvohjxyjhnuhoyjypwkymhhihhh.png"
-              url={gitlabProjectsVideo}
-            >
-              <CircleHelp size={20} />
-            </LinkPreview>
-          </Label>
-          <Description>快速访问已访问过的项目列表，按照访问次数降序排序</Description>
-          <Switch
-            name="isOpenGitlabProjects"
-            checked={isOpenGitlabProjects}
-            onChange={handleOpenGitlabProjectsChange}
-          />
-        </SwitchField>
+        <Field className="mt-3">
+          <Label htmlFor="gitlab-projects-display-mode">展示模式</Label>
+          <Description>选择 Gitlab 项目快捷访问的展示形态</Description>
+          <Select
+            id="gitlab-projects-display-mode"
+            name="gitlab-projects-display-mode"
+            value={gitlabProjectsDisplayMode}
+            onChange={(event) => handleGitlabProjectsDisplayModeChange(event.target.value)}
+          >
+            <option value="overlay">Overlay（右下角浮层）</option>
+            <option value="inline">Inline（页面内嵌）</option>
+            <option value="off">关闭</option>
+          </Select>
+        </Field>
       </div>
 
       <Fieldset className="max-w-xl">

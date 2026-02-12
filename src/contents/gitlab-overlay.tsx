@@ -5,7 +5,7 @@ import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "pla
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
 import { FamilyButton } from "@/components/complex-ui/family-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { localStorageInitialValue, storage } from "@/storages";
+import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
 import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 import packageJson from "../../package.json";
@@ -79,9 +79,7 @@ const init = async () => {
 
 const {
   enabled: { defaultValue: defaultEnabled },
-  config: {
-    defaultValue: { isOpenGitlabProjects: defaultOpenGitlabProjects }
-  }
+  gitlabProjectsDisplayMode: { defaultValue: defaultGitlabProjectsDisplayMode }
 } = localStorageInitialValue;
 
 // export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
@@ -93,14 +91,14 @@ export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => document.que
 
 const GitlabInline = () => {
   const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
-  const [isOpenGitlabProjects] = useStorage(
-    { key: "isOpenGitlabProjects", instance: storage },
-    defaultOpenGitlabProjects
+  const [gitlabProjectsDisplayMode] = useStorage<GitlabProjectsDisplayMode>(
+    { key: "gitlabProjectsDisplayMode", instance: storage },
+    defaultGitlabProjectsDisplayMode
   );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || gitlabProjectsDisplayMode !== "overlay") return;
     init()
       .then((projectList) => {
         setProjectList(projectList ?? []);
@@ -109,7 +107,7 @@ const GitlabInline = () => {
         console.error("GitlabInline error :>> ", error);
         throw error;
       });
-  }, [enabled]);
+  }, [enabled, gitlabProjectsDisplayMode]);
 
   const renderList = useMemo(() => {
     return sortBy(projectList, "frequency").reverse();
@@ -132,7 +130,7 @@ const GitlabInline = () => {
     [navigateToProject]
   );
 
-  if (!enabled || !isOpenGitlabProjects) return null;
+  if (!enabled || gitlabProjectsDisplayMode !== "overlay") return null;
   return (
     <FamilyButton containerWidth={300} containerHeight={300} className="fixed bottom-20 right-20 bg-white">
       <div className="w-full h-full flex flex-col items-center text-gray-700 pt-2">

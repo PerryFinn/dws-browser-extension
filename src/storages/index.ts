@@ -5,6 +5,7 @@ export const sessionStorage = new Storage({ area: "session" });
 export const syncStorage = new Storage({ area: "sync" });
 
 export type StorageType = "local" | "session" | "sync";
+export type GitlabProjectsDisplayMode = "inline" | "overlay" | "off";
 export const storageMap = new Map<StorageType, Storage>([
   ["local", storage],
   ["session", sessionStorage],
@@ -36,10 +37,12 @@ export const localStorageInitialValue = {
   versionCheckTtlMinutes: {
     defaultValue: 6 * 60
   },
+  gitlabProjectsDisplayMode: {
+    defaultValue: "overlay" as GitlabProjectsDisplayMode
+  },
   config: {
     defaultValue: {
-      isOpenWindowConfig: true, // 该配置在 MAIN 不可用
-      isOpenGitlabProjects: true
+      isOpenWindowConfig: true // 该配置在 MAIN 不可用
     } as Config
   }
 };

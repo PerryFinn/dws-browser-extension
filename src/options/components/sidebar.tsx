@@ -27,15 +27,13 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
     return matches[len - 1];
   }, [matches]);
 
-  const [homeRoute] = matches;
-
   return (
     <Sidebar {...props}>
       <SidebarHeader className="border-b h-16">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to={homeRoute.fullPath}>
+              <Link to="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <GalleryVerticalEnd className="size-4" />
                 </div>

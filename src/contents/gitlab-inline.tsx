@@ -4,7 +4,7 @@ import { sortBy } from "lodash-es";
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor, PlasmoGetStyle } from "plasmo";
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { localStorageInitialValue, storage } from "@/storages";
+import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
 import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
 
@@ -79,9 +79,7 @@ const init = async () => {
 
 const {
   enabled: { defaultValue: defaultEnabled },
-  config: {
-    defaultValue: { isOpenGitlabProjects: defaultOpenGitlabProjects }
-  }
+  gitlabProjectsDisplayMode: { defaultValue: defaultGitlabProjectsDisplayMode }
 } = localStorageInitialValue;
 
 export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
@@ -91,14 +89,14 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
 
 const GitlabInline = () => {
   const [enabled] = useStorage({ key: "enabled", instance: storage }, defaultEnabled);
-  const [isOpenGitlabProjects] = useStorage(
-    { key: "isOpenGitlabProjects", instance: storage },
-    defaultOpenGitlabProjects
+  const [gitlabProjectsDisplayMode] = useStorage<GitlabProjectsDisplayMode>(
+    { key: "gitlabProjectsDisplayMode", instance: storage },
+    defaultGitlabProjectsDisplayMode
   );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || gitlabProjectsDisplayMode !== "inline") return;
     init()
       .then((projectList) => {
         setProjectList(projectList ?? []);
@@ -107,7 +105,7 @@ const GitlabInline = () => {
         console.error("GitlabInline error :>> ", error);
         throw error;
       });
-  }, [enabled]);
+  }, [enabled, gitlabProjectsDisplayMode]);
 
   const renderList = useMemo(() => {
     return sortBy(projectList, "frequency").reverse();
@@ -130,7 +128,7 @@ const GitlabInline = () => {
     [navigateToProject]
   );
 
-  if (!enabled || !isOpenGitlabProjects) return null;
+  if (!enabled || gitlabProjectsDisplayMode !== "inline") return null;
   return (
     <div className="relative w-full h-full max-h-[220px] border-dashed border border-indigo-600">
       <div className="relative w-full h-full max-h-[220px] overflow-y-scroll ">

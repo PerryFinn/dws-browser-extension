@@ -43,7 +43,11 @@ export const ping = async (url: string, timeout = 1000): Promise<boolean> => {
 
 const handler: PlasmoMessaging.MessageHandler<PingReqBody, PingResBody> = async (request, response) => {
   console.log("ping 收到消息：", request);
-  const url = request.body.url;
+  const url = request.body?.url?.trim();
+  if (!url) {
+    response.send(false);
+    return;
+  }
 
   const success = await ping(url);
   response.send(success);

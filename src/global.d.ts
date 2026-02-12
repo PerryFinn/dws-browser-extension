@@ -26,8 +26,6 @@ interface Window {
 type Config = {
   /** 是否开启项目基本信息弹窗 */
   isOpenWindowConfig: boolean;
-  /** 是否开启 Gitlab 快捷访问列表 */
-  isOpenGitlabProjects: boolean;
 };
 
 declare module "*.png" {
