@@ -9,7 +9,9 @@
     "build-zip": "tsr generate && plasmo build -- --zip",
     "build": "tsx scripts/build-upload.ts",
     "package": "plasmo package",
-    "lint": "biome check --write ."
+    "lint": "biome check --write .",
+    "check:types": "tsc --noEmit",
+    "verify": "pnpm lint && pnpm check:types"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
