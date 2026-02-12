@@ -4,8 +4,8 @@ import { type FC, type ReactNode, useState } from "react";
 
 import { cn } from "@/utils";
 
-/** 展开后容器的宽度（高度为 CONTAINER_SIZE + 50） */
-const CONTAINER_SIZE = 200;
+/** 展开后容器默认宽度（高度为 width + 50） */
+const DEFAULT_CONTAINER_SIZE = 200;
 
 // ─────────────────────────────────────────────
 // FamilyButtonContainer —— 负责包裹内容并驱动展开/收起动画的容器
@@ -16,21 +16,23 @@ interface FamilyButtonContainerProps {
   isExpanded: boolean;
   /** 点击切换按钮时的回调 */
   onClick: () => void;
+  /** 展开后容器宽度 */
+  containerSize: number;
   /** 展开后显示的内容 */
   children: ReactNode;
 }
 
-const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onClick, children }) => {
+const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onClick, containerSize, children }) => {
   return (
     /**
      * 1. 外层容器 —— 控制整体尺寸与展开/收起的弹簧动画
      *    - 收起状态：4rem × 4rem 的圆角小按钮，带渐变背景
-     *    - 展开状态：200px × 250px 的面板，背景渐变移除
+     *    - 展开状态：containerSize × (containerSize + 50) 的面板，背景渐变移除
      *    - layoutRoot + layout 启用 Framer Motion 的自动布局动画
      */
     <motion.div
       className={cn(
-        "relative border-white/10 border shadow-lg flex flex-col space-y-1 items-center text-white cursor-pointer z-10",
+        "relative border-red-500 border shadow-lg flex flex-col space-y-1 items-center text-white cursor-pointer z-10",
         // 收起时添加渐变背景，展开时去掉（让内容区域自行展示）
         !isExpanded ? "bg-gradient-to-b from-neutral-900 to-stone-900 dark:from-stone-700 dark:to-neutral-800/80" : ""
       )}
@@ -41,8 +43,8 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onC
         isExpanded
           ? {
               borderRadius: 20,
-              width: CONTAINER_SIZE,
-              height: CONTAINER_SIZE + 50,
+              width: containerSize,
+              height: containerSize + 50,
               transition: {
                 type: "spring", // 使用弹簧物理动画
                 damping: 25, // 阻尼系数，控制回弹幅度
@@ -87,7 +89,7 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onC
           >
             <XIcon
               className={cn(
-                "h-7 w-7 text-black dark:text-neutral-900 group-hover:text-neutral-500 transition-colors duration-200 "
+                "h-7 w-7 text-black dark:text-neutral-900 group-hover:text-neutral-500 transition-colors duration-200"
               )}
             />
           </motion.div>
@@ -122,6 +124,8 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({ isExpanded, onC
 interface FamilyButtonProps {
   /** 展开后要展示的自定义内容 */
   children: React.ReactNode;
+  /** 展开后容器宽度，默认 200 */
+  containerSize?: number;
 }
 
 /**
@@ -130,34 +134,32 @@ interface FamilyButtonProps {
  * - 点击后展开为一个面板，展示传入的 children 内容
  * - 再次点击关闭按钮（X 图标）收起面板
  */
-const FamilyButton: React.FC<FamilyButtonProps> = ({ children }) => {
+const FamilyButton: React.FC<FamilyButtonProps> = ({ children, containerSize = DEFAULT_CONTAINER_SIZE }) => {
   /** 控制当前展开/收起状态 */
   const [isExpanded, setIsExpanded] = useState(false);
   /** 切换展开/收起 */
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
   return (
-    <div>
-      <FamilyButtonContainer isExpanded={isExpanded} onClick={toggleExpand}>
-        {isExpanded ? (
-          /**
-           * 5. 展开内容的淡入动画
-           *    - 延迟 0.3s 后开始（等容器展开动画基本完成）
-           *    - 0.4s 的 opacity 渐显，使用 easeOut 缓动
-           *    - 收起时直接卸载（返回 null），无退出动画
-           */
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{
-              opacity: 1,
-              transition: { delay: 0.3, duration: 0.4, ease: "easeOut" }
-            }}
-          >
-            {children}
-          </motion.div>
-        ) : null}
-      </FamilyButtonContainer>
-    </div>
+    <FamilyButtonContainer isExpanded={isExpanded} onClick={toggleExpand} containerSize={containerSize}>
+      {isExpanded ? (
+        /**
+         * 5. 展开内容的淡入动画
+         *    - 延迟 0.3s 后开始（等容器展开动画基本完成）
+         *    - 0.4s 的 opacity 渐显，使用 easeOut 缓动
+         *    - 收起时直接卸载（返回 null），无退出动画
+         */
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: 1,
+            transition: { delay: 0.3, duration: 0.4, ease: "easeOut" }
+          }}
+        >
+          {children}
+        </motion.div>
+      ) : null}
+    </FamilyButtonContainer>
   );
 };
 
