@@ -5,6 +5,7 @@ import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "pla
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
 import { FamilyButton } from "@/components/complex-ui/family-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
 import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
@@ -41,21 +42,22 @@ const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProje
   }
 };
 
-const getRandomWarmColor = (): string => {
-  const warmColors = [
-    "#FFB3A7", // Light Red-Orange
-    "#FFD1A1", // Light Orange
-    "#FFE599", // Light Yellow
-    "#FFB3A7", // Light Red-Orange
-    "#FFCCCB", // Light Coral
-    "#FFE0B2", // Light Light Orange
-    "#FFF2CC", // Light Gold
-    "#FFCCCB", // Light Tomato
-    "#FFB6C1", // Light Orange-Red
-    "#FFDAB9" // Light Light Salmon
-  ];
-  const randomIndex = Math.floor(Math.random() * warmColors.length);
-  return warmColors[randomIndex];
+const warmColors = [
+  "#FFB3A7", // Light Red-Orange
+  "#FFD1A1", // Light Orange
+  "#FFE599", // Light Yellow
+  "#FFB3A7", // Light Red-Orange
+  "#FFCCCB", // Light Coral
+  "#FFE0B2", // Light Light Orange
+  "#FFF2CC", // Light Gold
+  "#FFCCCB", // Light Tomato
+  "#FFB6C1", // Light Orange-Red
+  "#FFDAB9" // Light Light Salmon
+];
+
+const getStableWarmColor = (projectId: number): string => {
+  const colorIndex = Math.abs(projectId) % warmColors.length;
+  return warmColors[colorIndex];
 };
 
 const init = async () => {
@@ -94,6 +96,7 @@ const GitlabInline = () => {
     defaultGitlabProjectsDisplayMode
   );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   useEffect(() => {
     if (gitlabProjectsDisplayMode !== "overlay") return;
@@ -107,9 +110,31 @@ const GitlabInline = () => {
       });
   }, [gitlabProjectsDisplayMode]);
 
-  const renderList = useMemo(() => {
+  const sortedList = useMemo(() => {
     return sortBy(projectList, "frequency").reverse();
   }, [projectList]);
+
+  const normalizedKeyword = useMemo(() => {
+    return searchKeyword.trim().toLocaleLowerCase();
+  }, [searchKeyword]);
+
+  const searchableList = useMemo(() => {
+    return sortedList.map((project) => {
+      return {
+        project,
+        searchText: `${project.name} ${project.namespace}`.toLocaleLowerCase()
+      };
+    });
+  }, [sortedList]);
+
+  const renderList = useMemo(() => {
+    if (!normalizedKeyword) return sortedList;
+    return searchableList
+      .filter(({ searchText }) => {
+        return searchText.includes(normalizedKeyword);
+      })
+      .map(({ project }) => project);
+  }, [normalizedKeyword, searchableList, sortedList]);
 
   const navigateToProject = useCallback((url: string) => {
     window.open(url, "_self");
@@ -135,49 +160,65 @@ const GitlabInline = () => {
         <div className="pb-2 text-xs text-gray-500 opacity-60 tracking-wide cursor-default select-none">
           Frequent Visited Projects
         </div>
+        <div className="w-full px-4 pb-2">
+          <Input
+            type="search"
+            value={searchKeyword}
+            onChange={(event) => {
+              setSearchKeyword(event.target.value);
+            }}
+            placeholder="Search by project or namespace"
+            aria-label="Search projects by name or namespace"
+            className="h-8 border-slate-200 text-xs placeholder:text-gray-400 focus-visible:ring-1"
+          />
+        </div>
         <div className="w-full overflow-y-auto px-4 flex flex-col items-center">
           <ul className="w-full">
-            {renderList.map((project) => {
-              return (
-                <li key={project.id} className="flex space-x-3 items-center pb-2 last:pb-0">
-                  <button
-                    type="button"
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300 cursor-pointer"
-                    )}
-                    onClick={() => {
-                      navigateToProject(project.webUrl);
-                    }}
-                    data-url={project.webUrl}
-                    onKeyDown={handleKeyDown}
-                    aria-label={`Open ${project.name}`}
-                  >
-                    <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
-                      <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
-                      <AvatarFallback>
-                        <div className="flex items-center justify-center rounded-full h-full w-full text-sm text-black">
-                          {project.name.substring(0, 1).toLocaleUpperCase()}
-                        </div>
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                  <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
-                    <div className="max-w-[150px] truncate">
-                      <a
-                        href={project.webUrl}
-                        title={project.name}
-                        className="text-sm text-gray-500 font-medium hover:underline"
-                      >
-                        {project.name}
-                      </a>
+            {renderList.length === 0 && projectList.length > 0 ? (
+              <li className="py-6 text-center text-xs text-gray-400 cursor-default select-none">未找到匹配项目</li>
+            ) : (
+              renderList.map((project) => {
+                return (
+                  <li key={project.id} className="flex space-x-3 items-center pb-2 last:pb-0">
+                    <button
+                      type="button"
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300 cursor-pointer"
+                      )}
+                      onClick={() => {
+                        navigateToProject(project.webUrl);
+                      }}
+                      data-url={project.webUrl}
+                      onKeyDown={handleKeyDown}
+                      aria-label={`Open ${project.name}`}
+                    >
+                      <Avatar className="h-7 w-7" style={{ background: getStableWarmColor(project.id) }}>
+                        <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
+                        <AvatarFallback>
+                          <div className="flex items-center justify-center rounded-full h-full w-full text-sm text-black">
+                            {project.name.substring(0, 1).toLocaleUpperCase()}
+                          </div>
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                    <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
+                      <div className="max-w-[150px] truncate">
+                        <a
+                          href={project.webUrl}
+                          title={project.name}
+                          className="text-sm text-gray-500 font-medium hover:underline"
+                        >
+                          {project.name}
+                        </a>
+                      </div>
+                      <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                        <span>{project.frequency}</span>
+                      </div>
                     </div>
-                    <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                      <span>{project.frequency}</span>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+                  </li>
+                );
+              })
+            )}
           </ul>
           <div className="mt-2 bg-black bg-opacity-20 rounded-sm text-xs w-fit h-fit px-1 cursor-default select-none">
             Powered by {packageJson.displayName}
