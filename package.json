@@ -1,7 +1,7 @@
 {
   "name": "efficiency-assistant-extension",
   "displayName": "提效助手",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "提效工具",
   "author": "chenpengfei@cvte.com",
   "scripts": {

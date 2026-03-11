@@ -1,5 +1,15 @@
 # dws-browser-extension
 
+## 0.4.0
+
+### Minor Changes
+
+- f58e19c: 添加更新接口的 prompt 提示
+
+### Patch Changes
+
+- 49ae6b3: 支持 SWQA Prompt 模板按“更新 / 新增”双场景分别持久化编辑，并让 popup 与 options 都根据当前用途读取对应模板。
+
 ## 0.3.0
 
 ### Minor Changes
