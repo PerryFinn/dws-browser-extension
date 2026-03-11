@@ -1,4 +1,11 @@
 import { Storage } from "@plasmohq/storage";
+import {
+  resolveSwqaPromptTemplateMigration,
+  SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
+  SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY,
+  SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY,
+  swqaPromptTemplateDefaultValues
+} from "./swqa-prompt-template";
 
 export const storage = new Storage({ area: "local" });
 export const sessionStorage = new Storage({ area: "session" });
@@ -37,6 +44,12 @@ export const localStorageInitialValue = {
   gitlabProjectsDisplayMode: {
     defaultValue: "overlay" as GitlabProjectsDisplayMode
   },
+  [SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY]: {
+    defaultValue: swqaPromptTemplateDefaultValues[SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY]
+  },
+  [SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY]: {
+    defaultValue: swqaPromptTemplateDefaultValues[SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY]
+  },
   config: {
     defaultValue: {
       isOpenWindowConfig: true // 该配置在 MAIN 不可用
@@ -46,7 +59,35 @@ export const localStorageInitialValue = {
 
 export type LocalStorageKey = keyof typeof localStorageInitialValue;
 
+const initSwqaPromptTemplateStorage = async () => {
+  const [createTemplate, updateTemplate, legacyTemplate] = (await Promise.all([
+    storage.get(SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY),
+    storage.get(SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY),
+    storage.get(SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY)
+  ])) as [string | undefined, string | undefined, string | undefined];
+
+  const migration = resolveSwqaPromptTemplateMigration({
+    createTemplate,
+    updateTemplate,
+    legacyTemplate
+  });
+
+  const tasks: Promise<null>[] = [];
+
+  if (migration.create.shouldWrite) {
+    tasks.push(storage.set(SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY, migration.create.value));
+  }
+
+  if (migration.update.shouldWrite) {
+    tasks.push(storage.set(SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY, migration.update.value));
+  }
+
+  await Promise.all(tasks);
+};
+
 export const initLocalStorage = async () => {
+  await initSwqaPromptTemplateStorage();
+
   for (const [key, { defaultValue }] of Object.entries(localStorageInitialValue)) {
     const currentValue = await storage.get(key);
     if (typeof currentValue === "undefined") {

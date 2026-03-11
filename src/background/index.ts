@@ -1,17 +1,27 @@
 import { initLocalStorage } from "@/storages";
 
+const initializeLocalStorage = async (reason: "startup" | "install" | "update") => {
+  try {
+    await initLocalStorage();
+  } catch (error) {
+    console.error(`初始化本地存储失败（${reason}）`, error);
+  }
+};
+
 chrome.runtime.onStartup.addListener(async () => {
-  initLocalStorage();
+  await initializeLocalStorage("startup");
   console.log("用户打开浏览器时，插件会被启动。插件可以在这个阶段初始化数据，设置默认状态等");
 });
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
+    await initializeLocalStorage("install");
     console.log("第一次安装!");
   } else if (details.reason === "update") {
+    await initializeLocalStorage("update");
     console.log(`更新版本 ${details.previousVersion} 到 ${chrome.runtime.getManifest().version}!`);
   }
-  chrome.action.setBadgeText({ text: "ON" });
+  await chrome.action.setBadgeText({ text: "ON" });
 });
 
 chrome.tabs.onUpdated.addListener(async (_, changeInfo, tab) => {

@@ -166,24 +166,32 @@ export function DropdownShortcut({
   className,
   ...props
 }: { keys: string | string[]; className?: string } & Omit<Headless.DescriptionProps<"kbd">, "as" | "className">) {
+  const shortcutKeys = Array.isArray(keys) ? keys : keys.split("");
+  const keyOccurrences = new Map<string, number>();
+
   return (
     <Headless.Description
       as="kbd"
       {...props}
       className={clsx(className, "col-start-5 row-start-1 flex justify-self-end")}
     >
-      {(Array.isArray(keys) ? keys : keys.split("")).map((char, index) => (
-        <kbd
-          key={`${char + index}`}
-          className={clsx([
-            "min-w-[2ch] text-center font-sans capitalize text-zinc-400 group-data-[focus]:text-white forced-colors:group-data-[focus]:text-[HighlightText]",
-            // Make sure key names that are longer than one character (like "Tab") have extra space
-            index > 0 && char.length > 1 && "pl-1"
-          ])}
-        >
-          {char}
-        </kbd>
-      ))}
+      {shortcutKeys.map((char, index) => {
+        const occurrence = keyOccurrences.get(char) ?? 0;
+        keyOccurrences.set(char, occurrence + 1);
+
+        return (
+          <kbd
+            key={`${char}-${occurrence}`}
+            className={clsx([
+              "min-w-[2ch] text-center font-sans capitalize text-zinc-400 group-data-[focus]:text-white forced-colors:group-data-[focus]:text-[HighlightText]",
+              // Make sure key names that are longer than one character (like "Tab") have extra space
+              index > 0 && char.length > 1 && "pl-1"
+            ])}
+          >
+            {char}
+          </kbd>
+        );
+      })}
     </Headless.Description>
   );
 }
