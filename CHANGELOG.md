@@ -1,5 +1,11 @@
 # dws-browser-extension
 
+## 0.4.1
+
+### Patch Changes
+
+- fix: 修复弹窗用途选项默认值并持久化用户选择
+
 ## 0.4.0
 
 ### Minor Changes
