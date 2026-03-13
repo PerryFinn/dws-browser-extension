@@ -23,6 +23,7 @@ import { UpdateNotice } from "@/components/update-notice";
 import { storage } from "@/storages";
 import {
   SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
+  SWQA_PROMPT_PURPOSE_STORAGE_KEY,
   SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY
 } from "@/storages/swqa-prompt-template";
 import { cn } from "@/utils";
@@ -49,7 +50,10 @@ function IndexPopup() {
   const [extractState, setExtractState] = useState<ExtractState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [cleaned, setCleaned] = useState<CleanedSwqaInterfaceDetail | null>(null);
-  const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("update");
+  const [promptPurpose, setPromptPurpose] = useStorage<SwqaPromptPurpose>(
+    { key: SWQA_PROMPT_PURPOSE_STORAGE_KEY, instance: storage },
+    "create"
+  );
   const [storedCreatePromptTemplate, setStoredCreatePromptTemplate] = useStorage<string>(
     { key: SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
     ""
@@ -152,7 +156,7 @@ function IndexPopup() {
   };
 
   const handlePromptPurposeChange = (value: string) => {
-    setPromptPurpose(value as SwqaPromptPurpose);
+    void setPromptPurpose(value as SwqaPromptPurpose);
   };
 
   const isReady = parsedUrl?.ok === true;

@@ -3,6 +3,7 @@ import {
   resolveSwqaPromptTemplateMigration,
   SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
   SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY,
+  SWQA_PROMPT_PURPOSE_STORAGE_KEY,
   SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY,
   swqaPromptTemplateDefaultValues
 } from "./swqa-prompt-template";
@@ -49,6 +50,9 @@ export const localStorageInitialValue = {
   },
   [SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY]: {
     defaultValue: swqaPromptTemplateDefaultValues[SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY]
+  },
+  [SWQA_PROMPT_PURPOSE_STORAGE_KEY]: {
+    defaultValue: "create"
   },
   config: {
     defaultValue: {

@@ -3,6 +3,7 @@ import { defaultCreatePromptTemplate, defaultUpdatePromptTemplate } from "@/popu
 export const SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY = "swqaCreatePromptTemplate";
 export const SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY = "swqaUpdatePromptTemplate";
 export const SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY = "swqaPromptTemplate";
+export const SWQA_PROMPT_PURPOSE_STORAGE_KEY = "swqaPromptPurpose";
 
 export const swqaPromptTemplateDefaultValues = {
   [SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY]: defaultCreatePromptTemplate,
