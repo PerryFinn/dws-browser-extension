@@ -183,7 +183,7 @@ function RouteComponent() {
                 {promptPurposeOptions.map((purpose) => (
                   <RadioField className="gap-2" key={purpose}>
                     <Radio value={purpose} />
-                    <Label >
+                    <Label>
                       <span className="inline-flex items-center gap-1.5">
                         {swqaPromptPurposeLabelMap[purpose]}
                         <Tooltip>

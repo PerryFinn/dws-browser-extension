@@ -5,7 +5,8 @@ import type { fetchReqBody, fetchResBody } from "@/background/messages/fetch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { localStorageInitialValue, storage } from "@/storages";
-import { name as pkgName, version as pkgVersion } from "../../package.json";
+import { homepage as pkgHomepage, version as pkgVersion } from "../../package.json";
+import { resolveUpdateUrl } from "./update-notice-utils";
 
 const DEFAULT_VERSION_CHECK_URL = localStorageInitialValue.versionCheckUrl.defaultValue;
 const DEFAULT_CHECK_TTL_MINUTES = localStorageInitialValue.versionCheckTtlMinutes.defaultValue;
@@ -78,9 +79,11 @@ export function UpdateNotice() {
   const displayRemoteVersion = remoteVersion ?? normalizedRemoteVersion ?? "";
 
   const updateUrl = useMemo(() => {
-    const homepage = typeof pkgName === "string" ? pkgName : undefined;
-    if (!cacheMatchesSettings) return homepage;
-    return cache?.downloadUrl || homepage;
+    return resolveUpdateUrl({
+      cacheMatchesSettings,
+      downloadUrl: cache?.downloadUrl,
+      homepage: typeof pkgHomepage === "string" ? pkgHomepage : undefined
+    });
   }, [cache?.downloadUrl, cacheMatchesSettings]);
 
   const checkVersion = useCallback(

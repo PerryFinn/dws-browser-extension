@@ -236,7 +236,7 @@ function IndexPopup() {
               {promptPurposeOptions.map((purpose) => (
                 <RadioField key={purpose}>
                   <Radio value={purpose} />
-                  <FieldLabel >
+                  <FieldLabel>
                     <span className="inline-flex items-center gap-1.5">
                       {swqaPromptPurposeLabelMap[purpose]}
                       <Tooltip>
