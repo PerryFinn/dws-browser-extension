@@ -61,6 +61,13 @@
 - 用户辅助定位方式为：
   - `DOM 点选优先`
   - `当前文本选区兜底`
+- 请求体与响应体保证支持：
+  - 多层 `object / array` 嵌套
+  - 常见包裹结构，例如分页响应中的 `data / list / total`
+- 以下结构不作为 `v1` 的稳定保证范围：
+  - `oneOf / anyOf`
+  - 继承或多态
+  - 递归树结构
 - 主用途为：
   - 生成统一 JSON
   - 进一步生成可复制的 Prompt，交给其它大模型继续完成代码生成或代码更新工作
@@ -365,7 +372,7 @@ Generic extractor 将抽取上下文发送给 Provider 层，并要求模型返�
 其中：
 
 - `headers` 和 `auth` 可为空
-- `body` 允许为对象、数组、标量说明或 `null`
+- `body` 使用递归 schema 树表示，可为对象、数组、标量或 `null`
 
 #### `response`
 
@@ -376,7 +383,10 @@ Generic extractor 将抽取上下文发送给 Provider 层，并要求模型返�
 - `successBody`
 - `errorNotes`
 
-其中 `errorNotes` 可为空。
+其中：
+
+- `successBody` 使用递归 schema 树表示
+- `errorNotes` 可为空。
 
 #### `uncertainties`
 
@@ -395,6 +405,68 @@ Generic extractor 将抽取上下文发送给 Provider 层，并要求模型返�
   "reason": "文档中只出现字段名与示例值，未明确字段类型"
 }
 ```
+
+### 递归 schema 树
+
+为支持复杂嵌套结构，`request.body` 与 `response.successBody` 不再默认视为平面字段表，而是统一使用递归 schema 树表达。
+
+`v1` 的最小节点结构建议如下：
+
+- `type`
+  - `object`
+  - `array`
+  - `string`
+  - `number`
+  - `boolean`
+  - `null`
+  - `unknown`
+- `description`
+- `required`
+- `properties`
+  - 仅 `object` 节点使用
+- `items`
+  - 仅 `array` 节点使用
+
+设计约束如下：
+
+- 对于 `object` 节点，子字段放在 `properties` 中。
+- 对于 `array` 节点，元素结构放在 `items` 中。
+- 若深层节点只能判断存在但无法稳定判断类型，则该节点使用 `unknown`，并把对应路径写入 `uncertainties`。
+- `uncertainties.field` 对嵌套字段统一使用路径表示法，例如：
+  - `request.body.filters[].value.type`
+  - `response.successBody.data.list[].items[].price`
+
+### 常见包裹结构处理
+
+`v1` 需要稳定保留常见包裹结构，而不是强行拍平成字段表。
+
+例如以下结构都应尽量按原层级保留：
+
+- `data -> list -> []`
+- `data -> total`
+- `page -> pageNum / pageSize / total`
+- `result -> items -> []`
+
+本次设计不要求把这些结构进一步抽象成“分页模型”“列表模型”等专门语义对象，原因如下：
+
+- `v1` 的核心目标是稳定保留原有层级，便于后续 Prompt 和代码生成继续理解。
+- 若过早引入专门语义模型，会放大各站点字段命名差异带来的复杂度。
+- 对下游模型来说，保留原始层级通常已经足够完成代码生成或继续追问。
+
+### 高复杂结构降级策略
+
+以下结构不要求在 `v1` 中稳定完整表达：
+
+- `oneOf / anyOf / allOf`
+- 继承关系
+- 多态 discriminator
+- 递归树结构
+
+对这些结构的处理策略为：
+
+- 能提取出外层稳定结构时，保留外层结构。
+- 对无法稳定判断的节点使用 `unknown` 或省略深层细节。
+- 必须把相关不确定路径写入 `uncertainties`，而不是静默猜测。
 
 ### 示例
 
@@ -427,16 +499,41 @@ Generic extractor 将抽取上下文发送给 Provider 层，并要求模型返�
   },
   "response": {
     "successBody": {
-      "id": "string",
-      "name": "string",
-      "status": "number"
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "list": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "total": {
+              "type": "number"
+            }
+          }
+        }
+      }
     },
     "errorNotes": null
   },
   "uncertainties": [
     {
-      "field": "response.successBody.status",
-      "reason": "文档示例中返回数值，但字段说明未明确类型"
+      "field": "response.successBody.data.list[].status",
+      "reason": "文档示例中返回数值，但字段说明未明确该字段是否始终为 number"
     }
   ]
 }
