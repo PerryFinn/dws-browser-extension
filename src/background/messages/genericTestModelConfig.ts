@@ -6,10 +6,10 @@ import { isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 export type GenericTestModelConfigReqBody = { config: GenericModelConfig };
 export type GenericTestModelConfigResBody = { success: true } | { success: false; message: string };
 
-const handler: PlasmoMessaging.MessageHandler<
-  GenericTestModelConfigReqBody,
-  GenericTestModelConfigResBody
-> = async (req, res) => {
+const handler: PlasmoMessaging.MessageHandler<GenericTestModelConfigReqBody, GenericTestModelConfigResBody> = async (
+  req,
+  res
+) => {
   const config = req.body?.config;
 
   if (!config) {

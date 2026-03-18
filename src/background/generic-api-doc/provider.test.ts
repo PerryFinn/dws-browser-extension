@@ -7,8 +7,8 @@ import {
   buildGenericModelConfigTestPrompt,
   createGenericModel,
   extractGenericApiDoc,
-  testGenericModelConfig,
-  type GenericProviderDependencies
+  type GenericProviderDependencies,
+  testGenericModelConfig
 } from "./provider";
 
 const createConfig = (apiType: GenericModelConfig["apiType"]): GenericModelConfig => ({

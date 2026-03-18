@@ -180,7 +180,8 @@ export const testGenericModelConfig = async (
 
   return {
     ok: response.ok ?? true,
-    message: typeof response.message === "string" && response.message.trim().length > 0 ? response.message : "连接测试成功"
+    message:
+      typeof response.message === "string" && response.message.trim().length > 0 ? response.message : "连接测试成功"
   };
 };
 
