@@ -79,6 +79,15 @@ export interface GenericCaptureContext {
   domSummary?: string | null;
 }
 
+export type GenericPickerMessage =
+  | { type: "generic-picker:start" }
+  | { type: "generic-picker:read-selection" }
+  | { type: "generic-picker:reset" };
+
+export type GenericPickerResponse =
+  | { success: true; data?: GenericCaptureContext }
+  | { success: false; message: string };
+
 export interface GenericModelConfig {
   apiType: GenericProviderType;
   baseUrl: string;
