@@ -14,6 +14,7 @@ import { Code } from "@/components/catalyst-ui-kit/text";
 import { Textarea } from "@/components/catalyst-ui-kit/textarea";
 import { LinkPreview } from "@/components/complex-ui/link-preview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { GenericApiDocSettings } from "@/options/components/generic-api-doc-settings";
 import { getSwqaPromptTemplateTooltip, type SwqaPromptPurpose, swqaPromptPurposeLabelMap } from "@/popup/swqa/prompt";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import {
@@ -219,6 +220,8 @@ function RouteComponent() {
             </Field>
           </FieldGroup>
         </Fieldset>
+
+        <GenericApiDocSettings />
 
         <div>
           <Button
