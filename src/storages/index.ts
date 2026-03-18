@@ -1,5 +1,13 @@
 import { Storage } from "@plasmohq/storage";
 import {
+  GENERIC_API_KEY_STORAGE_KEY,
+  GENERIC_BASE_URL_STORAGE_KEY,
+  GENERIC_MODEL_ID_STORAGE_KEY,
+  GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
+  GENERIC_PROVIDER_TYPE_STORAGE_KEY,
+  genericApiDocStorageDefaultValues
+} from "./generic-api-doc";
+import {
   resolveSwqaPromptTemplateMigration,
   SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
   SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY,
@@ -53,6 +61,21 @@ export const localStorageInitialValue = {
   },
   [SWQA_PROMPT_PURPOSE_STORAGE_KEY]: {
     defaultValue: "create"
+  },
+  [GENERIC_PROVIDER_TYPE_STORAGE_KEY]: {
+    defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROVIDER_TYPE_STORAGE_KEY]
+  },
+  [GENERIC_BASE_URL_STORAGE_KEY]: {
+    defaultValue: genericApiDocStorageDefaultValues[GENERIC_BASE_URL_STORAGE_KEY]
+  },
+  [GENERIC_MODEL_ID_STORAGE_KEY]: {
+    defaultValue: genericApiDocStorageDefaultValues[GENERIC_MODEL_ID_STORAGE_KEY]
+  },
+  [GENERIC_API_KEY_STORAGE_KEY]: {
+    defaultValue: genericApiDocStorageDefaultValues[GENERIC_API_KEY_STORAGE_KEY]
+  },
+  [GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]: {
+    defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   },
   config: {
     defaultValue: {
