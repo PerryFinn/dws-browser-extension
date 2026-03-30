@@ -79,6 +79,13 @@ export interface GenericCaptureContext {
   domSummary?: string | null;
 }
 
+export interface GenericSanitizedCapture {
+  visibleText: string;
+  previewText: string;
+  domSummary: string | null;
+  pickedAt: number;
+}
+
 export type GenericPickerMessage =
   | { type: "generic-picker:start" }
   | { type: "generic-picker:read-selection" }
