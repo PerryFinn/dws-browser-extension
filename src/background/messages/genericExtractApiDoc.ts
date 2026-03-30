@@ -14,9 +14,10 @@ import type {
 import { storage } from "@/storages";
 import { GENERIC_CAPTURE_SESSION_STORAGE_KEY, isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 
-export type GenericExtractApiDocReqBody =
-  | { config: GenericModelConfig; sessionId: string }
-  | { config: GenericModelConfig; context: unknown; sessionId?: string };
+export interface GenericExtractApiDocReqBody {
+  sessionId: string;
+  config: GenericModelConfig;
+}
 export type GenericExtractApiDocResBody =
   | { success: true; data: GenericExtractionResult }
   | { success: false; message: string };
@@ -75,7 +76,7 @@ const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, Gener
   res
 ) => {
   const config = req.body?.config;
-  const requestedSessionId = "sessionId" in (req.body ?? {}) ? req.body?.sessionId : undefined;
+  const requestedSessionId = req.body?.sessionId;
 
   if (!config) {
     res.send({ success: false, message: "缺少模型配置" });
@@ -87,9 +88,14 @@ const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, Gener
     return;
   }
 
+  if (!requestedSessionId) {
+    res.send({ success: false, message: "缺少采集会话 ID" });
+    return;
+  }
+
   const session = (await storage.get(GENERIC_CAPTURE_SESSION_STORAGE_KEY)) as GenericCaptureSession | undefined;
 
-  if (!session || (requestedSessionId && session.sessionId !== requestedSessionId)) {
+  if (!session || session.sessionId !== requestedSessionId) {
     res.send({ success: false, message: MISSING_CAPTURE_MESSAGE });
     return;
   }

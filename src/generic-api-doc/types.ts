@@ -92,7 +92,7 @@ export interface GenericExtractFromSessionInput {
 }
 
 export type GenericPickerMessage =
-  | { type: "generic-picker:start" }
+  | { type: "generic-picker:start"; sessionId?: string }
   | { type: "generic-picker:read-selection" }
   | { type: "generic-picker:reset" };
 

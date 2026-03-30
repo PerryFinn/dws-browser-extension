@@ -20,9 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { UpdateNotice } from "@/components/update-notice";
 import { buildGenericPrompt, resolveGenericPromptTemplateForCopy } from "@/generic-api-doc/prompt";
+import {
+  type GenericCaptureSession,
+  markGenericCaptureSessionPicked,
+  markGenericCaptureSessionPicking,
+  resetGenericCaptureSession
+} from "@/generic-api-doc/session";
+import { deriveGenericPanelState } from "@/generic-api-doc/session-view";
 import type {
   GenericCaptureContext,
-  GenericExtractionResult,
   GenericModelConfig,
   GenericPickerMessage,
   GenericPickerResponse
@@ -31,9 +37,11 @@ import { storage } from "@/storages";
 import {
   GENERIC_API_KEY_STORAGE_KEY,
   GENERIC_BASE_URL_STORAGE_KEY,
+  GENERIC_CAPTURE_SESSION_STORAGE_KEY,
   GENERIC_MODEL_ID_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
   GENERIC_PROVIDER_TYPE_STORAGE_KEY,
+  genericApiDocCaptureSessionStorageDefaultValue,
   genericApiDocStorageDefaultValues,
   isGenericModelConfigComplete
 } from "@/storages/generic-api-doc";
@@ -106,11 +114,17 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     { key: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
     genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   );
-  const [captureContext, setCaptureContext] = useState<GenericCaptureContext | null>(null);
-  const [result, setResult] = useState<GenericExtractionResult | null>(null);
-  const [error, setError] = useState<string | null>(pageError ?? null);
+  const [session, , sessionSetter] = useStorage<GenericCaptureSession>(
+    { key: GENERIC_CAPTURE_SESSION_STORAGE_KEY, instance: storage },
+    genericApiDocCaptureSessionStorageDefaultValue
+  );
+  const [transientError, setTransientError] = useState<string | null>(pageError ?? null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+
+  useEffect(() => {
+    setTransientError(pageError ?? null);
+  }, [pageError]);
 
   useEffect(() => {
     return () => {
@@ -136,6 +150,16 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const isConfigComplete = isGenericModelConfigComplete(modelConfig);
   const isPageSupported = !!tab?.id && !isUnsupportedTabUrl(tab.url);
   const promptTemplateForCopy = resolveGenericPromptTemplateForCopy(storedPromptTemplate);
+  const viewState = deriveGenericPanelState({
+    session,
+    tab,
+    isConfigComplete,
+    isCapturing,
+    isExtracting,
+    isPageSupported
+  });
+  const result = session.result;
+  const errorMessage = transientError ?? session.error;
 
   const promptText = useMemo(() => {
     if (!result) {
@@ -179,16 +203,9 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   };
 
   const ensureReadyToCapture = (): boolean => {
-    if (!isConfigComplete) {
-      const message = "通用提取模型配置未完成，请先到设置页填写";
-      setError(message);
-      toast.error(message);
-      return false;
-    }
-
     if (!isPageSupported) {
       const message = resolveTabMessageError(tab?.url, pageError ?? "当前页面不支持通用提取");
-      setError(message);
+      setTransientError(message);
       toast.error(message);
       return false;
     }
@@ -196,78 +213,106 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     return true;
   };
 
+  const persistCapturedContext = async (baseSession: GenericCaptureSession, context: GenericCaptureContext) => {
+    const nextSession = markGenericCaptureSessionPicked(baseSession, {
+      source: {
+        tabId: tab?.id ?? -1,
+        url: context.source.url,
+        title: context.source.title,
+        mode: context.source.mode
+      },
+      capture: {
+        visibleText: context.rawText,
+        previewText: context.previewText,
+        domSummary: context.domSummary ?? null,
+        pickedAt: Date.now()
+      }
+    });
+    // content script 仍返回旧结构，这里负责桥接成 session 快照，供后续 Task 5 接管。
+    await sessionSetter.setStoreValue(nextSession);
+  };
+
   const handleCapture = async (message: GenericPickerMessage) => {
     if (!ensureReadyToCapture()) {
       return;
     }
 
+    const pickingSession = markGenericCaptureSessionPicking(resetGenericCaptureSession(session));
+    await sessionSetter.setStoreValue(pickingSession);
     setIsCapturing(true);
-    setError(null);
+    setTransientError(null);
 
-    const response = await sendPickerMessage(message);
+    const response = await sendPickerMessage(
+      message.type === "generic-picker:start" ? { ...message, sessionId: pickingSession.sessionId } : message
+    );
 
     if (!response.success) {
+      await sessionSetter.setStoreValue(resetGenericCaptureSession(pickingSession));
       setIsCapturing(false);
-      setError(response.message);
+      setTransientError(response.message);
       toast.error(response.message);
       return;
     }
 
     if (!response.data) {
+      await sessionSetter.setStoreValue(resetGenericCaptureSession(pickingSession));
       setIsCapturing(false);
-      setError("页面未返回采集上下文");
+      setTransientError("页面未返回采集上下文");
       toast.error("页面未返回采集上下文");
       return;
     }
 
-    setCaptureContext(response.data);
-    setResult(null);
+    await persistCapturedContext(pickingSession, response.data);
     setIsCapturing(false);
     toast.success("已采集接口文档片段");
   };
 
   const handleExtract = async () => {
-    if (!captureContext) {
+    if (!session.capture || !session.source || viewState.isTabMismatch) {
       const message = "请先点选区域或读取当前选中文本";
-      setError(message);
+      setTransientError(message);
       toast.error(message);
       return;
     }
 
     if (!isConfigComplete) {
       const message = "通用提取模型配置未完成，请先到设置页填写";
-      setError(message);
+      setTransientError(message);
       toast.error(message);
       return;
     }
 
     setIsExtracting(true);
-    setError(null);
+    setTransientError(null);
 
     try {
       const response = await sendToBackground<GenericExtractApiDocReqBody, GenericExtractApiDocResBody>({
         name: "genericExtractApiDoc" as never,
         body: {
-          config: modelConfig,
-          context: captureContext
+          sessionId: session.sessionId,
+          config: modelConfig
         }
       });
 
       if (!response.success) {
-        setError(response.message);
+        setTransientError(response.message);
         toast.error(response.message);
         return;
       }
 
-      setResult(response.data);
       toast.success("通用提取完成");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+      setTransientError(message);
       toast.error(message);
     } finally {
       setIsExtracting(false);
     }
+  };
+
+  const handleClearSession = async () => {
+    await sessionSetter.setStoreValue(resetGenericCaptureSession(session));
+    setTransientError(null);
   };
 
   const handleCopyJson = async () => {
@@ -291,9 +336,6 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const handleOpenOptions = () => {
     void chrome.runtime.openOptionsPage();
   };
-
-  const disableCaptureActions = isCapturing || isExtracting;
-  const disableExtract = !captureContext || isCapturing || isExtracting;
 
   return (
     <div className="w-[520px] p-4 space-y-4">
@@ -328,14 +370,28 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
         <div className="font-semibold">{tab?.title || "当前页面"}</div>
         <div className="break-all text-gray-600">{tab?.url || "未读取到当前页面 URL"}</div>
         <div className={isConfigComplete ? "text-green-600" : "text-amber-600"}>
-          模型配置：{isConfigComplete ? "已完成" : "未完成，请先到设置页填写"}
+          模型配置：
+          {isConfigComplete
+            ? "已完成"
+            : viewState.canStartCaptureWithoutConfig
+              ? "未完成，但仍可先采集，提取前需到设置页填写"
+              : "未完成，请先到设置页填写"}
         </div>
       </div>
+
+      {viewState.isTabMismatch ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 space-y-2">
+          <div>当前采集内容来自其他标签页，不能直接提取。请清空后重新采集，或直接在当前页重新点选。</div>
+          <Button variant="outline" size="sm" onClick={() => void handleClearSession()}>
+            清空会话
+          </Button>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-2">
         <Button
           variant="default"
-          disabled={disableCaptureActions}
+          disabled={viewState.disableCaptureActions}
           loading={isCapturing}
           onClick={() => void handleCapture({ type: "generic-picker:start" })}
         >
@@ -344,14 +400,19 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
         </Button>
         <Button
           variant="default"
-          disabled={disableCaptureActions}
+          disabled={viewState.disableCaptureActions}
           loading={isCapturing}
           onClick={() => void handleCapture({ type: "generic-picker:read-selection" })}
         >
           <FileSearch className="h-4 w-4 mr-1" />
           读取选区
         </Button>
-        <Button variant="default" disabled={disableExtract} loading={isExtracting} onClick={() => void handleExtract()}>
+        <Button
+          variant="default"
+          disabled={viewState.disableExtract}
+          loading={isExtracting}
+          onClick={() => void handleExtract()}
+        >
           提取并生成
         </Button>
       </div>
@@ -359,14 +420,14 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <Label>采集预览</Label>
-          {captureContext ? (
+          {session.source ? (
             <span className="text-xs text-gray-500">
-              {captureContext.source.mode === "generic-dom" ? "DOM 点选" : "文本选区"}
+              {session.source.mode === "generic-dom" ? "DOM 点选" : "文本选区"}
             </span>
           ) : null}
         </div>
         <div className="min-h-24 rounded-md border bg-gray-50 p-2 text-xs text-gray-700 whitespace-pre-wrap">
-          {captureContext ? captureContext.previewText : "暂无采集内容，请先点选区域或读取当前选中文本"}
+          {viewState.previewText}
         </div>
       </div>
 
@@ -422,8 +483,8 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
         </div>
       </div>
 
-      {error ? (
-        <div className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">{error}</div>
+      {errorMessage ? (
+        <div className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">{errorMessage}</div>
       ) : null}
 
       <ToastContainer autoClose={1500} />

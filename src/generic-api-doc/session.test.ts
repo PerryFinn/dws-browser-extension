@@ -101,6 +101,8 @@ test("markGenericCaptureSessionDone 会写入 result 并保留 capture", () => {
 });
 
 test("关键非法 helper 调用会抛错", () => {
+  assert.throws(() => markGenericCaptureSessionExtracting(createEmptyGenericCaptureSession("session-7")));
+
   assert.throws(() =>
     markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-7"), {
       source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
