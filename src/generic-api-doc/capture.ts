@@ -1,5 +1,3 @@
-import { parseHTML } from "linkedom";
-
 import { buildGenericDomSummary } from "./dom-summary";
 import type { GenericCaptureContext } from "./types";
 
@@ -33,14 +31,10 @@ const buildDomSummaryFromHtmlSnippet = (htmlSnippet?: string): string | null => 
     return null;
   }
 
-  const { document } = parseHTML(`<section>${htmlSnippet}</section>`);
-  const element = document.querySelector("section") as HTMLElement | null;
+  const container = document.createElement("section");
+  container.innerHTML = htmlSnippet;
 
-  if (!element) {
-    return null;
-  }
-
-  return buildGenericDomSummary(element);
+  return buildGenericDomSummary(container);
 };
 
 const buildCaptureContext = ({

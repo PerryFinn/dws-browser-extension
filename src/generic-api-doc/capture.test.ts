@@ -1,15 +1,34 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
+import { parseHTML } from "linkedom";
 
 import { createDomCaptureContext, createSelectionCaptureContext } from "./capture";
 
+const withTestDocument = <T>(run: () => T): T => {
+  const previousDocument = globalThis.document;
+  const { document } = parseHTML("<html><body></body></html>");
+  Reflect.set(globalThis, "document", document);
+
+  try {
+    return run();
+  } finally {
+    if (previousDocument) {
+      Reflect.set(globalThis, "document", previousDocument);
+    } else {
+      Reflect.deleteProperty(globalThis, "document");
+    }
+  }
+};
+
 test("DOM 点选结果保留 url、title、mode、rawText 和 preview", () => {
-  const context = createDomCaptureContext({
-    url: "https://example.com/docs/user/detail",
-    title: "用户详情接口",
-    text: "接口名称：获取用户详情\n请求方法：GET\n请求路径：/api/user/detail",
-    htmlSnippet: "<section><h2>获取用户详情</h2></section>"
-  });
+  const context = withTestDocument(() =>
+    createDomCaptureContext({
+      url: "https://example.com/docs/user/detail",
+      title: "用户详情接口",
+      text: "接口名称：获取用户详情\n请求方法：GET\n请求路径：/api/user/detail",
+      htmlSnippet: "<section><h2>获取用户详情</h2></section>"
+    })
+  );
 
   assert.equal(context.source.url, "https://example.com/docs/user/detail");
   assert.equal(context.source.title, "用户详情接口");
@@ -48,12 +67,14 @@ test("过长文本会被截断，但保留页面信息", () => {
 });
 
 test("点选模式优先保留目标节点文本，而不是整页噪声", () => {
-  const context = createDomCaptureContext({
-    url: "https://example.com/docs/user/detail",
-    title: "用户详情接口",
-    text: "接口名称：获取用户详情\n请求路径：/api/user/detail",
-    htmlSnippet: "<main>整页其它内容</main>"
-  });
+  const context = withTestDocument(() =>
+    createDomCaptureContext({
+      url: "https://example.com/docs/user/detail",
+      title: "用户详情接口",
+      text: "接口名称：获取用户详情\n请求路径：/api/user/detail",
+      htmlSnippet: "<main>整页其它内容</main>"
+    })
+  );
 
   assert.match(context.rawText, /获取用户详情/);
   assert.doesNotMatch(context.rawText, /整页其它内容/);
