@@ -33,6 +33,7 @@ dist/
 # plasmo - https://www.plasmo.com
 .plasmo
 /.superpowers/
+.worktrees/
 
 # bpp - http://bpp.browser.market/
 keys.json
