@@ -5,11 +5,11 @@ import {
   canTransitionGenericCaptureSession,
   createEmptyGenericCaptureSession,
   isGenericCaptureSessionBoundToTab,
-  markGenericCaptureSessionError,
   markGenericCaptureSessionDone,
+  markGenericCaptureSessionError,
   markGenericCaptureSessionExtracting,
-  markGenericCaptureSessionPicking,
   markGenericCaptureSessionPicked,
+  markGenericCaptureSessionPicking,
   resetGenericCaptureSession
 } from "./session";
 
@@ -37,8 +37,8 @@ test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 err
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),
     {
-    source: { tabId: 9, url: "https://example.com", title: "Example", mode: "generic-dom" },
-    capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: "headings: Users", pickedAt: 1 }
+      source: { tabId: 9, url: "https://example.com", title: "Example", mode: "generic-dom" },
+      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: "headings: Users", pickedAt: 1 }
     }
   );
   assert.equal(session.status, "picked");
@@ -86,13 +86,10 @@ test("markGenericCaptureSessionDone 会写入 result 并保留 capture", () => {
   };
   const session = markGenericCaptureSessionDone(
     markGenericCaptureSessionExtracting(
-      markGenericCaptureSessionPicked(
-        markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-6")),
-        {
-          source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-          capture
-        }
-      )
+      markGenericCaptureSessionPicked(markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-6")), {
+        source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
+        capture
+      })
     ),
     result
   );
@@ -148,25 +145,22 @@ test("关键非法 helper 调用会抛错", () => {
     })
   );
 
-  const done = markGenericCaptureSessionDone(
-    markGenericCaptureSessionExtracting(picked),
-    {
-      source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" as const },
-      endpoint: { name: "列表", path: "/api/users", method: "GET" },
-      request: {
-        pathParams: [],
-        queryParams: [],
-        headers: [],
-        body: null,
-        auth: null
-      },
-      response: {
-        successBody: null,
-        errorNotes: null
-      },
-      uncertainties: []
-    }
-  );
+  const done = markGenericCaptureSessionDone(markGenericCaptureSessionExtracting(picked), {
+    source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" as const },
+    endpoint: { name: "列表", path: "/api/users", method: "GET" },
+    request: {
+      pathParams: [],
+      queryParams: [],
+      headers: [],
+      body: null,
+      auth: null
+    },
+    response: {
+      successBody: null,
+      errorNotes: null
+    },
+    uncertainties: []
+  });
 
   assert.throws(() => markGenericCaptureSessionPicking(done));
 });
