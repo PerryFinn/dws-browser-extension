@@ -65,6 +65,16 @@ const buildSanitizedCapture = (input: { visibleText: string; domSummary: string 
   };
 };
 
+const assertNonEmptyVisibleText = (value: string, mode: GenericExtractionSource["mode"]): string => {
+  const normalizedVisibleText = normalizeVisibleText(value);
+
+  if (!normalizedVisibleText) {
+    throw new Error(mode === "generic-selection" ? "当前页面没有可用的选中文本" : "未从目标区域读取到有效文本");
+  }
+
+  return normalizedVisibleText;
+};
+
 export const sanitizePickedElement = (input: {
   element: HTMLElement;
   url: string;
@@ -75,6 +85,7 @@ export const sanitizePickedElement = (input: {
 } => {
   const clone = input.element.cloneNode(true) as HTMLElement;
   removeNoisyNodes(clone);
+  const visibleText = assertNonEmptyVisibleText(clone.textContent ?? "", "generic-dom");
 
   return {
     source: buildCaptureSource({
@@ -83,7 +94,7 @@ export const sanitizePickedElement = (input: {
       mode: "generic-dom"
     }),
     capture: buildSanitizedCapture({
-      visibleText: clone.textContent ?? "",
+      visibleText,
       domSummary: buildGenericDomSummary(clone)
     })
   };
@@ -97,7 +108,7 @@ export const sanitizeSelectionText = (input: {
   source: GenericExtractionSource;
   capture: GenericSanitizedCapture;
 } => {
-  const visibleText = normalizeVisibleText(input.text);
+  const visibleText = assertNonEmptyVisibleText(input.text, "generic-selection");
 
   return {
     source: buildCaptureSource({

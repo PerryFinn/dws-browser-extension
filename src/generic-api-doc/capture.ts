@@ -1,3 +1,6 @@
+import { parseHTML } from "linkedom";
+
+import { buildGenericDomSummary } from "./dom-summary";
 import type { GenericCaptureContext } from "./types";
 
 const MAX_CAPTURE_TEXT_LENGTH = 6000;
@@ -23,6 +26,21 @@ const truncateWithEllipsis = (value: string, maxLength: number): string => {
 
 const createPreviewText = (value: string): string => {
   return truncateWithEllipsis(value.replace(/\s+/g, " ").trim(), MAX_PREVIEW_TEXT_LENGTH);
+};
+
+const buildDomSummaryFromHtmlSnippet = (htmlSnippet?: string): string | null => {
+  if (!htmlSnippet?.trim()) {
+    return null;
+  }
+
+  const { document } = parseHTML(`<section>${htmlSnippet}</section>`);
+  const element = document.querySelector("section") as HTMLElement | null;
+
+  if (!element) {
+    return null;
+  }
+
+  return buildGenericDomSummary(element);
 };
 
 const buildCaptureContext = ({
@@ -78,6 +96,6 @@ export const createDomCaptureContext = (input: {
     title: input.title,
     text: input.text,
     mode: "generic-dom",
-    domSummary: input.htmlSnippet ?? null
+    domSummary: buildDomSummaryFromHtmlSnippet(input.htmlSnippet)
   });
 };

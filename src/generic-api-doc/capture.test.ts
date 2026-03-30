@@ -16,7 +16,8 @@ test("DOM 点选结果保留 url、title、mode、rawText 和 preview", () => {
   assert.equal(context.source.mode, "generic-dom");
   assert.match(context.rawText, /请求路径：\/api\/user\/detail/);
   assert.match(context.previewText, /获取用户详情/);
-  assert.equal(context.domSummary, "<section><h2>获取用户详情</h2></section>");
+  assert.match(context.domSummary ?? "", /headings: 获取用户详情/);
+  assert.doesNotMatch(context.domSummary ?? "", /<section>/);
 });
 
 test("文本选区为空时抛出明确错误", () => {

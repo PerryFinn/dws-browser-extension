@@ -38,3 +38,29 @@ test("sanitizeSelectionText 为选区模式生成无 DOM 摘要的最小 capture
   assert.equal(result.capture.visibleText, "请求方法：GET\n请求路径：/api/user/detail");
   assert.equal(result.capture.domSummary, null);
 });
+
+test("sanitizePickedElement 在空文本时抛出明确错误", () => {
+  const { document } = parseHTML(`<section><button>复制代码</button></section>`);
+
+  assert.throws(
+    () =>
+      sanitizePickedElement({
+        element: document.querySelector("section") as HTMLElement,
+        url: "https://example.com/users",
+        title: "Users"
+      }),
+    /未从目标区域读取到有效文本/
+  );
+});
+
+test("sanitizeSelectionText 在空文本时抛出明确错误", () => {
+  assert.throws(
+    () =>
+      sanitizeSelectionText({
+        text: "   ",
+        url: "https://example.com/users",
+        title: "Users"
+      }),
+    /当前页面没有可用的选中文本/
+  );
+});
