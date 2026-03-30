@@ -6,6 +6,8 @@ import {
   createEmptyGenericCaptureSession,
   isGenericCaptureSessionBoundToTab,
   markGenericCaptureSessionError,
+  markGenericCaptureSessionExtracting,
+  markGenericCaptureSessionPicking,
   markGenericCaptureSessionPicked,
   resetGenericCaptureSession
 } from "./session";
@@ -22,15 +24,22 @@ test("createEmptyGenericCaptureSession 返回 idle 默认值", () => {
 
 test("只允许合法状态迁移", () => {
   assert.equal(canTransitionGenericCaptureSession("idle", "picking"), true);
+  assert.equal(canTransitionGenericCaptureSession("idle", "picked"), false);
+  assert.equal(canTransitionGenericCaptureSession("picking", "error"), false);
   assert.equal(canTransitionGenericCaptureSession("picking", "done"), false);
+  assert.equal(canTransitionGenericCaptureSession("extracting", "idle"), false);
+  assert.equal(canTransitionGenericCaptureSession("done", "idle"), false);
   assert.equal(canTransitionGenericCaptureSession("error", "extracting"), true);
 });
 
 test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 error", () => {
-  const session = markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-2"), {
+  const session = markGenericCaptureSessionPicked(
+    markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),
+    {
     source: { tabId: 9, url: "https://example.com", title: "Example", mode: "generic-dom" },
     capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: "headings: Users", pickedAt: 1 }
-  });
+    }
+  );
   assert.equal(session.status, "picked");
   assert.equal(session.source?.url, "https://example.com");
   assert.equal(session.capture?.domSummary, "headings: Users");
@@ -38,21 +47,27 @@ test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 err
 });
 
 test("markGenericCaptureSessionError 会保留已有 capture", () => {
-  const base = markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-3"), {
+  const base = markGenericCaptureSessionPicked(
+    markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-3")),
+    {
     source: { tabId: 9, url: "https://example.com", title: "Example", mode: "generic-dom" },
     capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
-  });
-  const session = markGenericCaptureSessionError(base, "provider timeout");
+    }
+  );
+  const session = markGenericCaptureSessionError(markGenericCaptureSessionExtracting(base), "provider timeout");
   assert.equal(session.status, "error");
   assert.equal(session.capture?.visibleText, "GET /users");
   assert.equal(session.error, "provider timeout");
 });
 
 test("resetGenericCaptureSession 会回到初始 idle 状态", () => {
-  const base = markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-4"), {
+  const base = markGenericCaptureSessionPicked(
+    markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-4")),
+    {
     source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
     capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
-  });
+    }
+  );
   const session = resetGenericCaptureSession(base);
   assert.equal(session.sessionId, "session-4");
   assert.equal(session.status, "idle");
@@ -63,10 +78,13 @@ test("resetGenericCaptureSession 会回到初始 idle 状态", () => {
 });
 
 test("isGenericCaptureSessionBoundToTab 会校验 tabId 与 url", () => {
-  const session = markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-5"), {
+  const session = markGenericCaptureSessionPicked(
+    markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-5")),
+    {
     source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
     capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
-  });
+    }
+  );
   assert.equal(isGenericCaptureSessionBoundToTab(session, { id: 9, url: "https://example.com/users" }), true);
   assert.equal(isGenericCaptureSessionBoundToTab(session, { id: 10, url: "https://example.com/users" }), false);
 });
