@@ -1,16 +1,29 @@
 import type { PlasmoCSConfig } from "plasmo";
 import { useEffect } from "react";
-import { createDomCaptureContext, createSelectionCaptureContext } from "@/generic-api-doc/capture";
-import type { GenericPickerMessage, GenericPickerResponse } from "@/generic-api-doc/types";
+import { resolveGenericPickerTabId } from "@/generic-api-doc/picker-message";
+import { sanitizePickedElement, sanitizeSelectionText } from "@/generic-api-doc/sanitize";
+import {
+  type GenericCaptureSession,
+  markGenericCaptureSessionError,
+  markGenericCaptureSessionPicked
+} from "@/generic-api-doc/session";
+import type { GenericPickerMessage, GenericPickerResponse, GenericSanitizedCapture } from "@/generic-api-doc/types";
+import { storage } from "@/storages";
+import { GENERIC_CAPTURE_SESSION_STORAGE_KEY } from "@/storages/generic-api-doc";
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
   run_at: "document_idle"
 };
 
+// 页面采集不能依赖 popup 生命周期，因为用户一旦回到页面点击，popup 就会自动关闭，只能由页面脚本接管并直接写 session。
+
 const PICKER_OVERLAY_ID = "__generic-api-doc-picker-overlay__";
+const PICKER_NOTICE_ID = "__generic-api-doc-picker-notice__";
+const PICKER_SUCCESS_NOTICE = "已采集接口文档片段，请重新打开插件继续提取";
 
 let activePickerCleanup: (() => void) | null = null;
+let activeNoticeTimer: number | null = null;
 
 const getPickerOverlay = (): HTMLDivElement => {
   let overlay = document.getElementById(PICKER_OVERLAY_ID) as HTMLDivElement | null;
@@ -44,6 +57,42 @@ const hidePickerOverlay = () => {
   }
 
   overlay.style.display = "none";
+};
+
+const showPickerNotice = (message: string) => {
+  let notice = document.getElementById(PICKER_NOTICE_ID) as HTMLDivElement | null;
+
+  if (!notice) {
+    notice = document.createElement("div");
+    notice.id = PICKER_NOTICE_ID;
+    Object.assign(notice.style, {
+      position: "fixed",
+      top: "20px",
+      right: "20px",
+      zIndex: "2147483647",
+      maxWidth: "320px",
+      padding: "12px 16px",
+      borderRadius: "12px",
+      background: "rgba(15, 23, 42, 0.92)",
+      color: "#f8fafc",
+      fontSize: "14px",
+      lineHeight: "20px",
+      boxShadow: "0 10px 30px rgba(15, 23, 42, 0.28)"
+    });
+    document.documentElement.append(notice);
+  }
+
+  notice.textContent = message;
+  notice.style.display = "block";
+
+  if (activeNoticeTimer) {
+    window.clearTimeout(activeNoticeTimer);
+  }
+
+  activeNoticeTimer = window.setTimeout(() => {
+    notice?.remove();
+    activeNoticeTimer = null;
+  }, 2400);
 };
 
 const updatePickerOverlay = (target: HTMLElement | null) => {
@@ -90,96 +139,152 @@ const cleanupActivePicker = () => {
   hidePickerOverlay();
 };
 
-const startDomPicker = (): Promise<GenericPickerResponse> => {
+const readActiveGenericCaptureSession = async (sessionId: string): Promise<GenericCaptureSession> => {
+  const session = (await storage.get(GENERIC_CAPTURE_SESSION_STORAGE_KEY)) as GenericCaptureSession | undefined;
+
+  if (!session || session.sessionId !== sessionId) {
+    throw new Error("当前采集会话已失效，请重新打开插件后重试");
+  }
+
+  return session;
+};
+
+const persistPickedSession = async (input: {
+  sessionId: string;
+  tabId?: number;
+  source: { url: string; title: string; mode: "generic-dom" | "generic-selection" };
+  capture: GenericSanitizedCapture;
+}) => {
+  const session = await readActiveGenericCaptureSession(input.sessionId);
+
+  if (typeof input.tabId !== "number") {
+    throw new Error("未找到当前标签页信息");
+  }
+
+  const nextSession = markGenericCaptureSessionPicked(session, {
+    source: {
+      tabId: input.tabId,
+      url: input.source.url,
+      title: input.source.title,
+      mode: input.source.mode
+    },
+    capture: input.capture
+  });
+
+  await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, nextSession);
+};
+
+const persistPickerError = async (sessionId: string, message: string) => {
+  try {
+    const session = await readActiveGenericCaptureSession(sessionId);
+    const nextSession = markGenericCaptureSessionError(session, message);
+    await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, nextSession);
+  } catch (error) {
+    console.warn("[generic-api-doc-picker] failed to persist error", error);
+  }
+};
+
+const startDomPicker = (handlers: {
+  onPicked: (target: HTMLElement) => void | Promise<void>;
+  onCancel: (message: string) => void | Promise<void>;
+}) => {
   cleanupActivePicker();
 
-  return new Promise((resolve) => {
-    let currentTarget: HTMLElement | null = null;
+  let currentTarget: HTMLElement | null = null;
 
-    const finish = (response: GenericPickerResponse) => {
-      cleanup();
-      resolve(response);
-    };
+  const finish = (task: void | Promise<void>) => {
+    cleanup();
+    void task;
+  };
 
-    const handleMouseMove = (event: MouseEvent) => {
-      currentTarget = resolvePickTarget(event.target);
-      updatePickerOverlay(currentTarget);
-    };
+  const handleMouseMove = (event: MouseEvent) => {
+    currentTarget = resolvePickTarget(event.target);
+    updatePickerOverlay(currentTarget);
+  };
 
-    const handleClick = (event: MouseEvent) => {
-      if (!currentTarget) {
-        finish({ success: false, message: "未找到可提取的文档区域" });
-        return;
-      }
+  const handleClick = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
 
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
+    if (!currentTarget) {
+      finish(handlers.onCancel("未找到可提取的文档区域"));
+      return;
+    }
 
+    finish(handlers.onPicked(currentTarget));
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      finish(handlers.onCancel("已取消点选"));
+    }
+  };
+
+  const handleViewportChange = () => {
+    updatePickerOverlay(currentTarget);
+  };
+
+  const cleanup = () => {
+    document.removeEventListener("mousemove", handleMouseMove, true);
+    document.removeEventListener("click", handleClick, true);
+    document.removeEventListener("keydown", handleKeyDown, true);
+    window.removeEventListener("scroll", handleViewportChange, true);
+    window.removeEventListener("resize", handleViewportChange);
+    hidePickerOverlay();
+    activePickerCleanup = null;
+  };
+
+  activePickerCleanup = cleanup;
+
+  document.addEventListener("mousemove", handleMouseMove, true);
+  document.addEventListener("click", handleClick, true);
+  document.addEventListener("keydown", handleKeyDown, true);
+  window.addEventListener("scroll", handleViewportChange, true);
+  window.addEventListener("resize", handleViewportChange);
+};
+
+const startSessionBackedPicker = (sessionId: string, tabId?: number) => {
+  startDomPicker({
+    async onPicked(target) {
       try {
-        const context = createDomCaptureContext({
+        const result = sanitizePickedElement({
+          element: target,
           url: window.location.href,
-          title: document.title,
-          text: currentTarget.innerText || currentTarget.textContent || "",
-          htmlSnippet: currentTarget.outerHTML
+          title: document.title
         });
-
-        finish({ success: true, data: context });
+        await persistPickedSession({
+          sessionId,
+          tabId,
+          source: result.source,
+          capture: result.capture
+        });
+        showPickerNotice(PICKER_SUCCESS_NOTICE);
       } catch (error) {
-        finish({
-          success: false,
-          message: error instanceof Error ? error.message : String(error)
-        });
+        await persistPickerError(sessionId, error instanceof Error ? error.message : String(error));
       }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        finish({ success: false, message: "已取消点选" });
-      }
-    };
-
-    const handleViewportChange = () => {
-      updatePickerOverlay(currentTarget);
-    };
-
-    const cleanup = () => {
-      document.removeEventListener("mousemove", handleMouseMove, true);
-      document.removeEventListener("click", handleClick, true);
-      document.removeEventListener("keydown", handleKeyDown, true);
-      window.removeEventListener("scroll", handleViewportChange, true);
-      window.removeEventListener("resize", handleViewportChange);
-      hidePickerOverlay();
-      activePickerCleanup = null;
-    };
-
-    activePickerCleanup = cleanup;
-
-    document.addEventListener("mousemove", handleMouseMove, true);
-    document.addEventListener("click", handleClick, true);
-    document.addEventListener("keydown", handleKeyDown, true);
-    window.addEventListener("scroll", handleViewportChange, true);
-    window.addEventListener("resize", handleViewportChange);
+    },
+    async onCancel(message) {
+      await persistPickerError(sessionId, message);
+    }
   });
 };
 
-const readSelection = (): GenericPickerResponse => {
+const readSelectionIntoSession = async (sessionId: string, tabId?: number) => {
   try {
-    const context = createSelectionCaptureContext({
+    const result = sanitizeSelectionText({
+      text: window.getSelection()?.toString() ?? "",
       url: window.location.href,
-      title: document.title,
-      text: window.getSelection()?.toString() ?? ""
+      title: document.title
     });
-
-    return {
-      success: true,
-      data: context
-    };
+    await persistPickedSession({
+      sessionId,
+      tabId,
+      source: result.source,
+      capture: result.capture
+    });
   } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
-    };
+    await persistPickerError(sessionId, error instanceof Error ? error.message : String(error));
   }
 };
 
@@ -210,14 +315,22 @@ function GenericApiDocPicker() {
         return undefined;
       }
 
-      if (message.type === "generic-picker:read-selection") {
-        sendResponse(readSelection());
+      if (!message.sessionId) {
+        sendResponse({ success: false, message: "缺少采集会话 ID" });
         return undefined;
       }
 
-      void startDomPicker().then(sendResponse);
+      sendResponse({ success: true });
 
-      return true;
+      const targetTabId = resolveGenericPickerTabId(message);
+
+      if (message.type === "generic-picker:read-selection") {
+        void readSelectionIntoSession(message.sessionId, targetTabId);
+        return undefined;
+      }
+
+      startSessionBackedPicker(message.sessionId, targetTabId);
+      return undefined;
     };
 
     chrome.runtime.onMessage.addListener(listener);
@@ -225,6 +338,11 @@ function GenericApiDocPicker() {
     return () => {
       chrome.runtime.onMessage.removeListener(listener);
       cleanupActivePicker();
+      if (activeNoticeTimer) {
+        window.clearTimeout(activeNoticeTimer);
+        activeNoticeTimer = null;
+      }
+      document.getElementById(PICKER_NOTICE_ID)?.remove();
     };
   }, []);
 

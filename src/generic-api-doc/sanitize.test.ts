@@ -27,6 +27,29 @@ test("sanitizePickedElement 过滤按钮文案、隐藏文本和 data 属性噪�
   assert.equal(element.getAttribute("data-secret"), "abc");
 });
 
+test("sanitizePickedElement 生成最小 source、preview 与结构摘要，不暴露原始 HTML", () => {
+  const { document } = parseHTML(`
+    <section>
+      <h2>获取用户详情</h2>
+      <p>请求方法：GET</p>
+      <p>请求路径：/api/user/detail</p>
+    </section>
+  `);
+  const result = sanitizePickedElement({
+    element: document.querySelector("section") as HTMLElement,
+    url: "https://example.com/docs/user/detail",
+    title: "用户详情接口"
+  });
+
+  assert.equal(result.source.url, "https://example.com/docs/user/detail");
+  assert.equal(result.source.title, "用户详情接口");
+  assert.equal(result.source.mode, "generic-dom");
+  assert.match(result.capture.previewText, /获取用户详情/);
+  assert.match(result.capture.visibleText, /请求路径：\/api\/user\/detail/);
+  assert.match(result.capture.domSummary ?? "", /headings: 获取用户详情/);
+  assert.doesNotMatch(result.capture.domSummary ?? "", /<section>/);
+});
+
 test("sanitizeSelectionText 为选区模式生成无 DOM 摘要的最小 capture", () => {
   const result = sanitizeSelectionText({
     text: "  请求方法：GET\n请求路径：/api/user/detail  ",
@@ -37,6 +60,17 @@ test("sanitizeSelectionText 为选区模式生成无 DOM 摘要的最小 capture
   assert.equal(result.source.mode, "generic-selection");
   assert.equal(result.capture.visibleText, "请求方法：GET\n请求路径：/api/user/detail");
   assert.equal(result.capture.domSummary, null);
+});
+
+test("sanitizeSelectionText 会压平超长预览文本", () => {
+  const result = sanitizeSelectionText({
+    text: "字段说明 ".repeat(100),
+    url: "https://example.com/users",
+    title: "Users"
+  });
+
+  assert.equal(result.source.mode, "generic-selection");
+  assert.ok(result.capture.previewText.length <= 240);
 });
 
 test("sanitizePickedElement 在空文本时抛出明确错误", () => {

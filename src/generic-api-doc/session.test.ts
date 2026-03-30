@@ -26,11 +26,52 @@ test("createEmptyGenericCaptureSession 返回 idle 默认值", () => {
 test("只允许合法状态迁移", () => {
   assert.equal(canTransitionGenericCaptureSession("idle", "picking"), true);
   assert.equal(canTransitionGenericCaptureSession("idle", "picked"), false);
-  assert.equal(canTransitionGenericCaptureSession("picking", "error"), false);
+  assert.equal(canTransitionGenericCaptureSession("picking", "error"), true);
   assert.equal(canTransitionGenericCaptureSession("picking", "done"), false);
   assert.equal(canTransitionGenericCaptureSession("extracting", "idle"), false);
   assert.equal(canTransitionGenericCaptureSession("done", "idle"), false);
+  assert.equal(canTransitionGenericCaptureSession("done", "picking"), true);
   assert.equal(canTransitionGenericCaptureSession("error", "extracting"), true);
+});
+
+test("markGenericCaptureSessionPicking 允许从 done 重启并保留旧 capture", () => {
+  const done = markGenericCaptureSessionDone(
+    markGenericCaptureSessionExtracting(
+      markGenericCaptureSessionPicked(markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-9")), {
+        source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
+        capture: {
+          visibleText: "GET /users",
+          previewText: "GET /users",
+          domSummary: "headings: Users",
+          pickedAt: 1
+        }
+      })
+    ),
+    {
+      source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" as const },
+      endpoint: { name: "列表", path: "/api/users", method: "GET" },
+      request: {
+        pathParams: [],
+        queryParams: [],
+        headers: [],
+        body: null,
+        auth: null
+      },
+      response: {
+        successBody: null,
+        errorNotes: null
+      },
+      uncertainties: []
+    }
+  );
+
+  const restarted = markGenericCaptureSessionPicking(done);
+
+  assert.equal(restarted.status, "picking");
+  assert.equal(restarted.capture?.previewText, "GET /users");
+  assert.equal(restarted.source?.url, "https://example.com/users");
+  assert.equal(restarted.result, null);
+  assert.equal(restarted.error, null);
 });
 
 test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 error", () => {
@@ -164,7 +205,9 @@ test("关键非法 helper 调用会抛错", () => {
     uncertainties: []
   });
 
-  assert.throws(() => markGenericCaptureSessionPicking(done));
+  const restarted = markGenericCaptureSessionPicking(done);
+  assert.equal(restarted.status, "picking");
+  assert.equal(restarted.capture?.visibleText, "GET /users");
 });
 
 test("resetGenericCaptureSession 会回到初始 idle 状态", () => {

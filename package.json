@@ -6,7 +6,7 @@
   "author": "chenpengfei@cvte.com",
   "scripts": {
     "dev": "conc \"tsr watch\" \"plasmo dev\"",
-    "build-zip": "tsr generate && plasmo build -- --zip",
+    "build-zip": "node scripts/build-zip.js",
     "build": "tsx scripts/build-upload.ts",
     "package": "plasmo package",
     "lint": "biome check --write .",

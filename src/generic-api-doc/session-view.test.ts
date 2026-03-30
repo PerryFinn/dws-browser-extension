@@ -70,3 +70,22 @@ test("持久化的 extracting 状态仍然禁用采集与提取", () => {
   assert.equal(state.disableExtract, true);
   assert.equal(state.canStartCaptureWithoutConfig, false);
 });
+
+test("重新进入 picking 时仍显示旧 previewText，避免失败后丢失上下文", () => {
+  const session = markGenericCaptureSessionPicking(
+    markGenericCaptureSessionPicked(markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-5")), {
+      source: { tabId: 1, url: "https://example.com", title: "Users", mode: "generic-dom" },
+      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
+    })
+  );
+
+  const state = deriveGenericPanelState({
+    session,
+    tab: { id: 1, url: "https://example.com" } as chrome.tabs.Tab,
+    isConfigComplete: true
+  });
+
+  assert.equal(state.previewText, "GET /users");
+  assert.equal(state.disableCaptureActions, true);
+  assert.equal(state.disableExtract, true);
+});

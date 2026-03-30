@@ -10,7 +10,7 @@ import {
   Settings2,
   Sparkles
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import type {
   GenericExtractApiDocReqBody,
@@ -19,20 +19,15 @@ import type {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { UpdateNotice } from "@/components/update-notice";
+import { bindGenericPickerSession } from "@/generic-api-doc/picker-message";
 import { buildGenericPrompt, resolveGenericPromptTemplateForCopy } from "@/generic-api-doc/prompt";
 import {
   type GenericCaptureSession,
-  markGenericCaptureSessionPicked,
   markGenericCaptureSessionPicking,
   resetGenericCaptureSession
 } from "@/generic-api-doc/session";
 import { deriveGenericPanelState } from "@/generic-api-doc/session-view";
-import type {
-  GenericCaptureContext,
-  GenericModelConfig,
-  GenericPickerMessage,
-  GenericPickerResponse
-} from "@/generic-api-doc/types";
+import type { GenericModelConfig, GenericPickerMessage, GenericPickerResponse } from "@/generic-api-doc/types";
 import { storage } from "@/storages";
 import {
   GENERIC_API_KEY_STORAGE_KEY,
@@ -121,6 +116,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const [transientError, setTransientError] = useState<string | null>(pageError ?? null);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const shouldResetPickerOnUnmountRef = useRef(true);
 
   useEffect(() => {
     setTransientError(pageError ?? null);
@@ -128,7 +124,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
 
   useEffect(() => {
     return () => {
-      if (tab?.id) {
+      if (tab?.id && shouldResetPickerOnUnmountRef.current) {
         void chrome.tabs
           .sendMessage(tab.id, { type: "generic-picker:reset" } satisfies GenericPickerMessage)
           .catch(() => {});
@@ -213,58 +209,33 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     return true;
   };
 
-  const persistCapturedContext = async (baseSession: GenericCaptureSession, context: GenericCaptureContext) => {
-    const nextSession = markGenericCaptureSessionPicked(baseSession, {
-      source: {
-        tabId: tab?.id ?? -1,
-        url: context.source.url,
-        title: context.source.title,
-        mode: context.source.mode
-      },
-      capture: {
-        visibleText: context.rawText,
-        previewText: context.previewText,
-        domSummary: context.domSummary ?? null,
-        pickedAt: Date.now()
-      }
-    });
-    // content script 仍返回旧结构，这里负责桥接成 session 快照，供后续 Task 5 接管。
-    await sessionSetter.setStoreValue(nextSession);
-  };
-
   const handleCapture = async (message: GenericPickerMessage) => {
     if (!ensureReadyToCapture()) {
       return;
     }
 
-    const pickingSession = markGenericCaptureSessionPicking(resetGenericCaptureSession(session));
+    const previousSession = session;
+    const pickingSession = markGenericCaptureSessionPicking(session);
     await sessionSetter.setStoreValue(pickingSession);
     setIsCapturing(true);
     setTransientError(null);
 
-    const response = await sendPickerMessage(
-      message.type === "generic-picker:start" ? { ...message, sessionId: pickingSession.sessionId } : message
-    );
+    const response = await sendPickerMessage(bindGenericPickerSession(message, pickingSession.sessionId, tab?.id));
 
     if (!response.success) {
-      await sessionSetter.setStoreValue(resetGenericCaptureSession(pickingSession));
+      await sessionSetter.setStoreValue(previousSession);
       setIsCapturing(false);
       setTransientError(response.message);
       toast.error(response.message);
       return;
     }
 
-    if (!response.data) {
-      await sessionSetter.setStoreValue(resetGenericCaptureSession(pickingSession));
-      setIsCapturing(false);
-      setTransientError("页面未返回采集上下文");
-      toast.error("页面未返回采集上下文");
-      return;
-    }
-
-    await persistCapturedContext(pickingSession, response.data);
     setIsCapturing(false);
-    toast.success("已采集接口文档片段");
+
+    if (message.type === "generic-picker:start") {
+      shouldResetPickerOnUnmountRef.current = false;
+      window.close();
+    }
   };
 
   const handleExtract = async () => {

@@ -28,11 +28,11 @@ export interface GenericCaptureSession {
 // resetGenericCaptureSession 直接回到 idle，不经过这张迁移表。
 const allowedTransitions: Record<GenericCaptureSessionStatus, GenericCaptureSessionStatus[]> = {
   idle: ["picking"],
-  picking: ["picked"],
-  picked: ["extracting"],
+  picking: ["picked", "error"],
+  picked: ["extracting", "picking"],
   extracting: ["done", "error"],
-  done: [],
-  error: ["extracting"]
+  done: ["picking"],
+  error: ["extracting", "picking"]
 };
 
 export const createEmptyGenericCaptureSession = (sessionId: string): GenericCaptureSession => {
