@@ -59,6 +59,7 @@ const buildSanitizedCapture = (input: { visibleText: string; domSummary: string 
 
   return {
     visibleText: normalizedVisibleText,
+    // previewText 只服务于 popup 回显，长度要稳定可控，避免把整段正文重新塞回 UI。
     previewText: createPreviewText(normalizedVisibleText),
     domSummary: input.domSummary,
     pickedAt: Date.now()
@@ -83,6 +84,7 @@ export const sanitizePickedElement = (input: {
   source: GenericExtractionSource;
   capture: GenericSanitizedCapture;
 } => {
+  // 这里输出的是“最小必要上下文”，后续送模只使用清洗后的文本和结构摘要，不再传原始 outerHTML。
   const clone = input.element.cloneNode(true) as HTMLElement;
   removeNoisyNodes(clone);
   const visibleText = assertNonEmptyVisibleText(clone.textContent ?? "", "generic-dom");

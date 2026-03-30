@@ -215,6 +215,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     }
 
     const previousSession = session;
+    // popup 先把 session 标记成 picking，再把 sessionId 交给页面脚本接管，避免 popup 关闭后状态丢失。
     const pickingSession = markGenericCaptureSessionPicking(session);
     await sessionSetter.setStoreValue(pickingSession);
     setIsCapturing(true);
@@ -233,6 +234,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     setIsCapturing(false);
 
     if (message.type === "generic-picker:start") {
+      // 点选模式下 popup 一定会因为回到页面而关闭，这里显式避免卸载时把刚启动的 picker 重置掉。
       shouldResetPickerOnUnmountRef.current = false;
       window.close();
     }

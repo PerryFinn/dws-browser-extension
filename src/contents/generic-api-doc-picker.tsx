@@ -155,6 +155,7 @@ const persistPickedSession = async (input: {
   source: { url: string; title: string; mode: "generic-dom" | "generic-selection" };
   capture: GenericSanitizedCapture;
 }) => {
+  // 页面脚本只允许写回当前激活的 session，避免旧 popup 或旧页面结果串写到新的采集流程里。
   const session = await readActiveGenericCaptureSession(input.sessionId);
 
   if (typeof input.tabId !== "number") {
@@ -248,6 +249,7 @@ const startSessionBackedPicker = (sessionId: string, tabId?: number) => {
   startDomPicker({
     async onPicked(target) {
       try {
+        // 点选完成后立即在页面侧完成 sanitize 并落 storage，popup 重新打开时直接从 session 恢复。
         const result = sanitizePickedElement({
           element: target,
           url: window.location.href,
@@ -325,6 +327,7 @@ function GenericApiDocPicker() {
       const targetTabId = resolveGenericPickerTabId(message);
 
       if (message.type === "generic-picker:read-selection") {
+        // 选区模式同样走 session 回写链路，popup 不再等待页面把正文直接回传回来。
         void readSelectionIntoSession(message.sessionId, targetTabId);
         return undefined;
       }

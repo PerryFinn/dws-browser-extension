@@ -26,6 +26,8 @@ export interface GenericCaptureSession {
 }
 
 // resetGenericCaptureSession 直接回到 idle，不经过这张迁移表。
+// 这里刻意允许 picked/done/error 回到 picking，保证用户重新点选时可以复用旧上下文，
+// 直到新的页面结果真正写回 picked/error 为止。
 const allowedTransitions: Record<GenericCaptureSessionStatus, GenericCaptureSessionStatus[]> = {
   idle: ["picking"],
   picking: ["picked", "error"],
@@ -61,6 +63,7 @@ export const markGenericCaptureSessionPicking = (session: GenericCaptureSession)
   return {
     ...session,
     status: "picking",
+    // 重新进入 picking 只清理上一次提取结果/错误，保留 capture/source 供 UI 回显和失败兜底。
     result: null,
     error: null
   };
