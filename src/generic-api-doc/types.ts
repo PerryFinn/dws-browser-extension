@@ -86,6 +86,11 @@ export interface GenericSanitizedCapture {
   pickedAt: number;
 }
 
+export interface GenericExtractFromSessionInput {
+  source: GenericExtractionSource;
+  capture: GenericSanitizedCapture;
+}
+
 export type GenericPickerMessage =
   | { type: "generic-picker:start" }
   | { type: "generic-picker:read-selection" }
@@ -112,7 +117,8 @@ export interface GenericModelTestResult {
 }
 
 export interface GenericExtractApiDocRequest {
-  capture: GenericCaptureContext;
+  sessionId: string;
+  config: GenericModelConfig;
 }
 
 export interface GenericExtractApiDocSuccess {

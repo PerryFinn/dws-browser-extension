@@ -3,7 +3,7 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateObject } from "ai";
 import { normalizeGenericExtractionResult } from "@/generic-api-doc/normalize";
 import type {
-  GenericCaptureContext,
+  GenericExtractFromSessionInput,
   GenericExtractionResult,
   GenericModelConfig,
   GenericModelTestResult
@@ -51,19 +51,6 @@ const genericExtractionSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
-    source: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        url: { type: "string" },
-        title: { type: "string" },
-        mode: {
-          type: "string",
-          enum: ["generic-dom", "generic-selection"]
-        }
-      },
-      required: ["url", "title", "mode"]
-    },
     endpoint: {
       type: "object",
       additionalProperties: false,
@@ -109,7 +96,7 @@ const genericExtractionSchema = {
       }
     }
   },
-  required: ["source", "endpoint", "request", "response", "uncertainties"]
+  required: ["endpoint", "request", "response", "uncertainties"]
 } as const;
 
 const getProviderName = (apiType: GenericModelConfig["apiType"]): string => {
@@ -124,21 +111,21 @@ export const buildGenericModelConfigTestPrompt = (): string => {
   ].join("\n");
 };
 
-export const buildGenericExtractionPrompt = (context: GenericCaptureContext): string => {
+export const buildGenericExtractionPrompt = (input: GenericExtractFromSessionInput): string => {
   const sections = [
     "你是一个 API 文档结构化提取器。",
     "请基于以下采集上下文，输出统一 JSON。",
     "如果某个字段无法稳定判断，请保留外层结构，并把不确定项写入 uncertainties。",
     "",
-    `页面标题：${context.source.title}`,
-    `页面地址：${context.source.url}`,
-    `采集模式：${context.source.mode}`,
-    `预览片段：${context.previewText}`,
-    `原始文本：\n${context.rawText}`
+    `页面标题：${input.source.title}`,
+    `页面地址：${input.source.url}`,
+    `采集模式：${input.source.mode}`,
+    `预览片段：${input.capture.previewText}`,
+    `原始文本：\n${input.capture.visibleText}`
   ];
 
-  if (context.domSummary?.trim()) {
-    sections.push(`DOM 摘要：\n${context.domSummary}`);
+  if (input.capture.domSummary?.trim()) {
+    sections.push(`DOM 摘要：\n${input.capture.domSummary}`);
   }
 
   return sections.join("\n");
@@ -187,7 +174,7 @@ export const testGenericModelConfig = async (
 
 export const extractGenericApiDoc = async (
   config: GenericModelConfig,
-  context: GenericCaptureContext,
+  input: GenericExtractFromSessionInput,
   dependencies: GenericProviderDependencies = defaultDependencies
 ): Promise<GenericExtractionResult> => {
   const model = createGenericModel(config, dependencies);
@@ -196,8 +183,17 @@ export const extractGenericApiDoc = async (
     output: "object",
     schema: genericExtractionSchema,
     schemaName: "generic_api_doc_extraction",
-    prompt: buildGenericExtractionPrompt(context)
+    prompt: buildGenericExtractionPrompt(input)
   });
 
-  return normalizeGenericExtractionResult(result.object);
+  // 可信边界只来自本地 session，模型返回的 source 不参与归一化。
+  const normalized = normalizeGenericExtractionResult({
+    ...(result.object as Record<string, unknown>),
+    source: input.source
+  });
+
+  return {
+    ...normalized,
+    source: input.source
+  };
 };

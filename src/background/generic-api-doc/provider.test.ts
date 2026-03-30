@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 
-import type { GenericCaptureContext, GenericModelConfig } from "@/generic-api-doc/types";
+import type { GenericExtractFromSessionInput, GenericModelConfig } from "@/generic-api-doc/types";
 import {
   buildGenericExtractionPrompt,
   buildGenericModelConfigTestPrompt,
@@ -18,15 +18,18 @@ const createConfig = (apiType: GenericModelConfig["apiType"]): GenericModelConfi
   apiKey: "sk-test"
 });
 
-const createCaptureContext = (): GenericCaptureContext => ({
+const createCaptureContext = (): GenericExtractFromSessionInput => ({
   source: {
     url: "https://example.com/docs/user-detail",
     title: "用户详情接口",
     mode: "generic-dom"
   },
-  rawText: "接口名称：获取用户详情\n请求路径：/api/user/detail\n请求方法：GET",
-  previewText: "获取用户详情 /api/user/detail GET",
-  domSummary: "<section><h2>获取用户详情</h2></section>"
+  capture: {
+    visibleText: "接口名称：获取用户详情\n请求路径：/api/user/detail\n请求方法：GET",
+    previewText: "获取用户详情 /api/user/detail GET",
+    domSummary: "<section><h2>获取用户详情</h2></section>",
+    pickedAt: 1
+  }
 });
 
 const createDependencies = () => {
@@ -143,4 +146,34 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
   assert.match(String(request.prompt), /页面标题：用户详情接口/);
   assert.match(String(request.prompt), /原始文本：/);
   assert.equal(result.endpoint.path, "/api/user/detail");
+});
+
+test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 source", async () => {
+  const { dependencies } = createDependencies();
+  dependencies.generateObject = async () => ({
+    object: {
+      source: { url: "https://wrong.example.com", title: "Wrong", mode: "generic-selection" },
+      endpoint: { name: "获取用户详情", path: "/api/user/detail", method: "GET" },
+      request: { pathParams: [], queryParams: [], headers: [], body: null, auth: null },
+      response: { successBody: null, errorNotes: null },
+      uncertainties: []
+    }
+  });
+
+  const result = await extractGenericApiDoc(
+    createConfig("openai-compatible"),
+    {
+      source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" },
+      capture: {
+        visibleText: "GET /api/user/detail",
+        previewText: "GET /api/user/detail",
+        domSummary: null,
+        pickedAt: 1
+      }
+    },
+    dependencies
+  );
+
+  assert.equal(result.source.url, "https://example.com/users");
+  assert.equal(result.source.mode, "generic-dom");
 });

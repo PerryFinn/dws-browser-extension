@@ -1,19 +1,81 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { extractGenericApiDoc } from "@/background/generic-api-doc/provider";
-import type { GenericCaptureContext, GenericExtractionResult, GenericModelConfig } from "@/generic-api-doc/types";
-import { isGenericModelConfigComplete } from "@/storages/generic-api-doc";
+import {
+  type GenericCaptureSession,
+  markGenericCaptureSessionDone,
+  markGenericCaptureSessionError,
+  markGenericCaptureSessionExtracting
+} from "@/generic-api-doc/session";
+import type {
+  GenericExtractFromSessionInput,
+  GenericExtractionResult,
+  GenericModelConfig
+} from "@/generic-api-doc/types";
+import { storage } from "@/storages";
+import { GENERIC_CAPTURE_SESSION_STORAGE_KEY, isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 
-export type GenericExtractApiDocReqBody = { config: GenericModelConfig; context: GenericCaptureContext };
+export type GenericExtractApiDocReqBody =
+  | { config: GenericModelConfig; sessionId: string }
+  | { config: GenericModelConfig; context: unknown; sessionId?: string };
 export type GenericExtractApiDocResBody =
   | { success: true; data: GenericExtractionResult }
   | { success: false; message: string };
+
+interface ExecuteGenericExtractApiDocOptions {
+  session: GenericCaptureSession;
+  config: GenericModelConfig;
+  onSessionUpdate: (next: GenericCaptureSession) => void | Promise<void>;
+  extract: (input: GenericExtractFromSessionInput) => Promise<GenericExtractionResult>;
+}
+
+const MISSING_CAPTURE_MESSAGE = "缺少可用的采集结果";
+
+export const executeGenericExtractApiDoc = async ({
+  session,
+  config,
+  onSessionUpdate,
+  extract
+}: ExecuteGenericExtractApiDocOptions): Promise<GenericExtractApiDocResBody> => {
+  void config;
+
+  if (!session.source || !session.capture) {
+    return { success: false, message: MISSING_CAPTURE_MESSAGE };
+  }
+
+  const extractingSession = markGenericCaptureSessionExtracting(session);
+  // 状态回写统一经过调用方，保证 storage/session 与纯执行逻辑解耦。
+  await onSessionUpdate(extractingSession);
+
+  const input: GenericExtractFromSessionInput = {
+    source: {
+      url: session.source.url,
+      title: session.source.title,
+      mode: session.source.mode
+    },
+    capture: session.capture
+  };
+
+  try {
+    const data = await extract(input);
+    const doneSession = markGenericCaptureSessionDone(extractingSession, data);
+    // 成功结果写回时保留原 capture，供后续重试或展示复用。
+    await onSessionUpdate(doneSession);
+    return { success: true, data };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const errorSession = markGenericCaptureSessionError(extractingSession, message);
+    // 失败状态只写 error/result，不清空 capture。
+    await onSessionUpdate(errorSession);
+    return { success: false, message };
+  }
+};
 
 const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, GenericExtractApiDocResBody> = async (
   req,
   res
 ) => {
   const config = req.body?.config;
-  const context = req.body?.context;
+  const requestedSessionId = "sessionId" in (req.body ?? {}) ? req.body?.sessionId : undefined;
 
   if (!config) {
     res.send({ success: false, message: "缺少模型配置" });
@@ -25,19 +87,28 @@ const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, Gener
     return;
   }
 
-  if (!context) {
-    res.send({ success: false, message: "缺少采集上下文" });
+  const session = (await storage.get(GENERIC_CAPTURE_SESSION_STORAGE_KEY)) as GenericCaptureSession | undefined;
+
+  if (!session || (requestedSessionId && session.sessionId !== requestedSessionId)) {
+    res.send({ success: false, message: MISSING_CAPTURE_MESSAGE });
     return;
   }
 
   try {
-    const data = await extractGenericApiDoc(config, context);
-    res.send({ success: true, data });
-  } catch (error) {
-    res.send({
-      success: false,
-      message: error instanceof Error ? error.message : String(error)
+    const result = await executeGenericExtractApiDoc({
+      session,
+      config,
+      async onSessionUpdate(next) {
+        await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, next);
+      },
+      extract(input) {
+        return extractGenericApiDoc(config, input);
+      }
     });
+
+    res.send(result);
+  } catch (error) {
+    res.send({ success: false, message: error instanceof Error ? error.message : String(error) });
   }
 };
 
