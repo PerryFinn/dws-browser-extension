@@ -11,7 +11,7 @@ import {
   genericApiDocStorageDefaultValues,
   getGenericProviderLabel,
   isGenericModelConfigComplete
-} from "./generic-api-doc";
+} from "@/storages/generic-api-doc";
 
 test("模型配置缺少任一项时都不完整", () => {
   assert.equal(

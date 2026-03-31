@@ -430,12 +430,12 @@ ExpandableCardFooter.displayName = "ExpandableCardFooter";
 
 export {
   Expandable,
-  useExpandable,
   ExpandableCard,
+  ExpandableCardContent,
+  ExpandableCardFooter,
+  ExpandableCardHeader,
   ExpandableContent,
   ExpandableContext,
   ExpandableTrigger,
-  ExpandableCardHeader,
-  ExpandableCardContent,
-  ExpandableCardFooter
+  useExpandable
 };

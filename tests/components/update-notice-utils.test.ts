@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 
-import { resolveUpdateUrl } from "./update-notice-utils";
+import { resolveUpdateUrl } from "@/components/update-notice-utils";
 
 test("当远端未返回 downloadUrl 时回退到 homepage", () => {
   const updateUrl = resolveUpdateUrl({

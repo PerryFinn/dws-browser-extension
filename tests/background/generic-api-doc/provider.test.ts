@@ -1,7 +1,5 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-
-import type { GenericExtractFromSessionInput, GenericModelConfig } from "@/generic-api-doc/types";
 import {
   buildGenericExtractionPrompt,
   buildGenericModelConfigTestPrompt,
@@ -9,7 +7,8 @@ import {
   extractGenericApiDoc,
   type GenericProviderDependencies,
   testGenericModelConfig
-} from "./provider";
+} from "@/background/generic-api-doc/provider";
+import type { GenericExtractFromSessionInput, GenericModelConfig } from "@/generic-api-doc/types";
 
 const createConfig = (apiType: GenericModelConfig["apiType"]): GenericModelConfig => ({
   apiType,

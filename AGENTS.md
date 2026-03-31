@@ -41,7 +41,8 @@
 当前 `package.json` 未提供 Jest/Vitest 等自动化测试命令。
 
 - PR 最低验证要求：运行 `pnpm verify`，并手动冒烟验证 popup/options/content-script 关键路径。
-- 新增可测试模块时，建议在同目录添加 `*.test.ts` 或 `*.test.tsx`，便于维护归属。
+- 测试文件统一放在仓库顶层 `tests/`，按 `src/` 镜像目录组织，例如 `tests/popup/generic/*.test.ts`。
+- 不要把 `*.test.ts` 或 `*.test.tsx` 放在 `src/` 内，尤其是 `src/background/messages`、`src/contents`、`src/options/routes` 这类约定式入口目录。
 
 ## Changeset 版本变更流程
 

@@ -6,8 +6,8 @@ import {
   markGenericCaptureSessionExtracting,
   markGenericCaptureSessionPicked,
   markGenericCaptureSessionPicking
-} from "./session";
-import { deriveGenericPanelState } from "./session-view";
+} from "@/generic-api-doc/session";
+import { deriveGenericPanelState } from "@/generic-api-doc/session-view";
 
 test("未配置模型时仍允许开始点选和读取选区", () => {
   const state = deriveGenericPanelState({

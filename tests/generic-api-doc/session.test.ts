@@ -11,7 +11,7 @@ import {
   markGenericCaptureSessionPicked,
   markGenericCaptureSessionPicking,
   resetGenericCaptureSession
-} from "./session";
+} from "@/generic-api-doc/session";
 
 test("createEmptyGenericCaptureSession 返回 idle 默认值", () => {
   const session = createEmptyGenericCaptureSession("session-1");

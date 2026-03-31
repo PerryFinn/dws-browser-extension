@@ -28,6 +28,7 @@ import {
 } from "@/generic-api-doc/session";
 import { deriveGenericPanelState } from "@/generic-api-doc/session-view";
 import type { GenericModelConfig, GenericPickerMessage, GenericPickerResponse } from "@/generic-api-doc/types";
+import { openGenericApiSettingsTab } from "@/popup/generic/open-options";
 import { storage } from "@/storages";
 import {
   GENERIC_API_KEY_STORAGE_KEY,
@@ -307,7 +308,10 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   };
 
   const handleOpenOptions = () => {
-    void chrome.runtime.openOptionsPage();
+    void openGenericApiSettingsTab({
+      runtimeGetURL: (path) => chrome.runtime.getURL(path),
+      createTab: (createProperties) => chrome.tabs.create(createProperties)
+    });
   };
 
   return (

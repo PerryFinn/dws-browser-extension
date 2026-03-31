@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import test from "node:test";
 import { parseHTML } from "linkedom";
 
-import { buildGenericDomSummary } from "./dom-summary";
+import { buildGenericDomSummary } from "@/generic-api-doc/dom-summary";
 
 test("buildGenericDomSummary 保留标题、表格与代码块信息", () => {
   const { document } = parseHTML(`

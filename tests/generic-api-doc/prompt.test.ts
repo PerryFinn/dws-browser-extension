@@ -1,8 +1,12 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 
-import { buildGenericPrompt, defaultGenericPromptTemplate, resolveGenericPromptTemplateForCopy } from "./prompt";
-import type { GenericExtractionResult } from "./types";
+import {
+  buildGenericPrompt,
+  defaultGenericPromptTemplate,
+  resolveGenericPromptTemplateForCopy
+} from "@/generic-api-doc/prompt";
+import type { GenericExtractionResult } from "@/generic-api-doc/types";
 
 const createBaseExtractionResult = (): GenericExtractionResult => ({
   source: {

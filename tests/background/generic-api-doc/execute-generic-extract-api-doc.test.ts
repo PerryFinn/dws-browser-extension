@@ -1,13 +1,12 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-
+import { executeGenericExtractApiDoc } from "@/background/messages/genericExtractApiDoc";
 import {
   createEmptyGenericCaptureSession,
   markGenericCaptureSessionPicked,
   markGenericCaptureSessionPicking
 } from "@/generic-api-doc/session";
 import type { GenericExtractionResult, GenericModelConfig } from "@/generic-api-doc/types";
-import { executeGenericExtractApiDoc } from "./genericExtractApiDoc";
 
 const createConfig = (): GenericModelConfig => ({
   apiType: "openai-compatible",

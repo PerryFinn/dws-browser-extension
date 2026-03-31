@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import test from "node:test";
 import { parseHTML } from "linkedom";
 
-import { sanitizePickedElement, sanitizeSelectionText } from "./sanitize";
+import { sanitizePickedElement, sanitizeSelectionText } from "@/generic-api-doc/sanitize";
 
 test("sanitizePickedElement 过滤按钮文案、隐藏文本和 data 属性噪声", () => {
   const { document } = parseHTML(`

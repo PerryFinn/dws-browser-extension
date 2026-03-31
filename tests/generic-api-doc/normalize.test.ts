@@ -1,8 +1,8 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 
-import { normalizeGenericExtractionResult, normalizeGenericSchemaNode } from "./normalize";
-import type { GenericExtractionResult } from "./types";
+import { normalizeGenericExtractionResult, normalizeGenericSchemaNode } from "@/generic-api-doc/normalize";
+import type { GenericExtractionResult } from "@/generic-api-doc/types";
 
 test("顶层缺少关键字段时报错", () => {
   assert.throws(

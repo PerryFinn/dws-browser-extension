@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 
-import { bindGenericPickerSession, resolveGenericPickerTabId } from "./picker-message";
+import { bindGenericPickerSession, resolveGenericPickerTabId } from "@/generic-api-doc/picker-message";
 
 test("bindGenericPickerSession 为点选消息补齐 sessionId 与 tabId", () => {
   const message = bindGenericPickerSession({ type: "generic-picker:start" }, "session-1", 12);
