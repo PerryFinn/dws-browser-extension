@@ -1,4 +1,5 @@
 import { defaultGenericPromptTemplate } from "@/generic-api-doc/prompt";
+import { createEmptyGenericCaptureSession } from "@/generic-api-doc/session";
 import type { GenericModelConfig, GenericProviderType } from "@/generic-api-doc/types";
 
 export const GENERIC_PROVIDER_TYPE_STORAGE_KEY = "genericApiDocProviderType";
@@ -6,6 +7,7 @@ export const GENERIC_BASE_URL_STORAGE_KEY = "genericApiDocBaseUrl";
 export const GENERIC_MODEL_ID_STORAGE_KEY = "genericApiDocModelId";
 export const GENERIC_API_KEY_STORAGE_KEY = "genericApiDocApiKey";
 export const GENERIC_PROMPT_TEMPLATE_STORAGE_KEY = "genericApiDocPromptTemplate";
+export const GENERIC_CAPTURE_SESSION_STORAGE_KEY = "genericApiDocCaptureSession";
 
 export const genericProviderLabelMap: Record<GenericProviderType, string> = {
   "openai-compatible": "OpenAI Compatible",
@@ -19,6 +21,9 @@ export const genericApiDocStorageDefaultValues = {
   [GENERIC_API_KEY_STORAGE_KEY]: "",
   [GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]: defaultGenericPromptTemplate
 } as const;
+
+export const genericApiDocCaptureSessionStorageDefaultValue =
+  createEmptyGenericCaptureSession("default-generic-session");
 
 const hasNonEmptyValue = (value: string): boolean => value.trim().length > 0;
 

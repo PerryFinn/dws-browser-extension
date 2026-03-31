@@ -72,21 +72,24 @@ export interface GenericExtractionResult {
   uncertainties: GenericUncertainty[];
 }
 
-export interface GenericCaptureContext {
-  source: GenericExtractionSource;
-  rawText: string;
+export interface GenericSanitizedCapture {
+  visibleText: string;
   previewText: string;
-  domSummary?: string | null;
+  domSummary: string | null;
+  pickedAt: number;
+}
+
+export interface GenericExtractFromSessionInput {
+  source: GenericExtractionSource;
+  capture: GenericSanitizedCapture;
 }
 
 export type GenericPickerMessage =
-  | { type: "generic-picker:start" }
-  | { type: "generic-picker:read-selection" }
+  | { type: "generic-picker:start"; sessionId?: string; tabId?: number }
+  | { type: "generic-picker:read-selection"; sessionId?: string; tabId?: number }
   | { type: "generic-picker:reset" };
 
-export type GenericPickerResponse =
-  | { success: true; data?: GenericCaptureContext }
-  | { success: false; message: string };
+export type GenericPickerResponse = { success: true } | { success: false; message: string };
 
 export interface GenericModelConfig {
   apiType: GenericProviderType;
@@ -105,7 +108,8 @@ export interface GenericModelTestResult {
 }
 
 export interface GenericExtractApiDocRequest {
-  capture: GenericCaptureContext;
+  sessionId: string;
+  config: GenericModelConfig;
 }
 
 export interface GenericExtractApiDocSuccess {
