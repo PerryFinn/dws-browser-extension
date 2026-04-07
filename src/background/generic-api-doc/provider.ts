@@ -47,6 +47,19 @@ const genericConnectivitySchema = {
   required: ["ok", "message"]
 } as const;
 
+const genericParameterSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    name: { type: "string" },
+    type: { type: "string" },
+    required: { type: "boolean" },
+    description: { type: "string" },
+    example: {}
+  },
+  required: ["name"]
+} as const;
+
 const genericExtractionSchema = {
   type: "object",
   additionalProperties: false,
@@ -57,7 +70,10 @@ const genericExtractionSchema = {
       properties: {
         name: { type: "string" },
         path: { type: "string" },
-        method: { type: "string" },
+        method: {
+          type: "string",
+          enum: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+        },
         description: { type: "string" }
       },
       required: ["name", "path", "method"]
@@ -66,9 +82,9 @@ const genericExtractionSchema = {
       type: "object",
       additionalProperties: false,
       properties: {
-        pathParams: { type: "array", items: {} },
-        queryParams: { type: "array", items: {} },
-        headers: { type: "array", items: {} },
+        pathParams: { type: "array", items: genericParameterSchema },
+        queryParams: { type: "array", items: genericParameterSchema },
+        headers: { type: "array", items: genericParameterSchema },
         body: {},
         auth: { type: ["string", "null"] }
       },

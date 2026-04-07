@@ -222,7 +222,9 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     setIsCapturing(true);
     setTransientError(null);
 
-    const response = await sendPickerMessage(bindGenericPickerSession(message, pickingSession.sessionId, tab?.id));
+    const response = await sendPickerMessage(
+      bindGenericPickerSession(message, pickingSession.sessionId, pickingSession.attemptId, tab?.id)
+    );
 
     if (!response.success) {
       await sessionSetter.setStoreValue(previousSession);
@@ -264,6 +266,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
         name: "genericExtractApiDoc" as never,
         body: {
           sessionId: session.sessionId,
+          attemptId: session.attemptId,
           config: modelConfig
         }
       });
@@ -285,6 +288,13 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   };
 
   const handleClearSession = async () => {
+    if (tab?.id) {
+      await chrome.tabs
+        .sendMessage(tab.id, { type: "generic-picker:reset" } satisfies GenericPickerMessage)
+        .catch(() => {});
+    }
+
+    shouldResetPickerOnUnmountRef.current = true;
     await sessionSetter.setStoreValue(resetGenericCaptureSession(session));
     setTransientError(null);
   };
@@ -359,9 +369,6 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       {viewState.isTabMismatch ? (
         <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 space-y-2">
           <div>当前采集内容来自其他标签页，不能直接提取。请清空后重新采集，或直接在当前页重新点选。</div>
-          <Button variant="outline" size="sm" onClick={() => void handleClearSession()}>
-            清空会话
-          </Button>
         </div>
       ) : null}
 
@@ -394,6 +401,14 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
         </Button>
       </div>
 
+      {viewState.canClearSession ? (
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => void handleClearSession()}>
+            取消/清空当前采集
+          </Button>
+        </div>
+      ) : null}
+
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <Label>采集预览</Label>
@@ -407,6 +422,19 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
           {viewState.previewText}
         </div>
       </div>
+
+      {viewState.captureDiagnostics ? (
+        <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
+          <div>采集来源：{viewState.captureDiagnostics.sourceModeLabel}</div>
+          <div>结构摘要：{viewState.captureDiagnostics.hasDomSummary ? "已生成" : "缺失"}</div>
+          <div>正文长度：{viewState.captureDiagnostics.charCount} 字</div>
+          <div>已截断：{viewState.captureDiagnostics.truncated ? "是" : "否"}</div>
+          <div>不确定项：{viewState.captureDiagnostics.uncertaintyCount} 个</div>
+          {viewState.captureDiagnostics.shouldRepick ? (
+            <div className="text-amber-700">当前采集证据偏弱，建议重新点选更聚焦的接口文档区域。</div>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <div className="flex items-center justify-start gap-2">

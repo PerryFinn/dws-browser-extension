@@ -26,8 +26,11 @@ const createCaptureContext = (): GenericExtractFromSessionInput => ({
   capture: {
     visibleText: "接口名称：获取用户详情\n请求路径：/api/user/detail\n请求方法：GET",
     previewText: "获取用户详情 /api/user/detail GET",
-    domSummary: "<section><h2>获取用户详情</h2></section>",
-    pickedAt: 1
+    domSummary: "headingPath: 获取用户详情",
+    pickedAt: 1,
+    charCount: 36,
+    truncated: false,
+    qualityHints: []
   }
 });
 
@@ -144,6 +147,42 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
   assert.equal(request.prompt, buildGenericExtractionPrompt(context));
   assert.match(String(request.prompt), /页面标题：用户详情接口/);
   assert.match(String(request.prompt), /原始文本：/);
+  assert.deepEqual(
+    (request.schema as { properties: { endpoint: { properties: { method: { enum: string[] } } } } }).properties.endpoint
+      .properties.method.enum,
+    ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
+  );
+  assert.deepEqual(
+    (
+      request.schema as {
+        properties: {
+          request: {
+            properties: {
+              pathParams: {
+                items: {
+                  type: string;
+                  additionalProperties: boolean;
+                  required: string[];
+                };
+              };
+            };
+          };
+        };
+      }
+    ).properties.request.properties.pathParams.items,
+    {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        name: { type: "string" },
+        type: { type: "string" },
+        required: { type: "boolean" },
+        description: { type: "string" },
+        example: {}
+      },
+      required: ["name"]
+    }
+  );
   assert.equal(result.endpoint.path, "/api/user/detail");
 });
 
@@ -167,7 +206,10 @@ test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 sourc
         visibleText: "GET /api/user/detail",
         previewText: "GET /api/user/detail",
         domSummary: null,
-        pickedAt: 1
+        pickedAt: 1,
+        charCount: 20,
+        truncated: false,
+        qualityHints: ["missing-dom-summary"]
       }
     },
     dependencies

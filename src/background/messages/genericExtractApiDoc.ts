@@ -1,6 +1,7 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { extractGenericApiDoc } from "@/background/generic-api-doc/provider";
 import {
+  doesGenericCaptureSessionMatchAttempt,
   type GenericCaptureSession,
   markGenericCaptureSessionDone,
   markGenericCaptureSessionError,
@@ -16,6 +17,7 @@ import { GENERIC_CAPTURE_SESSION_STORAGE_KEY, isGenericModelConfigComplete } fro
 
 export interface GenericExtractApiDocReqBody {
   sessionId: string;
+  attemptId: string;
   config: GenericModelConfig;
 }
 export type GenericExtractApiDocResBody =
@@ -77,6 +79,7 @@ const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, Gener
 ) => {
   const config = req.body?.config;
   const requestedSessionId = req.body?.sessionId;
+  const requestedAttemptId = req.body?.attemptId;
 
   if (!config) {
     res.send({ success: false, message: "缺少模型配置" });
@@ -93,9 +96,17 @@ const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, Gener
     return;
   }
 
+  if (!requestedAttemptId) {
+    res.send({ success: false, message: "缺少采集尝试 ID" });
+    return;
+  }
+
   const session = (await storage.get(GENERIC_CAPTURE_SESSION_STORAGE_KEY)) as GenericCaptureSession | undefined;
 
-  if (!session || session.sessionId !== requestedSessionId) {
+  if (
+    !session ||
+    !doesGenericCaptureSessionMatchAttempt(session, { sessionId: requestedSessionId, attemptId: requestedAttemptId })
+  ) {
     res.send({ success: false, message: MISSING_CAPTURE_MESSAGE });
     return;
   }

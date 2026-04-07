@@ -5,6 +5,7 @@ import type { GenericPickerMessage } from "./types";
 export const bindGenericPickerSession = (
   message: GenericPickerMessage,
   sessionId: string,
+  attemptId: string,
   tabId?: number
 ): GenericPickerMessage => {
   if (message.type === "generic-picker:reset") {
@@ -14,6 +15,7 @@ export const bindGenericPickerSession = (
   return {
     ...message,
     sessionId,
+    attemptId,
     tabId
   };
 };
