@@ -37,7 +37,7 @@ export const parseSwqaInterfaceUrl = (rawUrl: string | null | undefined): Parsed
 
   // 注意：SWQA 使用 hash 路由，interfaceId 可能出现在 hash 段，故直接在完整 href 里匹配。
   const match = href.match(INTERFACE_PATH_REGEX);
-  if (!match || !match[1]) {
+  if (!match?.[1]) {
     return { ok: false, url: href, hostname, reason: "Not an interface detail page" };
   }
 
