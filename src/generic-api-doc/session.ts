@@ -14,16 +14,24 @@ export interface GenericCaptureSnapshot {
   previewText: string;
   domSummary: string | null;
   pickedAt: number;
+  charCount: number;
+  truncated: boolean;
+  qualityHints: Array<"truncated-visible-text" | "missing-dom-summary">;
 }
 
 export interface GenericCaptureSession {
   sessionId: string;
+  attemptId: string;
   status: GenericCaptureSessionStatus;
   source: GenericCaptureSource | null;
   capture: GenericCaptureSnapshot | null;
   result: GenericExtractionResult | null;
   error: string | null;
 }
+
+export const createGenericCaptureAttemptId = (): string => {
+  return `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
 
 // resetGenericCaptureSession 直接回到 idle，不经过这张迁移表。
 // 这里刻意允许 picked/done/error 回到 picking，保证用户重新点选时可以复用旧上下文，
@@ -40,6 +48,7 @@ const allowedTransitions: Record<GenericCaptureSessionStatus, GenericCaptureSess
 export const createEmptyGenericCaptureSession = (sessionId: string): GenericCaptureSession => {
   return {
     sessionId,
+    attemptId: createGenericCaptureAttemptId(),
     status: "idle",
     source: null,
     capture: null,
@@ -62,6 +71,7 @@ export const markGenericCaptureSessionPicking = (session: GenericCaptureSession)
 
   return {
     ...session,
+    attemptId: createGenericCaptureAttemptId(),
     status: "picking",
     // 重新进入 picking 只清理上一次提取结果/错误，保留 capture/source 供 UI 回显和失败兜底。
     result: null,
@@ -148,4 +158,15 @@ export const isGenericCaptureSessionBoundToTab = (
   }
 
   return session.source.tabId === tab.id && session.source.url === tab.url;
+};
+
+export const doesGenericCaptureSessionMatchAttempt = (
+  session: GenericCaptureSession | null | undefined,
+  input: { sessionId?: string; attemptId?: string }
+): boolean => {
+  if (!session || !input.sessionId || !input.attemptId) {
+    return false;
+  }
+
+  return session.sessionId === input.sessionId && session.attemptId === input.attemptId;
 };

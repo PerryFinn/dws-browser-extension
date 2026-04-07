@@ -6,6 +6,10 @@ import type {
   GenericExtractApiDocResBody
 } from "@/background/messages/genericExtractApiDoc";
 import type {
+  GenericSelfCheckCurrentCaptureReqBody,
+  GenericSelfCheckCurrentCaptureResBody
+} from "@/background/messages/genericSelfCheckCurrentCapture";
+import type {
   GenericTestModelConfigReqBody,
   GenericTestModelConfigResBody
 } from "@/background/messages/genericTestModelConfig";
@@ -38,6 +42,10 @@ declare module "@plasmohq/messaging" {
     genericExtractApiDoc: {
       req: GenericExtractApiDocReqBody;
       res: GenericExtractApiDocResBody;
+    };
+    genericSelfCheckCurrentCapture: {
+      req: GenericSelfCheckCurrentCaptureReqBody;
+      res: GenericSelfCheckCurrentCaptureResBody;
     };
     genericTestModelConfig: {
       req: GenericTestModelConfigReqBody;

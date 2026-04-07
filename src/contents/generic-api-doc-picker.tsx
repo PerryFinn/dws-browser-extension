@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { resolveGenericPickerTabId } from "@/generic-api-doc/picker-message";
 import { sanitizePickedElement, sanitizeSelectionText } from "@/generic-api-doc/sanitize";
 import {
+  doesGenericCaptureSessionMatchAttempt,
   type GenericCaptureSession,
   markGenericCaptureSessionError,
   markGenericCaptureSessionPicked
@@ -139,10 +140,13 @@ const cleanupActivePicker = () => {
   hidePickerOverlay();
 };
 
-const readActiveGenericCaptureSession = async (sessionId: string): Promise<GenericCaptureSession> => {
+const readActiveGenericCaptureSession = async (
+  sessionId: string,
+  attemptId: string
+): Promise<GenericCaptureSession> => {
   const session = (await storage.get(GENERIC_CAPTURE_SESSION_STORAGE_KEY)) as GenericCaptureSession | undefined;
 
-  if (!session || session.sessionId !== sessionId) {
+  if (!session || !doesGenericCaptureSessionMatchAttempt(session, { sessionId, attemptId })) {
     throw new Error("当前采集会话已失效，请重新打开插件后重试");
   }
 
@@ -151,12 +155,13 @@ const readActiveGenericCaptureSession = async (sessionId: string): Promise<Gener
 
 const persistPickedSession = async (input: {
   sessionId: string;
+  attemptId: string;
   tabId?: number;
   source: { url: string; title: string; mode: "generic-dom" | "generic-selection" };
   capture: GenericSanitizedCapture;
 }) => {
   // 页面脚本只允许写回当前激活的 session，避免旧 popup 或旧页面结果串写到新的采集流程里。
-  const session = await readActiveGenericCaptureSession(input.sessionId);
+  const session = await readActiveGenericCaptureSession(input.sessionId, input.attemptId);
 
   if (typeof input.tabId !== "number") {
     throw new Error("未找到当前标签页信息");
@@ -175,9 +180,9 @@ const persistPickedSession = async (input: {
   await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, nextSession);
 };
 
-const persistPickerError = async (sessionId: string, message: string) => {
+const persistPickerError = async (sessionId: string, attemptId: string, message: string) => {
   try {
-    const session = await readActiveGenericCaptureSession(sessionId);
+    const session = await readActiveGenericCaptureSession(sessionId, attemptId);
     const nextSession = markGenericCaptureSessionError(session, message);
     await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, nextSession);
   } catch (error) {
@@ -245,7 +250,7 @@ const startDomPicker = (handlers: {
   window.addEventListener("resize", handleViewportChange);
 };
 
-const startSessionBackedPicker = (sessionId: string, tabId?: number) => {
+const startSessionBackedPicker = (sessionId: string, attemptId: string, tabId?: number) => {
   startDomPicker({
     async onPicked(target) {
       try {
@@ -257,22 +262,23 @@ const startSessionBackedPicker = (sessionId: string, tabId?: number) => {
         });
         await persistPickedSession({
           sessionId,
+          attemptId,
           tabId,
           source: result.source,
           capture: result.capture
         });
         showPickerNotice(PICKER_SUCCESS_NOTICE);
       } catch (error) {
-        await persistPickerError(sessionId, error instanceof Error ? error.message : String(error));
+        await persistPickerError(sessionId, attemptId, error instanceof Error ? error.message : String(error));
       }
     },
     async onCancel(message) {
-      await persistPickerError(sessionId, message);
+      await persistPickerError(sessionId, attemptId, message);
     }
   });
 };
 
-const readSelectionIntoSession = async (sessionId: string, tabId?: number) => {
+const readSelectionIntoSession = async (sessionId: string, attemptId: string, tabId?: number) => {
   try {
     const result = sanitizeSelectionText({
       text: window.getSelection()?.toString() ?? "",
@@ -281,12 +287,13 @@ const readSelectionIntoSession = async (sessionId: string, tabId?: number) => {
     });
     await persistPickedSession({
       sessionId,
+      attemptId,
       tabId,
       source: result.source,
       capture: result.capture
     });
   } catch (error) {
-    await persistPickerError(sessionId, error instanceof Error ? error.message : String(error));
+    await persistPickerError(sessionId, attemptId, error instanceof Error ? error.message : String(error));
   }
 };
 
@@ -317,8 +324,8 @@ function GenericApiDocPicker() {
         return undefined;
       }
 
-      if (!message.sessionId) {
-        sendResponse({ success: false, message: "缺少采集会话 ID" });
+      if (!message.sessionId || !message.attemptId) {
+        sendResponse({ success: false, message: "缺少采集会话标识" });
         return undefined;
       }
 
@@ -328,11 +335,11 @@ function GenericApiDocPicker() {
 
       if (message.type === "generic-picker:read-selection") {
         // 选区模式同样走 session 回写链路，popup 不再等待页面把正文直接回传回来。
-        void readSelectionIntoSession(message.sessionId, targetTabId);
+        void readSelectionIntoSession(message.sessionId, message.attemptId, targetTabId);
         return undefined;
       }
 
-      startSessionBackedPicker(message.sessionId, targetTabId);
+      startSessionBackedPicker(message.sessionId, message.attemptId, targetTabId);
       return undefined;
     };
 

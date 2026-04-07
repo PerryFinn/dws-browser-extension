@@ -165,7 +165,8 @@ test("未知深层节点会降级为 unknown", () => {
   assert.deepEqual(normalized.uncertainties, [
     {
       field: "request.body.metadata",
-      reason: "节点类型 mystery 不在 v1 支持范围内，已降级为 unknown"
+      reason: "节点类型 mystery 不在 v1 支持范围内，已降级为 unknown",
+      kind: "degraded"
     }
   ]);
 });
@@ -219,8 +220,112 @@ test("高复杂结构会落到 uncertainties 而不是抛弃整个结果", () =>
   assert.equal(result.uncertainties.length, 1);
   assert.deepEqual(result.uncertainties[0], {
     field: "response.successBody.data.children",
-    reason: "检测到 oneOf 结构，v1 仅保留外层节点并将其降级为 unknown"
+    reason: "检测到 oneOf 结构，v1 仅保留外层节点并将其降级为 unknown",
+    kind: "degraded"
   });
+});
+
+test("endpoint.method 必须是支持的 HTTP 方法", () => {
+  assert.throws(
+    () =>
+      normalizeGenericExtractionResult({
+        source: {
+          url: "https://example.com/api/user/detail",
+          title: "用户详情接口",
+          mode: "generic-dom"
+        },
+        endpoint: {
+          name: "获取用户详情",
+          path: "/api/user/detail",
+          method: "FETCH"
+        },
+        request: {
+          pathParams: [],
+          queryParams: [],
+          headers: [],
+          body: null,
+          auth: null
+        },
+        response: {
+          successBody: null,
+          errorNotes: null
+        },
+        uncertainties: []
+      }),
+    /Field endpoint.method must be a supported HTTP method/
+  );
+});
+
+test("异常 endpoint.path 会保留值并标记 conflict uncertainty", () => {
+  const result = normalizeGenericExtractionResult({
+    source: {
+      url: "https://example.com/api/user/detail",
+      title: "用户详情接口",
+      mode: "generic-dom"
+    },
+    endpoint: {
+      name: "获取用户详情",
+      path: "用户详情接口",
+      method: "GET"
+    },
+    request: {
+      pathParams: [],
+      queryParams: [],
+      headers: [],
+      body: null,
+      auth: null
+    },
+    response: {
+      successBody: null,
+      errorNotes: null
+    },
+    uncertainties: []
+  });
+
+  assert.equal(result.endpoint.path, "用户详情接口");
+  assert.deepEqual(result.uncertainties, [
+    {
+      field: "endpoint.path",
+      reason: "endpoint.path 看起来不像 URL 或接口路径，请确认是否提取错误",
+      kind: "conflict"
+    }
+  ]);
+});
+
+test("参数缺少 name 时会回退占位名并标记 missing uncertainty", () => {
+  const result = normalizeGenericExtractionResult({
+    source: {
+      url: "https://example.com/api/user/detail",
+      title: "用户详情接口",
+      mode: "generic-dom"
+    },
+    endpoint: {
+      name: "获取用户详情",
+      path: "/api/user/detail",
+      method: "GET"
+    },
+    request: {
+      pathParams: [],
+      queryParams: [{ type: "string", required: true }],
+      headers: [],
+      body: null,
+      auth: null
+    },
+    response: {
+      successBody: null,
+      errorNotes: null
+    },
+    uncertainties: []
+  });
+
+  assert.equal(result.request.queryParams[0]?.name, "request.queryParams[0]");
+  assert.deepEqual(result.uncertainties, [
+    {
+      field: "request.queryParams[0].name",
+      reason: "参数缺少 name，已回退为索引占位名，请用户确认真实参数名",
+      kind: "missing"
+    }
+  ]);
 });
 
 test("原始 uncertainties 会被规范化保留", () => {

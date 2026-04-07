@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   canTransitionGenericCaptureSession,
   createEmptyGenericCaptureSession,
+  doesGenericCaptureSessionMatchAttempt,
   isGenericCaptureSessionBoundToTab,
   markGenericCaptureSessionDone,
   markGenericCaptureSessionError,
@@ -13,9 +14,23 @@ import {
   resetGenericCaptureSession
 } from "@/generic-api-doc/session";
 
+const createCapture = (domSummary: string | null) => ({
+  visibleText: "GET /users",
+  previewText: "GET /users",
+  domSummary,
+  pickedAt: 1,
+  charCount: 10,
+  truncated: false,
+  qualityHints: domSummary
+    ? ([] as Array<"truncated-visible-text" | "missing-dom-summary">)
+    : (["missing-dom-summary"] as Array<"truncated-visible-text" | "missing-dom-summary">)
+});
+
 test("createEmptyGenericCaptureSession 返回 idle 默认值", () => {
   const session = createEmptyGenericCaptureSession("session-1");
   assert.equal(session.sessionId, "session-1");
+  assert.equal(typeof session.attemptId, "string");
+  assert.ok(session.attemptId.length > 0);
   assert.equal(session.status, "idle");
   assert.equal(session.source, null);
   assert.equal(session.capture, null);
@@ -39,12 +54,7 @@ test("markGenericCaptureSessionPicking 允许从 done 重启并保留旧 capture
     markGenericCaptureSessionExtracting(
       markGenericCaptureSessionPicked(markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-9")), {
         source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-        capture: {
-          visibleText: "GET /users",
-          previewText: "GET /users",
-          domSummary: "headings: Users",
-          pickedAt: 1
-        }
+        capture: createCapture("headingPath: Users")
       })
     ),
     {
@@ -68,10 +78,30 @@ test("markGenericCaptureSessionPicking 允许从 done 重启并保留旧 capture
   const restarted = markGenericCaptureSessionPicking(done);
 
   assert.equal(restarted.status, "picking");
+  assert.notEqual(restarted.attemptId, done.attemptId);
   assert.equal(restarted.capture?.previewText, "GET /users");
   assert.equal(restarted.source?.url, "https://example.com/users");
   assert.equal(restarted.result, null);
   assert.equal(restarted.error, null);
+});
+
+test("doesGenericCaptureSessionMatchAttempt 同时校验 sessionId 和 attemptId", () => {
+  const session = createEmptyGenericCaptureSession("session-attempt");
+
+  assert.equal(
+    doesGenericCaptureSessionMatchAttempt(session, {
+      sessionId: "session-attempt",
+      attemptId: session.attemptId
+    }),
+    true
+  );
+  assert.equal(
+    doesGenericCaptureSessionMatchAttempt(session, {
+      sessionId: "session-attempt",
+      attemptId: "stale-attempt"
+    }),
+    false
+  );
 });
 
 test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 error", () => {
@@ -79,12 +109,12 @@ test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 err
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),
     {
       source: { tabId: 9, url: "https://example.com", title: "Example", mode: "generic-dom" },
-      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: "headings: Users", pickedAt: 1 }
+      capture: createCapture("headingPath: Users")
     }
   );
   assert.equal(session.status, "picked");
   assert.equal(session.source?.url, "https://example.com");
-  assert.equal(session.capture?.domSummary, "headings: Users");
+  assert.equal(session.capture?.domSummary, "headingPath: Users");
   assert.equal(session.error, null);
 });
 
@@ -93,7 +123,7 @@ test("markGenericCaptureSessionError 会保留已有 capture", () => {
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-3")),
     {
       source: { tabId: 9, url: "https://example.com", title: "Example", mode: "generic-dom" },
-      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
+      capture: createCapture(null)
     }
   );
   const session = markGenericCaptureSessionError(markGenericCaptureSessionExtracting(base), "provider timeout");
@@ -103,12 +133,7 @@ test("markGenericCaptureSessionError 会保留已有 capture", () => {
 });
 
 test("markGenericCaptureSessionDone 会写入 result 并保留 capture", () => {
-  const capture = {
-    visibleText: "GET /users",
-    previewText: "GET /users",
-    domSummary: "headings: Users",
-    pickedAt: 1
-  };
+  const capture = createCapture("headingPath: Users");
   const result = {
     source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" as const },
     endpoint: { name: "列表", path: "/api/users", method: "GET" },
@@ -147,12 +172,7 @@ test("关键非法 helper 调用会抛错", () => {
   assert.throws(() =>
     markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-7"), {
       source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-      capture: {
-        visibleText: "GET /users",
-        previewText: "GET /users",
-        domSummary: null,
-        pickedAt: 1
-      }
+      capture: createCapture(null)
     })
   );
 
@@ -160,12 +180,7 @@ test("关键非法 helper 调用会抛错", () => {
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-8")),
     {
       source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-      capture: {
-        visibleText: "GET /users",
-        previewText: "GET /users",
-        domSummary: null,
-        pickedAt: 1
-      }
+      capture: createCapture(null)
     }
   );
 
@@ -215,7 +230,7 @@ test("resetGenericCaptureSession 会回到初始 idle 状态", () => {
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-4")),
     {
       source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
+      capture: createCapture(null)
     }
   );
   const session = resetGenericCaptureSession(base);
@@ -232,7 +247,7 @@ test("isGenericCaptureSessionBoundToTab 会校验 tabId 与 url", () => {
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-5")),
     {
       source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
+      capture: createCapture(null)
     }
   );
   assert.equal(isGenericCaptureSessionBoundToTab(session, { id: 9, url: "https://example.com/users" }), true);

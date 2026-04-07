@@ -28,6 +28,7 @@ export type GenericSchemaNode = GenericObjectSchemaNode | GenericArraySchemaNode
 export interface GenericUncertainty {
   field: string;
   reason: string;
+  kind?: "missing" | "degraded" | "conflict";
 }
 
 export interface GenericParameter {
@@ -77,6 +78,9 @@ export interface GenericSanitizedCapture {
   previewText: string;
   domSummary: string | null;
   pickedAt: number;
+  charCount: number;
+  truncated: boolean;
+  qualityHints: Array<"truncated-visible-text" | "missing-dom-summary">;
 }
 
 export interface GenericExtractFromSessionInput {
@@ -85,8 +89,8 @@ export interface GenericExtractFromSessionInput {
 }
 
 export type GenericPickerMessage =
-  | { type: "generic-picker:start"; sessionId?: string; tabId?: number }
-  | { type: "generic-picker:read-selection"; sessionId?: string; tabId?: number }
+  | { type: "generic-picker:start"; sessionId?: string; attemptId?: string; tabId?: number }
+  | { type: "generic-picker:read-selection"; sessionId?: string; attemptId?: string; tabId?: number }
   | { type: "generic-picker:reset" };
 
 export type GenericPickerResponse = { success: true } | { success: false; message: string };
@@ -109,6 +113,7 @@ export interface GenericModelTestResult {
 
 export interface GenericExtractApiDocRequest {
   sessionId: string;
+  attemptId: string;
   config: GenericModelConfig;
 }
 

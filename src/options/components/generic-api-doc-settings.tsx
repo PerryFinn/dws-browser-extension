@@ -3,6 +3,10 @@ import { useStorage } from "@plasmohq/storage/hook";
 import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import type {
+  GenericSelfCheckCurrentCaptureReqBody,
+  GenericSelfCheckCurrentCaptureResBody
+} from "@/background/messages/genericSelfCheckCurrentCapture";
+import type {
   GenericTestModelConfigReqBody,
   GenericTestModelConfigResBody
 } from "@/background/messages/genericTestModelConfig";
@@ -16,9 +20,11 @@ import { storage } from "@/storages";
 import {
   GENERIC_API_KEY_STORAGE_KEY,
   GENERIC_BASE_URL_STORAGE_KEY,
+  GENERIC_CAPTURE_SESSION_STORAGE_KEY,
   GENERIC_MODEL_ID_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
   GENERIC_PROVIDER_TYPE_STORAGE_KEY,
+  genericApiDocCaptureSessionStorageDefaultValue,
   genericApiDocStorageDefaultValues,
   genericProviderLabelMap,
   isGenericModelConfigComplete
@@ -27,6 +33,7 @@ import { Button } from "../../components/catalyst-ui-kit/button";
 
 export function GenericApiDocSettings() {
   const [isTesting, setIsTesting] = useState(false);
+  const [isSelfChecking, setIsSelfChecking] = useState(false);
   const [providerType, setProviderType] = useStorage<GenericModelConfig["apiType"]>(
     { key: GENERIC_PROVIDER_TYPE_STORAGE_KEY, instance: storage },
     genericApiDocStorageDefaultValues[GENERIC_PROVIDER_TYPE_STORAGE_KEY]
@@ -47,6 +54,10 @@ export function GenericApiDocSettings() {
     { key: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
     genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   );
+  const [captureSession] = useStorage(
+    { key: GENERIC_CAPTURE_SESSION_STORAGE_KEY, instance: storage },
+    genericApiDocCaptureSessionStorageDefaultValue
+  );
 
   const modelConfig = useMemo<GenericModelConfig>(
     () => ({
@@ -59,6 +70,12 @@ export function GenericApiDocSettings() {
   );
 
   const canTestConnection = isGenericModelConfigComplete(modelConfig) && !isTesting;
+  const canSelfCheck =
+    isGenericModelConfigComplete(modelConfig) &&
+    !isSelfChecking &&
+    !!captureSession.source &&
+    !!captureSession.capture &&
+    captureSession.status !== "picking";
 
   const handleTestConnection = async () => {
     if (!isGenericModelConfigComplete(modelConfig)) {
@@ -84,6 +101,45 @@ export function GenericApiDocSettings() {
       toast.error(error instanceof Error ? error.message : String(error));
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const handleSelfCheckCurrentCapture = async () => {
+    if (!captureSession.source || !captureSession.capture) {
+      toast.error("当前没有可用的采集样例，请先在 popup 完成一次采集");
+      return;
+    }
+
+    if (!isGenericModelConfigComplete(modelConfig)) {
+      toast.error("请先填写完整的 Generic 模型配置");
+      return;
+    }
+
+    setIsSelfChecking(true);
+
+    try {
+      const response = await sendToBackground<
+        GenericSelfCheckCurrentCaptureReqBody,
+        GenericSelfCheckCurrentCaptureResBody
+      >({
+        name: "genericSelfCheckCurrentCapture" as never,
+        body: {
+          sessionId: captureSession.sessionId,
+          attemptId: captureSession.attemptId,
+          config: modelConfig
+        }
+      });
+
+      if (!response.success) {
+        toast.error(response.message);
+        return;
+      }
+
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSelfChecking(false);
     }
   };
 
@@ -153,6 +209,18 @@ export function GenericApiDocSettings() {
             </div>
             <Button onClick={() => void handleTestConnection()} disabled={!canTestConnection}>
               {isTesting ? "测试中..." : "测试连接"}
+            </Button>
+          </div>
+        </Field>
+
+        <Field>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <Label>样例自检</Label>
+              <Description>使用最近一次采集样例做一次真实提取，帮助判断当前模型配置是否适合这类 API 文档。</Description>
+            </div>
+            <Button onClick={() => void handleSelfCheckCurrentCapture()} disabled={!canSelfCheck}>
+              {isSelfChecking ? "自检中..." : "自检当前样例"}
             </Button>
           </div>
         </Field>

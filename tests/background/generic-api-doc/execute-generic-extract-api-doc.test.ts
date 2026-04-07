@@ -20,7 +20,15 @@ test("executeGenericExtractApiDoc 提取失败时保留 capture 并回写 error"
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-1")),
     {
       source: { tabId: 1, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
+      capture: {
+        visibleText: "GET /users",
+        previewText: "GET /users",
+        domSummary: null,
+        pickedAt: 1,
+        charCount: 10,
+        truncated: false,
+        qualityHints: ["missing-dom-summary"]
+      }
     }
   );
 
@@ -45,7 +53,15 @@ test("executeGenericExtractApiDoc 提取成功时回写 done 并返回结果", a
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),
     {
       source: { tabId: 1, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-      capture: { visibleText: "GET /users", previewText: "GET /users", domSummary: null, pickedAt: 1 }
+      capture: {
+        visibleText: "GET /users",
+        previewText: "GET /users",
+        domSummary: null,
+        pickedAt: 1,
+        charCount: 10,
+        truncated: false,
+        qualityHints: ["missing-dom-summary"]
+      }
     }
   );
   const resultData: GenericExtractionResult = {

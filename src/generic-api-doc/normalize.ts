@@ -16,6 +16,7 @@ const SUPPORTED_SCHEMA_SCALAR_TYPES = new Set<GenericSchemaScalarType>([
   "unknown"
 ]);
 const COMPLEX_SCHEMA_KEYS = ["oneOf", "anyOf", "allOf", "discriminator"] as const;
+const SUPPORTED_UNCERTAINTY_KINDS = new Set(["missing", "degraded", "conflict"]);
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -89,23 +90,59 @@ const requireArray = (value: unknown, field: string): unknown[] => {
   return value;
 };
 
-const normalizeParameterList = (value: unknown, field: string): GenericParameter[] => {
-  return requireArray(value, field).map((item, index) => {
+const createUncertainty = (field: string, reason: string, kind: GenericUncertainty["kind"]): GenericUncertainty => ({
+  field,
+  reason,
+  kind
+});
+
+const normalizeParameterList = (
+  value: unknown,
+  field: string
+): { parameters: GenericParameter[]; uncertainties: GenericUncertainty[] } => {
+  const uncertainties: GenericUncertainty[] = [];
+
+  const parameters = requireArray(value, field).map((item, index) => {
     if (!isRecord(item)) {
+      uncertainties.push(
+        createUncertainty(
+          `${field}[${index}].name`,
+          "参数缺少 name，已回退为索引占位名，请用户确认真实参数名",
+          "missing"
+        )
+      );
       return {
         name: `${field}[${index}]`,
         example: item
       };
     }
 
+    const normalizedName =
+      typeof item.name === "string" && item.name.trim().length > 0 ? item.name.trim() : `${field}[${index}]`;
+
+    if (normalizedName === `${field}[${index}]`) {
+      uncertainties.push(
+        createUncertainty(
+          `${field}[${index}].name`,
+          "参数缺少 name，已回退为索引占位名，请用户确认真实参数名",
+          "missing"
+        )
+      );
+    }
+
     return {
-      name: typeof item.name === "string" && item.name.trim().length > 0 ? item.name.trim() : `${field}[${index}]`,
+      name: normalizedName,
       type: typeof item.type === "string" ? item.type.trim() || undefined : undefined,
       required: typeof item.required === "boolean" ? item.required : undefined,
       description: typeof item.description === "string" ? item.description.trim() || undefined : undefined,
       example: item.example
     };
   });
+
+  return {
+    parameters,
+    uncertainties
+  };
 };
 
 const normalizeCaptureMode = (value: unknown): GenericCaptureMode => {
@@ -164,8 +201,12 @@ const ensureSchemaNode = (
     node: {
       type: "unknown"
     },
-    uncertainties: [{ field, reason }]
+    uncertainties: [createUncertainty(field, reason, "degraded")]
   };
+};
+
+const looksLikeEndpointPath = (value: string): boolean => {
+  return /^(\/|https?:\/\/)/i.test(value.trim());
 };
 
 export const normalizeGenericSchemaNode = (
@@ -184,7 +225,7 @@ export const normalizeGenericSchemaNode = (
       node: {
         type: "unknown"
       },
-      uncertainties: [{ field: path, reason: "节点不是对象，已降级为 unknown" }]
+      uncertainties: [createUncertainty(path, "节点不是对象，已降级为 unknown", "degraded")]
     };
   }
 
@@ -194,10 +235,7 @@ export const normalizeGenericSchemaNode = (
     return {
       node: buildUnknownSchemaNode(value),
       uncertainties: [
-        {
-          field: path,
-          reason: `检测到 ${complexSchemaKey} 结构，v1 仅保留外层节点并将其降级为 unknown`
-        }
+        createUncertainty(path, `检测到 ${complexSchemaKey} 结构，v1 仅保留外层节点并将其降级为 unknown`, "degraded")
       ]
     };
   }
@@ -210,10 +248,7 @@ export const normalizeGenericSchemaNode = (
     const uncertainties: GenericUncertainty[] = [];
 
     if (!isRecord(value.properties)) {
-      uncertainties.push({
-        field: path,
-        reason: "object 节点缺少有效的 properties，已降级为空对象"
-      });
+      uncertainties.push(createUncertainty(path, "object 节点缺少有效的 properties，已降级为空对象", "degraded"));
     }
 
     for (const [propertyName, propertyValue] of Object.entries(propertiesRecord)) {
@@ -288,23 +323,28 @@ export const normalizeGenericSchemaNode = (
   if (!rawType) {
     return {
       node: buildUnknownSchemaNode(value),
-      uncertainties: [{ field: path, reason: "节点缺少 type，已降级为 unknown" }]
+      uncertainties: [createUncertainty(path, "节点缺少 type，已降级为 unknown", "degraded")]
     };
   }
 
   return {
     node: buildUnknownSchemaNode(value),
-    uncertainties: [{ field: path, reason: `节点类型 ${rawType} 不在 v1 支持范围内，已降级为 unknown` }]
+    uncertainties: [createUncertainty(path, `节点类型 ${rawType} 不在 v1 支持范围内，已降级为 unknown`, "degraded")]
   };
 };
 
 const normalizeUncertaintyList = (value: unknown): GenericUncertainty[] => {
   return requireArray(value, "uncertainties").map((item, index) => {
     const record = requireRecord(item, `uncertainties[${index}]`);
+    const kind =
+      typeof record.kind === "string" && SUPPORTED_UNCERTAINTY_KINDS.has(record.kind)
+        ? (record.kind as GenericUncertainty["kind"])
+        : undefined;
 
     return {
       field: requireString(record.field, `uncertainties[${index}].field`),
-      reason: requireString(record.reason, `uncertainties[${index}].reason`)
+      reason: requireString(record.reason, `uncertainties[${index}].reason`),
+      ...(kind ? { kind } : {})
     };
   });
 };
@@ -326,6 +366,19 @@ export const normalizeGenericExtractionResult = (value: unknown): GenericExtract
 
   const normalizedRequestBody = normalizeGenericSchemaNode(request.body, "request.body");
   const normalizedSuccessBody = normalizeGenericSchemaNode(response.successBody, "response.successBody");
+  const normalizedMethod = requireString(endpoint.method, "endpoint.method").toUpperCase();
+
+  if (!isSupportedHttpMethod(normalizedMethod)) {
+    throw new Error("Field endpoint.method must be a supported HTTP method");
+  }
+
+  const normalizedPath = requireString(endpoint.path, "endpoint.path");
+  const pathUncertainties: GenericUncertainty[] = looksLikeEndpointPath(normalizedPath)
+    ? []
+    : [createUncertainty("endpoint.path", "endpoint.path 看起来不像 URL 或接口路径，请确认是否提取错误", "conflict")];
+  const normalizedPathParams = normalizeParameterList(request.pathParams, "request.pathParams");
+  const normalizedQueryParams = normalizeParameterList(request.queryParams, "request.queryParams");
+  const normalizedHeaders = normalizeParameterList(request.headers, "request.headers");
 
   return {
     source: {
@@ -335,14 +388,14 @@ export const normalizeGenericExtractionResult = (value: unknown): GenericExtract
     },
     endpoint: {
       name: requireString(endpoint.name, "endpoint.name"),
-      path: requireString(endpoint.path, "endpoint.path"),
-      method: requireString(endpoint.method, "endpoint.method").toUpperCase(),
+      path: normalizedPath,
+      method: normalizedMethod,
       description: readOptionalString(endpoint.description, "endpoint.description")
     },
     request: {
-      pathParams: normalizeParameterList(request.pathParams, "request.pathParams"),
-      queryParams: normalizeParameterList(request.queryParams, "request.queryParams"),
-      headers: normalizeParameterList(request.headers, "request.headers"),
+      pathParams: normalizedPathParams.parameters,
+      queryParams: normalizedQueryParams.parameters,
+      headers: normalizedHeaders.parameters,
       body: normalizedRequestBody.node,
       auth: readOptionalNullableString(request.auth, "request.auth") ?? null
     },
@@ -352,6 +405,10 @@ export const normalizeGenericExtractionResult = (value: unknown): GenericExtract
     },
     uncertainties: [
       ...normalizeUncertaintyList(root.uncertainties),
+      ...pathUncertainties,
+      ...normalizedPathParams.uncertainties,
+      ...normalizedQueryParams.uncertainties,
+      ...normalizedHeaders.uncertainties,
       ...normalizedRequestBody.uncertainties,
       ...normalizedSuccessBody.uncertainties
     ]

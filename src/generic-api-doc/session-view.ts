@@ -17,6 +17,15 @@ export interface GenericPanelViewState {
   disableCaptureActions: boolean;
   disableExtract: boolean;
   canStartCaptureWithoutConfig: boolean;
+  canClearSession: boolean;
+  captureDiagnostics: {
+    sourceModeLabel: string;
+    hasDomSummary: boolean;
+    truncated: boolean;
+    charCount: number;
+    uncertaintyCount: number;
+    shouldRepick: boolean;
+  } | null;
 }
 
 export const deriveGenericPanelState = ({
@@ -34,12 +43,25 @@ export const deriveGenericPanelState = ({
   // 采集结果一旦和当前标签页不匹配，只允许清空或重采集，避免误提取旧页面内容。
   const isTabMismatch = hasCapture ? !isGenericCaptureSessionBoundToTab(session, tab ?? {}) : false;
   const disableCaptureActions = !isPageSupported || isBusy;
+  const captureDiagnostics =
+    hasCapture && session.source && session.capture
+      ? {
+          sourceModeLabel: session.source.mode === "generic-dom" ? "DOM 点选" : "文本选区",
+          hasDomSummary: !!session.capture.domSummary,
+          truncated: session.capture.truncated,
+          charCount: session.capture.charCount,
+          uncertaintyCount: session.result?.uncertainties.length ?? 0,
+          shouldRepick: session.capture.truncated || !session.capture.domSummary
+        }
+      : null;
 
   return {
     isTabMismatch,
     previewText: session.capture?.previewText ?? EMPTY_PREVIEW_TEXT,
     disableCaptureActions,
     disableExtract: !hasCapture || !isConfigComplete || isTabMismatch || isBusy,
-    canStartCaptureWithoutConfig: isPageSupported && !isBusy
+    canStartCaptureWithoutConfig: isPageSupported && !isBusy,
+    canClearSession: session.status !== "idle" || hasCapture || !!session.error || !!session.result,
+    captureDiagnostics
   };
 };
