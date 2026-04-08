@@ -1,22 +1,13 @@
 import { Storage } from "@plasmohq/storage";
 import {
-  GENERIC_API_KEY_STORAGE_KEY,
-  GENERIC_BASE_URL_STORAGE_KEY,
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
-  GENERIC_MODEL_ID_STORAGE_KEY,
+  GENERIC_MODEL_CONFIG_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
-  GENERIC_PROVIDER_TYPE_STORAGE_KEY,
   genericApiDocCaptureSessionStorageDefaultValue,
+  genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues
 } from "./generic-api-doc";
-import {
-  resolveSwqaPromptTemplateMigration,
-  SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
-  SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY,
-  SWQA_PROMPT_PURPOSE_STORAGE_KEY,
-  SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY,
-  swqaPromptTemplateDefaultValues
-} from "./swqa-prompt-template";
+import { SWQA_PROMPT_TEMPLATES_STORAGE_KEY, swqaPromptTemplatesDefaultValue } from "./swqa-prompt-template";
 
 export const storage = new Storage({ area: "local" });
 export const sessionStorage = new Storage({ area: "session" });
@@ -55,26 +46,11 @@ export const localStorageInitialValue = {
   gitlabProjectsDisplayMode: {
     defaultValue: "overlay" as GitlabProjectsDisplayMode
   },
-  [SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY]: {
-    defaultValue: swqaPromptTemplateDefaultValues[SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY]
+  [SWQA_PROMPT_TEMPLATES_STORAGE_KEY]: {
+    defaultValue: swqaPromptTemplatesDefaultValue
   },
-  [SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY]: {
-    defaultValue: swqaPromptTemplateDefaultValues[SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY]
-  },
-  [SWQA_PROMPT_PURPOSE_STORAGE_KEY]: {
-    defaultValue: "create"
-  },
-  [GENERIC_PROVIDER_TYPE_STORAGE_KEY]: {
-    defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROVIDER_TYPE_STORAGE_KEY]
-  },
-  [GENERIC_BASE_URL_STORAGE_KEY]: {
-    defaultValue: genericApiDocStorageDefaultValues[GENERIC_BASE_URL_STORAGE_KEY]
-  },
-  [GENERIC_MODEL_ID_STORAGE_KEY]: {
-    defaultValue: genericApiDocStorageDefaultValues[GENERIC_MODEL_ID_STORAGE_KEY]
-  },
-  [GENERIC_API_KEY_STORAGE_KEY]: {
-    defaultValue: genericApiDocStorageDefaultValues[GENERIC_API_KEY_STORAGE_KEY]
+  [GENERIC_MODEL_CONFIG_STORAGE_KEY]: {
+    defaultValue: genericApiDocModelConfigDefaultValue
   },
   [GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]: {
     defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
@@ -91,34 +67,23 @@ export const localStorageInitialValue = {
 
 export type LocalStorageKey = keyof typeof localStorageInitialValue;
 
-const initSwqaPromptTemplateStorage = async () => {
-  const [createTemplate, updateTemplate, legacyTemplate] = (await Promise.all([
-    storage.get(SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY),
-    storage.get(SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY),
-    storage.get(SWQA_LEGACY_PROMPT_TEMPLATE_STORAGE_KEY)
-  ])) as [string | undefined, string | undefined, string | undefined];
+export const LEGACY_LOCAL_STORAGE_KEYS = [
+  "swqaPromptPurpose",
+  "swqaCreatePromptTemplate",
+  "swqaUpdatePromptTemplate",
+  "swqaPromptTemplate",
+  "genericApiDocProviderType",
+  "genericApiDocBaseUrl",
+  "genericApiDocModelId",
+  "genericApiDocApiKey"
+] as const;
 
-  const migration = resolveSwqaPromptTemplateMigration({
-    createTemplate,
-    updateTemplate,
-    legacyTemplate
-  });
-
-  const tasks: Promise<null>[] = [];
-
-  if (migration.create.shouldWrite) {
-    tasks.push(storage.set(SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY, migration.create.value));
-  }
-
-  if (migration.update.shouldWrite) {
-    tasks.push(storage.set(SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY, migration.update.value));
-  }
-
-  await Promise.all(tasks);
+const cleanupLegacyLocalStorage = async () => {
+  await storage.removeMany([...LEGACY_LOCAL_STORAGE_KEYS]);
 };
 
 export const initLocalStorage = async () => {
-  await initSwqaPromptTemplateStorage();
+  await cleanupLegacyLocalStorage();
 
   for (const [key, { defaultValue }] of Object.entries(localStorageInitialValue)) {
     const currentValue = await storage.get(key);
@@ -129,6 +94,7 @@ export const initLocalStorage = async () => {
 };
 
 export const resetLocalStorage = async () => {
+  await cleanupLegacyLocalStorage();
   await Promise.all(
     Object.entries(localStorageInitialValue).map(([key, { defaultValue }]) =>
       storage.set(key, defaultValue).catch((e) => console.error(`Failed to reset ${key}:`, e))

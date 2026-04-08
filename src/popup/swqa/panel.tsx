@@ -1,6 +1,6 @@
 import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
-import { BookOpen, CircleHelp, Clipboard, ClipboardCheck, RefreshCcw, Sparkles, Wand2 } from "lucide-react";
+import { BookOpen, CircleHelp, Clipboard, ClipboardCheck, RefreshCcw, Settings2, Sparkles, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import type { ActiveTabIdResBody } from "@/background/messages/getActiveTab";
@@ -16,12 +16,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UpdateNotice } from "@/components/update-notice";
+import { openBaseSettingsTab } from "@/popup/open-options";
 import { storage } from "@/storages";
-import {
-  SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
-  SWQA_PROMPT_PURPOSE_STORAGE_KEY,
-  SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY
-} from "@/storages/swqa-prompt-template";
+import { SWQA_PROMPT_TEMPLATES_STORAGE_KEY, swqaPromptTemplatesDefaultValue } from "@/storages/swqa-prompt-template";
 import { cn } from "@/utils";
 import { type CleanedSwqaInterfaceDetail, cleanSwqaInterfaceDetail } from "./clean";
 import {
@@ -51,19 +48,13 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
   const [extractState, setExtractState] = useState<ExtractState>("idle");
   const [error, setError] = useState<string | null>(pageError ?? null);
   const [cleaned, setCleaned] = useState<CleanedSwqaInterfaceDetail | null>(null);
-  const [promptPurpose, setPromptPurpose] = useStorage<SwqaPromptPurpose>(
-    { key: SWQA_PROMPT_PURPOSE_STORAGE_KEY, instance: storage },
-    "create"
-  );
-  const [storedCreatePromptTemplate, setStoredCreatePromptTemplate] = useStorage<string>(
-    { key: SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
-    ""
-  );
-  const [storedUpdatePromptTemplate, setStoredUpdatePromptTemplate] = useStorage<string>(
-    { key: SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
-    ""
+  const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("update");
+  const [storedPromptTemplates, , storedPromptTemplatesState] = useStorage(
+    { key: SWQA_PROMPT_TEMPLATES_STORAGE_KEY, instance: storage },
+    swqaPromptTemplatesDefaultValue
   );
 
+  const isPromptTemplatesHydrated = !storedPromptTemplatesState.isLoading;
   const cleanedJsonText = useMemo(() => {
     if (!cleaned) {
       return "";
@@ -72,11 +63,15 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
     return JSON.stringify(cleaned, null, 2);
   }, [cleaned]);
 
-  const storedPromptTemplate = promptPurpose === "update" ? storedUpdatePromptTemplate : storedCreatePromptTemplate;
+  const storedPromptTemplate = isPromptTemplatesHydrated
+    ? promptPurpose === "update"
+      ? storedPromptTemplates.update
+      : storedPromptTemplates.create
+    : "";
   const promptTemplateForCopy = resolvePromptTemplateForCopy(storedPromptTemplate, promptPurpose);
 
   const promptText = useMemo(() => {
-    if (!cleaned || !parsedUrl?.ok) {
+    if (!isPromptTemplatesHydrated || !cleaned || !parsedUrl?.ok) {
       return "";
     }
 
@@ -86,7 +81,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
       url: parsedUrl.url,
       interfaceId: parsedUrl.interfaceId
     });
-  }, [cleaned, cleanedJsonText, parsedUrl, promptTemplateForCopy]);
+  }, [cleaned, cleanedJsonText, isPromptTemplatesHydrated, parsedUrl, promptTemplateForCopy]);
 
   const handleExtract = async () => {
     if (!parsedUrl?.ok || !tab?.id) {
@@ -139,24 +134,22 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
     toast.success(getSwqaCopyPromptSuccessMessage(promptPurpose));
   };
 
-  const handlePromptTemplateChange = (value: string) => {
-    if (promptPurpose === "update") {
-      void setStoredUpdatePromptTemplate(value);
-      return;
-    }
-
-    void setStoredCreatePromptTemplate(value);
+  const handlePromptPurposeChange = (value: string) => {
+    setPromptPurpose(value as SwqaPromptPurpose);
   };
 
-  const handlePromptPurposeChange = (value: string) => {
-    void setPromptPurpose(value as SwqaPromptPurpose);
+  const handleOpenOptions = () => {
+    void openBaseSettingsTab({
+      runtimeGetURL: (path) => chrome.runtime.getURL(path),
+      createTab: (createProperties) => chrome.tabs.create(createProperties)
+    });
   };
 
   const isReady = parsedUrl?.ok === true;
   const isLoading = extractState === "loading";
   const disableExtract = !isReady || isLoading;
   const disableJsonCopy = !cleanedJsonText || isLoading;
-  const disablePromptCopy = !promptText || isLoading;
+  const disablePromptCopy = !isPromptTemplatesHydrated || !promptText || isLoading;
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -230,6 +223,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
               aria-label="用途"
               value={promptPurpose}
               onChange={handlePromptPurposeChange}
+              disabled={!isPromptTemplatesHydrated}
               className="flex items-center gap-4 !space-y-0"
             >
               {promptPurposeOptions.map((purpose) => (
@@ -257,7 +251,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
 
           <div className="space-y-2">
             <div className="flex items-center justify-start gap-2">
-              <Label htmlFor="swqa-prompt-template">Prompt 模板（持久化、可编辑）</Label>
+              <Label htmlFor="swqa-prompt-template">Prompt 模板（只读预览）</Label>
               <Button
                 variant="default"
                 size="sm"
@@ -268,14 +262,23 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
                 <ClipboardCheck className="h-4 w-4 mr-1" />
                 复制 Prompt
               </Button>
+              <Button variant="outline" size="sm" onClick={handleOpenOptions} className="shrink-0">
+                <Settings2 className="h-4 w-4 mr-1" />
+                去设置
+              </Button>
             </div>
             <Textarea
               id="swqa-prompt-template"
               className="w-full rounded-md p-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
               rows={6}
-              value={storedPromptTemplate ?? ""}
-              onChange={(event) => handlePromptTemplateChange(event.target.value)}
+              value={isPromptTemplatesHydrated ? promptTemplateForCopy : ""}
+              readOnly
             />
+            <div className="text-xs text-gray-500">
+              {isPromptTemplatesHydrated
+                ? "当前展示的是已保存模板；如需修改，请前往设置页编辑并点击保存后再回来复制。"
+                : "正在加载已保存模板，加载完成前不会使用默认模板。"}
+            </div>
             <div className="text-xs text-gray-500">
               支持的占位符：<Code>{"{{json}}"}</Code> / <Code>{"{{url}}"}</Code> / <Code>{"{{interfaceId}}"}</Code>
             </div>

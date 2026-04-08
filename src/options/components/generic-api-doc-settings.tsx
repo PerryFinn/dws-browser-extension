@@ -1,6 +1,6 @@
 import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import type {
   GenericSelfCheckCurrentCaptureReqBody,
@@ -16,69 +16,77 @@ import { Select } from "@/components/catalyst-ui-kit/select";
 import { Code } from "@/components/catalyst-ui-kit/text";
 import { Textarea } from "@/components/catalyst-ui-kit/textarea";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import { areGenericModelConfigEqual } from "@/options/model-settings";
+import { useDraftedStorageValue } from "@/options/use-drafted-storage";
 import { storage } from "@/storages";
 import {
-  GENERIC_API_KEY_STORAGE_KEY,
-  GENERIC_BASE_URL_STORAGE_KEY,
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
-  GENERIC_MODEL_ID_STORAGE_KEY,
+  GENERIC_MODEL_CONFIG_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
-  GENERIC_PROVIDER_TYPE_STORAGE_KEY,
   genericApiDocCaptureSessionStorageDefaultValue,
+  genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues,
   genericProviderLabelMap,
   isGenericModelConfigComplete
 } from "@/storages/generic-api-doc";
 import { Button } from "../../components/catalyst-ui-kit/button";
 
-export function GenericApiDocSettings() {
+interface GenericApiDocSettingsProps {
+  onUnsavedChangesChange?: (hasUnsavedChanges: boolean) => void;
+}
+
+export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocSettingsProps) {
   const [isTesting, setIsTesting] = useState(false);
   const [isSelfChecking, setIsSelfChecking] = useState(false);
-  const [providerType, setProviderType] = useStorage<GenericModelConfig["apiType"]>(
-    { key: GENERIC_PROVIDER_TYPE_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_PROVIDER_TYPE_STORAGE_KEY]
-  );
-  const [baseUrl, setBaseUrl] = useStorage<string>(
-    { key: GENERIC_BASE_URL_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_BASE_URL_STORAGE_KEY]
-  );
-  const [modelId, setModelId] = useStorage<string>(
-    { key: GENERIC_MODEL_ID_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_MODEL_ID_STORAGE_KEY]
-  );
-  const [apiKey, setApiKey] = useStorage<string>(
-    { key: GENERIC_API_KEY_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_API_KEY_STORAGE_KEY]
-  );
-  const [promptTemplate, setPromptTemplate] = useStorage<string>(
-    { key: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
-  );
   const [captureSession] = useStorage(
     { key: GENERIC_CAPTURE_SESSION_STORAGE_KEY, instance: storage },
     genericApiDocCaptureSessionStorageDefaultValue
   );
+  const {
+    savedValue: savedModelConfig,
+    draftValue: modelConfigDraft,
+    setDraftValue: setModelConfigDraft,
+    isHydrated: isModelConfigHydrated,
+    isSaving: isSavingModelConfig,
+    isDirty: isModelConfigDirty,
+    resetDraft: resetModelConfigDraft,
+    saveDraft: saveModelConfigDraft
+  } = useDraftedStorageValue<GenericModelConfig>({
+    storage,
+    storageKey: GENERIC_MODEL_CONFIG_STORAGE_KEY,
+    defaultValue: genericApiDocModelConfigDefaultValue,
+    isEqual: areGenericModelConfigEqual
+  });
+  const {
+    draftValue: promptTemplateDraft,
+    setDraftValue: setPromptTemplateDraft,
+    isHydrated: isPromptTemplateHydrated,
+    isSaving: isSavingPromptTemplate,
+    isDirty: isPromptTemplateDirty,
+    resetDraft: resetPromptTemplateDraft,
+    saveDraft: savePromptTemplateDraft
+  } = useDraftedStorageValue<string>({
+    storage,
+    storageKey: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
+    defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
+  });
 
-  const modelConfig = useMemo<GenericModelConfig>(
-    () => ({
-      apiType: providerType,
-      baseUrl,
-      modelId,
-      apiKey
-    }),
-    [apiKey, baseUrl, modelId, providerType]
-  );
-
-  const canTestConnection = isGenericModelConfigComplete(modelConfig) && !isTesting;
+  const canTestConnection = isGenericModelConfigComplete(savedModelConfig) && !isModelConfigDirty && !isTesting;
   const canSelfCheck =
-    isGenericModelConfigComplete(modelConfig) &&
+    isGenericModelConfigComplete(savedModelConfig) &&
+    !isModelConfigDirty &&
     !isSelfChecking &&
     !!captureSession.source &&
     !!captureSession.capture &&
     captureSession.status !== "picking";
+  const hasUnsavedChanges = isModelConfigDirty || isPromptTemplateDirty;
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
   const handleTestConnection = async () => {
-    if (!isGenericModelConfigComplete(modelConfig)) {
+    if (!isGenericModelConfigComplete(savedModelConfig)) {
       toast.error("请先填写完整的 Generic 模型配置");
       return;
     }
@@ -88,7 +96,7 @@ export function GenericApiDocSettings() {
     try {
       const response = await sendToBackground<GenericTestModelConfigReqBody, GenericTestModelConfigResBody>({
         name: "genericTestModelConfig" as never,
-        body: { config: modelConfig }
+        body: { config: savedModelConfig }
       });
 
       if (!response.success) {
@@ -110,7 +118,7 @@ export function GenericApiDocSettings() {
       return;
     }
 
-    if (!isGenericModelConfigComplete(modelConfig)) {
+    if (!isGenericModelConfigComplete(savedModelConfig)) {
       toast.error("请先填写完整的 Generic 模型配置");
       return;
     }
@@ -126,7 +134,7 @@ export function GenericApiDocSettings() {
         body: {
           sessionId: captureSession.sessionId,
           attemptId: captureSession.attemptId,
-          config: modelConfig
+          config: savedModelConfig
         }
       });
 
@@ -143,103 +151,219 @@ export function GenericApiDocSettings() {
     }
   };
 
+  const handleResetModelConfigDraft = () => {
+    resetModelConfigDraft();
+  };
+
+  const handleSaveModelConfigDraft = async () => {
+    try {
+      await saveModelConfigDraft();
+      toast.success("Generic 模型配置已保存");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const handleResetPromptTemplateDraft = () => {
+    resetPromptTemplateDraft();
+  };
+
+  const handleSavePromptTemplateDraft = async () => {
+    try {
+      await savePromptTemplateDraft();
+      toast.success("Generic Prompt 模板已保存");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    }
+  };
+
   return (
-    <Fieldset className="max-w-3xl">
-      <Legend>通用 API 文档提取</Legend>
-      <FieldGroup>
-        <Field>
-          <Label htmlFor="generic-provider-type">API 类型</Label>
-          <Description>先支持 OpenAI 兼容端点和 OpenAI 官方端点。</Description>
-          <Select
-            id="generic-provider-type"
-            name="generic-provider-type"
-            value={providerType}
-            onChange={(event) => void setProviderType(event.target.value as GenericModelConfig["apiType"])}
-          >
-            {Object.entries(genericProviderLabelMap).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </Select>
-        </Field>
+    <>
+      <Fieldset className="max-w-3xl">
+        <Legend>通用 API 文档提取 - 模型配置</Legend>
+        <FieldGroup>
+          <Field>
+            <Label htmlFor="generic-provider-type">API 类型</Label>
+            <Description>
+              {isModelConfigHydrated
+                ? "修改后点击保存才会生效；测试连接和样例自检只使用已保存配置。"
+                : "正在加载已保存模型配置，加载完成前不可编辑。"}
+            </Description>
+            <Select
+              id="generic-provider-type"
+              name="generic-provider-type"
+              value={modelConfigDraft.apiType}
+              disabled={!isModelConfigHydrated || isSavingModelConfig}
+              onChange={(event) =>
+                setModelConfigDraft((current) => ({
+                  ...current,
+                  apiType: event.target.value as GenericModelConfig["apiType"]
+                }))
+              }
+            >
+              {Object.entries(genericProviderLabelMap).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </Field>
 
-        <Field>
-          <Label htmlFor="generic-base-url">Base URL</Label>
-          <Description>填写模型接口的基础地址，例如 OpenAI 兼容网关或官方 API 地址。</Description>
-          <Input
-            id="generic-base-url"
-            name="generic-base-url"
-            type="url"
-            placeholder="https://api.openai.com/v1"
-            value={baseUrl ?? ""}
-            onChange={(event) => void setBaseUrl(event.target.value)}
-          />
-        </Field>
+          <Field>
+            <Label htmlFor="generic-base-url">Base URL</Label>
+            <Description>填写模型接口的基础地址，例如 OpenAI 兼容网关或官方 API 地址。</Description>
+            <Input
+              id="generic-base-url"
+              name="generic-base-url"
+              type="url"
+              placeholder="https://api.openai.com/v1"
+              value={modelConfigDraft.baseUrl ?? ""}
+              disabled={!isModelConfigHydrated || isSavingModelConfig}
+              onChange={(event) =>
+                setModelConfigDraft((current) => ({
+                  ...current,
+                  baseUrl: event.target.value
+                }))
+              }
+            />
+          </Field>
 
-        <Field>
-          <Label htmlFor="generic-model-id">Model ID</Label>
-          <Description>例如 `gpt-5.1`、`deepseek-chat` 等。</Description>
-          <Input
-            id="generic-model-id"
-            name="generic-model-id"
-            value={modelId ?? ""}
-            onChange={(event) => void setModelId(event.target.value)}
-          />
-        </Field>
+          <Field>
+            <Label htmlFor="generic-model-id">Model ID</Label>
+            <Description>例如 `gpt-5.1`、`deepseek-chat` 等。</Description>
+            <Input
+              id="generic-model-id"
+              name="generic-model-id"
+              value={modelConfigDraft.modelId ?? ""}
+              disabled={!isModelConfigHydrated || isSavingModelConfig}
+              onChange={(event) =>
+                setModelConfigDraft((current) => ({
+                  ...current,
+                  modelId: event.target.value
+                }))
+              }
+            />
+          </Field>
 
-        <Field>
-          <Label htmlFor="generic-api-key">API Key</Label>
-          <Description>仅保存在本地扩展 storage，不会同步到其它设备。</Description>
-          <Input
-            id="generic-api-key"
-            name="generic-api-key"
-            type="password"
-            autoComplete="off"
-            value={apiKey ?? ""}
-            onChange={(event) => void setApiKey(event.target.value)}
-          />
-        </Field>
+          <Field>
+            <Label htmlFor="generic-api-key">API Key</Label>
+            <Description>仅保存在本地扩展 storage，不会同步到其它设备。</Description>
+            <Input
+              id="generic-api-key"
+              name="generic-api-key"
+              type="password"
+              autoComplete="off"
+              value={modelConfigDraft.apiKey ?? ""}
+              disabled={!isModelConfigHydrated || isSavingModelConfig}
+              onChange={(event) =>
+                setModelConfigDraft((current) => ({
+                  ...current,
+                  apiKey: event.target.value
+                }))
+              }
+            />
+          </Field>
 
-        <Field>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Label>测试连接</Label>
-              <Description>只验证是否可发起请求以及是否能返回结构化对象，不验证抽取质量。</Description>
+          <Field>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label>测试连接</Label>
+                <Description>只验证已保存配置是否可发起请求以及是否能返回结构化对象。</Description>
+              </div>
+              <Button
+                onClick={() => void handleTestConnection()}
+                disabled={!isModelConfigHydrated || !canTestConnection}
+              >
+                {isTesting ? "测试中..." : "测试连接"}
+              </Button>
             </div>
-            <Button onClick={() => void handleTestConnection()} disabled={!canTestConnection}>
-              {isTesting ? "测试中..." : "测试连接"}
-            </Button>
-          </div>
-        </Field>
+          </Field>
 
-        <Field>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Label>样例自检</Label>
-              <Description>使用最近一次采集样例做一次真实提取，帮助判断当前模型配置是否适合这类 API 文档。</Description>
+          <Field>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Label>样例自检</Label>
+                <Description>使用最近一次采集样例做一次真实提取，帮助判断已保存配置是否适合当前文档。</Description>
+              </div>
+              <Button
+                onClick={() => void handleSelfCheckCurrentCapture()}
+                disabled={!isModelConfigHydrated || !canSelfCheck}
+              >
+                {isSelfChecking ? "自检中..." : "自检当前样例"}
+              </Button>
             </div>
-            <Button onClick={() => void handleSelfCheckCurrentCapture()} disabled={!canSelfCheck}>
-              {isSelfChecking ? "自检中..." : "自检当前样例"}
-            </Button>
-          </div>
-        </Field>
+          </Field>
 
-        <Field>
-          <Label htmlFor="generic-prompt-template">Prompt 模板</Label>
-          <Description>
-            支持的占位符：<Code>{"{{json}}"}</Code> / <Code>{"{{url}}"}</Code>
-          </Description>
-          <Textarea
-            id="generic-prompt-template"
-            data-slot="control"
-            rows={12}
-            value={promptTemplate ?? ""}
-            onChange={(event) => void setPromptTemplate(event.target.value)}
-            className="relative block w-full appearance-none rounded-lg border border-zinc-950/10 bg-transparent px-[calc(theme(spacing[3.5])-1px)] py-[calc(theme(spacing[2.5])-1px)] text-base/6 text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:data-[hover]:border-white/20"
-          />
-        </Field>
-      </FieldGroup>
-    </Fieldset>
+          {isModelConfigDirty ? (
+            <Field>
+              <Description className="text-amber-600">
+                当前有未保存的模型配置变更，请先保存，再执行测试连接或样例自检。
+              </Description>
+            </Field>
+          ) : null}
+
+          <Field>
+            <div className="flex justify-end gap-2">
+              <Button
+                outline
+                disabled={!isModelConfigHydrated || isSavingModelConfig || !isModelConfigDirty}
+                onClick={handleResetModelConfigDraft}
+              >
+                重置
+              </Button>
+              <Button
+                disabled={!isModelConfigHydrated || isSavingModelConfig || !isModelConfigDirty}
+                onClick={() => void handleSaveModelConfigDraft()}
+              >
+                {isSavingModelConfig ? "保存中..." : "保存模型配置"}
+              </Button>
+            </div>
+          </Field>
+        </FieldGroup>
+      </Fieldset>
+
+      <Fieldset className="max-w-3xl">
+        <Legend>通用 API 文档提取 - Prompt 模板</Legend>
+        <FieldGroup>
+          <Field>
+            <Label htmlFor="generic-prompt-template">Prompt 模板</Label>
+            <Description>
+              {isPromptTemplateHydrated ? (
+                <>
+                  当前为页面内草稿，修改后点击保存才会生效。支持的占位符：<Code>{"{{json}}"}</Code> /{" "}
+                  <Code>{"{{url}}"}</Code>
+                </>
+              ) : (
+                "正在加载已保存 Prompt 模板，加载完成前不可编辑。"
+              )}
+            </Description>
+            <Textarea
+              id="generic-prompt-template"
+              data-slot="control"
+              rows={12}
+              value={isPromptTemplateHydrated ? (promptTemplateDraft ?? "") : ""}
+              disabled={!isPromptTemplateHydrated || isSavingPromptTemplate}
+              onChange={(event) => setPromptTemplateDraft(event.target.value)}
+              className="relative block w-full appearance-none rounded-lg border border-zinc-950/10 bg-transparent px-[calc(theme(spacing[3.5])-1px)] py-[calc(theme(spacing[2.5])-1px)] text-base/6 text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:data-[hover]:border-white/20"
+            />
+            <div className="mt-3 flex justify-end gap-2">
+              <Button
+                outline
+                disabled={!isPromptTemplateHydrated || isSavingPromptTemplate || !isPromptTemplateDirty}
+                onClick={handleResetPromptTemplateDraft}
+              >
+                重置
+              </Button>
+              <Button
+                disabled={!isPromptTemplateHydrated || isSavingPromptTemplate || !isPromptTemplateDirty}
+                onClick={() => void handleSavePromptTemplateDraft()}
+              >
+                {isSavingPromptTemplate ? "保存中..." : "保存 Prompt 模板"}
+              </Button>
+            </div>
+          </Field>
+        </FieldGroup>
+      </Fieldset>
+    </>
   );
 }

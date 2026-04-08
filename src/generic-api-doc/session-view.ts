@@ -5,6 +5,7 @@ const EMPTY_PREVIEW_TEXT = "暂无采集内容，请先点选区域或读取当�
 interface DeriveGenericPanelStateOptions {
   session: GenericCaptureSession;
   tab: chrome.tabs.Tab | null;
+  isConfigHydrated?: boolean;
   isConfigComplete: boolean;
   isCapturing?: boolean;
   isExtracting?: boolean;
@@ -31,6 +32,7 @@ export interface GenericPanelViewState {
 export const deriveGenericPanelState = ({
   session,
   tab,
+  isConfigHydrated = true,
   isConfigComplete,
   isCapturing = false,
   isExtracting = false,
@@ -59,7 +61,7 @@ export const deriveGenericPanelState = ({
     isTabMismatch,
     previewText: session.capture?.previewText ?? EMPTY_PREVIEW_TEXT,
     disableCaptureActions,
-    disableExtract: !hasCapture || !isConfigComplete || isTabMismatch || isBusy,
+    disableExtract: !hasCapture || !isConfigHydrated || !isConfigComplete || isTabMismatch || isBusy,
     canStartCaptureWithoutConfig: isPageSupported && !isBusy,
     canClearSession: session.status !== "idle" || hasCapture || !!session.error || !!session.result,
     captureDiagnostics

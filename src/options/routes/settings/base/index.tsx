@@ -15,11 +15,15 @@ import { Textarea } from "@/components/catalyst-ui-kit/textarea";
 import { LinkPreview } from "@/components/complex-ui/link-preview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GenericApiDocSettings } from "@/options/components/generic-api-doc-settings";
+import { areSwqaPromptTemplatesEqual } from "@/options/model-settings";
+import { useDraftedStorageValue } from "@/options/use-drafted-storage";
+import { useUnsavedChangesGuard } from "@/options/use-unsaved-changes-guard";
 import { getSwqaPromptTemplateTooltip, type SwqaPromptPurpose, swqaPromptPurposeLabelMap } from "@/popup/swqa/prompt";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import {
-  SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY,
-  SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY
+  SWQA_PROMPT_TEMPLATES_STORAGE_KEY,
+  type SwqaPromptTemplates,
+  swqaPromptTemplatesDefaultValue
 } from "@/storages/swqa-prompt-template";
 
 export const Route = createFileRoute("/settings/base/")({
@@ -39,6 +43,7 @@ const promptPurposeOptions: SwqaPromptPurpose[] = ["create", "update"];
 
 function RouteComponent() {
   const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("update");
+  const [hasGenericUnsavedChanges, setHasGenericUnsavedChanges] = useState(false);
   const [isOpenWindowConfig, , isOpenWindowConfigSetter] = useStorage<boolean>(
     { key: "isOpenWindowConfig", instance: storage },
     defaultOpenWindowConfig
@@ -55,14 +60,20 @@ function RouteComponent() {
     { key: "versionCheckTtlMinutes", instance: storage },
     defaultVersionCheckTtlMinutes
   );
-  const [storedCreatePromptTemplate, , createPromptTemplateSetter] = useStorage<string>(
-    { key: SWQA_CREATE_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
-    ""
-  );
-  const [storedUpdatePromptTemplate, , updatePromptTemplateSetter] = useStorage<string>(
-    { key: SWQA_UPDATE_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
-    ""
-  );
+  const {
+    draftValue: swqaPromptDraft,
+    isDirty: isSwqaPromptDraftDirty,
+    isHydrated: isSwqaPromptHydrated,
+    isSaving: isSavingSwqaPromptDraft,
+    setDraftValue: setSwqaPromptDraft,
+    resetDraft: resetSwqaPromptDraft,
+    saveDraft: saveSwqaPromptDraft
+  } = useDraftedStorageValue<SwqaPromptTemplates>({
+    storage,
+    storageKey: SWQA_PROMPT_TEMPLATES_STORAGE_KEY,
+    defaultValue: swqaPromptTemplatesDefaultValue,
+    isEqual: areSwqaPromptTemplatesEqual
+  });
   const handleOpenWindowConfigChange = (checked: boolean) => {
     isOpenWindowConfigSetter.setStoreValue(checked);
   };
@@ -84,20 +95,48 @@ function RouteComponent() {
     versionCheckTtlMinutesSetter.setStoreValue(defaultVersionCheckTtlMinutes);
   };
 
-  const storedPromptTemplate = promptPurpose === "update" ? storedUpdatePromptTemplate : storedCreatePromptTemplate;
+  const storedPromptTemplate = isSwqaPromptHydrated
+    ? promptPurpose === "update"
+      ? swqaPromptDraft.update
+      : swqaPromptDraft.create
+    : "";
 
   const handlePromptTemplateChange = (value: string) => {
     if (promptPurpose === "update") {
-      updatePromptTemplateSetter.setStoreValue(value);
+      setSwqaPromptDraft((current) => ({
+        ...current,
+        update: value
+      }));
       return;
     }
 
-    createPromptTemplateSetter.setStoreValue(value);
+    setSwqaPromptDraft((current) => ({
+      ...current,
+      create: value
+    }));
   };
 
   const handlePromptPurposeChange = (value: string) => {
     setPromptPurpose(value as SwqaPromptPurpose);
   };
+
+  const handleResetSwqaPromptDraft = () => {
+    resetSwqaPromptDraft();
+  };
+
+  const handleSaveSwqaPromptDraft = async () => {
+    try {
+      await saveSwqaPromptDraft();
+      toast.success("SWQA Prompt 模板已保存");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    }
+  };
+  const hasUnsavedChanges = isSwqaPromptDraftDirty || hasGenericUnsavedChanges;
+
+  useUnsavedChangesGuard({
+    isDirty: hasUnsavedChanges
+  });
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -174,11 +213,16 @@ function RouteComponent() {
               <div className="flex items-center gap-2">
                 <Label>用途</Label>
               </div>
-              <Description>切换后会显示并编辑对应用途的持久化模板，默认展示更新模板。</Description>
+              <Description>
+                {isSwqaPromptHydrated
+                  ? "切换后会显示并编辑对应用途的当前草稿，修改后点击保存才会生效。"
+                  : "正在加载已保存模板，加载完成前不可编辑。"}
+              </Description>
               <RadioGroup
                 aria-label="用途"
                 value={promptPurpose}
                 onChange={handlePromptPurposeChange}
+                disabled={!isSwqaPromptHydrated || isSavingSwqaPromptDraft}
                 className="flex items-center gap-4 !space-y-0"
               >
                 {promptPurposeOptions.map((purpose) => (
@@ -204,7 +248,7 @@ function RouteComponent() {
               </RadioGroup>
 
               <div className="flex items-center gap-2">
-                <Label htmlFor="swqa-prompt-template">Prompt 模板（持久化保存，可编辑占位符）</Label>
+                <Label htmlFor="swqa-prompt-template">Prompt 模板（本地草稿，点击保存后生效）</Label>
               </div>
               <Description>
                 支持的占位符：<Code>{"{{json}}"}</Code> / <Code>{"{{url}}"}</Code> / <Code>{"{{interfaceId}}"}</Code>
@@ -215,23 +259,28 @@ function RouteComponent() {
                 rows={12}
                 value={storedPromptTemplate ?? ""}
                 onChange={(event) => handlePromptTemplateChange(event.target.value)}
+                disabled={!isSwqaPromptHydrated || isSavingSwqaPromptDraft}
                 className="relative block w-full appearance-none rounded-lg border border-zinc-950/10 bg-transparent px-[calc(theme(spacing[3.5])-1px)] py-[calc(theme(spacing[2.5])-1px)] text-base/6 text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:data-[hover]:border-white/20"
               />
+              <div className="mt-3 flex justify-end gap-2">
+                <Button
+                  outline
+                  disabled={!isSwqaPromptHydrated || isSavingSwqaPromptDraft || !isSwqaPromptDraftDirty}
+                  onClick={handleResetSwqaPromptDraft}
+                >
+                  重置
+                </Button>
+                <Button
+                  disabled={!isSwqaPromptHydrated || isSavingSwqaPromptDraft || !isSwqaPromptDraftDirty}
+                  onClick={() => void handleSaveSwqaPromptDraft()}
+                >
+                  {isSavingSwqaPromptDraft ? "保存中..." : "保存 SWQA Prompt"}
+                </Button>
+              </div>
             </Field>
           </FieldGroup>
         </Fieldset>
-
-        <GenericApiDocSettings />
-
-        <div>
-          <Button
-            onClick={() => {
-              toast("Wow so easy!", { pauseOnHover: true });
-            }}
-          >
-            toast it
-          </Button>
-        </div>
+        <GenericApiDocSettings onUnsavedChangesChange={setHasGenericUnsavedChanges} />
       </div>
     </TooltipProvider>
   );

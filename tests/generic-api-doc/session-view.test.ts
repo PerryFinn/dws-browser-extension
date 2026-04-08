@@ -19,6 +19,34 @@ test("未配置模型时仍允许开始点选和读取选区", () => {
   assert.equal(state.disableExtract, true);
 });
 
+test("模型配置加载中时仍允许采集，但不会允许直接提取", () => {
+  const session = markGenericCaptureSessionPicked(
+    markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-loading")),
+    {
+      source: { tabId: 1, url: "https://example.com", title: "Users", mode: "generic-dom" },
+      capture: {
+        visibleText: "GET /users",
+        previewText: "GET /users",
+        domSummary: "headingPath: Users",
+        pickedAt: 1,
+        charCount: 10,
+        truncated: false,
+        qualityHints: []
+      }
+    }
+  );
+  const state = deriveGenericPanelState({
+    session,
+    tab: { id: 1, url: "https://example.com" } as chrome.tabs.Tab,
+    isConfigHydrated: false,
+    isConfigComplete: true
+  });
+
+  assert.equal(state.disableCaptureActions, false);
+  assert.equal(state.disableExtract, true);
+  assert.equal(state.canStartCaptureWithoutConfig, true);
+});
+
 test("picked 状态使用 session 里的 previewText", () => {
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),

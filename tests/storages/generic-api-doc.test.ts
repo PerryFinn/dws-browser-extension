@@ -3,11 +3,9 @@ import test from "node:test";
 
 import { defaultGenericPromptTemplate, resolveGenericPromptTemplateForCopy } from "@/generic-api-doc/prompt";
 import {
-  GENERIC_API_KEY_STORAGE_KEY,
-  GENERIC_BASE_URL_STORAGE_KEY,
-  GENERIC_MODEL_ID_STORAGE_KEY,
+  GENERIC_MODEL_CONFIG_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
-  GENERIC_PROVIDER_TYPE_STORAGE_KEY,
+  genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues,
   getGenericProviderLabel,
   isGenericModelConfigComplete
@@ -81,8 +79,15 @@ test("provider 标签文案稳定", () => {
 });
 
 test("Generic storage 默认值符合 v1 约束", () => {
-  assert.equal(genericApiDocStorageDefaultValues[GENERIC_PROVIDER_TYPE_STORAGE_KEY], "openai-compatible");
-  assert.equal(genericApiDocStorageDefaultValues[GENERIC_BASE_URL_STORAGE_KEY], "");
-  assert.equal(genericApiDocStorageDefaultValues[GENERIC_MODEL_ID_STORAGE_KEY], "");
-  assert.equal(genericApiDocStorageDefaultValues[GENERIC_API_KEY_STORAGE_KEY], "");
+  assert.deepEqual(genericApiDocModelConfigDefaultValue, {
+    apiType: "openai-compatible",
+    baseUrl: "",
+    modelId: "",
+    apiKey: ""
+  });
+  assert.deepEqual(
+    genericApiDocStorageDefaultValues[GENERIC_MODEL_CONFIG_STORAGE_KEY],
+    genericApiDocModelConfigDefaultValue
+  );
+  assert.equal(genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY], defaultGenericPromptTemplate);
 });

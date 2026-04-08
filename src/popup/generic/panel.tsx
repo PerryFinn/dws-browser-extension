@@ -31,13 +31,11 @@ import type { GenericModelConfig, GenericPickerMessage, GenericPickerResponse } 
 import { openGenericApiSettingsTab } from "@/popup/generic/open-options";
 import { storage } from "@/storages";
 import {
-  GENERIC_API_KEY_STORAGE_KEY,
-  GENERIC_BASE_URL_STORAGE_KEY,
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
-  GENERIC_MODEL_ID_STORAGE_KEY,
+  GENERIC_MODEL_CONFIG_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
-  GENERIC_PROVIDER_TYPE_STORAGE_KEY,
   genericApiDocCaptureSessionStorageDefaultValue,
+  genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues,
   isGenericModelConfigComplete
 } from "@/storages/generic-api-doc";
@@ -90,23 +88,11 @@ export interface GenericPanelProps {
 }
 
 export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa }: GenericPanelProps) {
-  const [providerType] = useStorage<GenericModelConfig["apiType"]>(
-    { key: GENERIC_PROVIDER_TYPE_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_PROVIDER_TYPE_STORAGE_KEY]
+  const [savedModelConfig, , savedModelConfigState] = useStorage<GenericModelConfig>(
+    { key: GENERIC_MODEL_CONFIG_STORAGE_KEY, instance: storage },
+    genericApiDocModelConfigDefaultValue
   );
-  const [baseUrl] = useStorage<string>(
-    { key: GENERIC_BASE_URL_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_BASE_URL_STORAGE_KEY]
-  );
-  const [modelId] = useStorage<string>(
-    { key: GENERIC_MODEL_ID_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_MODEL_ID_STORAGE_KEY]
-  );
-  const [apiKey] = useStorage<string>(
-    { key: GENERIC_API_KEY_STORAGE_KEY, instance: storage },
-    genericApiDocStorageDefaultValues[GENERIC_API_KEY_STORAGE_KEY]
-  );
-  const [storedPromptTemplate] = useStorage<string>(
+  const [storedPromptTemplate, , storedPromptTemplateState] = useStorage<string>(
     { key: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
     genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   );
@@ -133,15 +119,17 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     };
   }, [tab?.id]);
 
+  const isModelConfigHydrated = !savedModelConfigState.isLoading;
+  const isPromptTemplateHydrated = !storedPromptTemplateState.isLoading;
   const modelConfig = useMemo(
     () =>
       buildModelConfig({
-        providerType,
-        baseUrl,
-        modelId,
-        apiKey
+        providerType: savedModelConfig.apiType,
+        baseUrl: savedModelConfig.baseUrl,
+        modelId: savedModelConfig.modelId,
+        apiKey: savedModelConfig.apiKey
       }),
-    [apiKey, baseUrl, modelId, providerType]
+    [savedModelConfig]
   );
 
   const isConfigComplete = isGenericModelConfigComplete(modelConfig);
@@ -150,6 +138,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const viewState = deriveGenericPanelState({
     session,
     tab,
+    isConfigHydrated: isModelConfigHydrated,
     isConfigComplete,
     isCapturing,
     isExtracting,
@@ -159,7 +148,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const errorMessage = transientError ?? session.error;
 
   const promptText = useMemo(() => {
-    if (!result) {
+    if (!isPromptTemplateHydrated || !result) {
       return "";
     }
 
@@ -168,7 +157,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       extractionResult: result,
       url: result.source.url
     });
-  }, [promptTemplateForCopy, result]);
+  }, [isPromptTemplateHydrated, promptTemplateForCopy, result]);
 
   const resultJsonText = useMemo(() => {
     if (!result) {
@@ -358,11 +347,13 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
         <div className="break-all text-gray-600">{tab?.url || "未读取到当前页面 URL"}</div>
         <div className={isConfigComplete ? "text-green-600" : "text-amber-600"}>
           模型配置：
-          {isConfigComplete
-            ? "已完成"
-            : viewState.canStartCaptureWithoutConfig
-              ? "未完成，但仍可先采集，提取前需到设置页填写"
-              : "未完成，请先到设置页填写"}
+          {!isModelConfigHydrated
+            ? "加载中..."
+            : isConfigComplete
+              ? "已完成"
+              : viewState.canStartCaptureWithoutConfig
+                ? "未完成，但仍可先采集，提取前需到设置页填写"
+                : "未完成，请先到设置页填写"}
         </div>
       </div>
 
@@ -442,7 +433,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
           <Button
             variant="default"
             size="sm"
-            disabled={!promptText || isExtracting}
+            disabled={!isPromptTemplateHydrated || !promptText || isExtracting}
             onClick={() => void handleCopyPrompt()}
           >
             <ClipboardCheck className="h-4 w-4 mr-1" />
@@ -450,7 +441,9 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
           </Button>
         </div>
         <div className="h-36 overflow-auto rounded-md border bg-gray-50 p-2 text-xs font-mono whitespace-pre-wrap">
-          {promptText || "提取完成后会在这里显示最终 Prompt"}
+          {!isPromptTemplateHydrated
+            ? "正在加载已保存 Prompt 模板..."
+            : promptText || "提取完成后会在这里显示最终 Prompt"}
         </div>
       </div>
 

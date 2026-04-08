@@ -1,13 +1,7 @@
-export const GENERIC_API_SETTINGS_OPTIONS_PATH = "options.html#/settings/base";
+import { type OpenOptionsTabParams, openBaseSettingsTab, SETTINGS_BASE_OPTIONS_PATH } from "@/popup/open-options";
 
-export const openGenericApiSettingsTab = ({
-  runtimeGetURL,
-  createTab
-}: {
-  runtimeGetURL: (path: string) => string;
-  createTab: (createProperties: chrome.tabs.CreateProperties) => Promise<chrome.tabs.Tab | undefined>;
-}) => {
-  const url = runtimeGetURL(GENERIC_API_SETTINGS_OPTIONS_PATH);
+export const GENERIC_API_SETTINGS_OPTIONS_PATH = SETTINGS_BASE_OPTIONS_PATH;
 
-  return createTab({ url });
+export const openGenericApiSettingsTab = (params: OpenOptionsTabParams) => {
+  return openBaseSettingsTab(params);
 };
