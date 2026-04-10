@@ -48,7 +48,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
   const [extractState, setExtractState] = useState<ExtractState>("idle");
   const [error, setError] = useState<string | null>(pageError ?? null);
   const [cleaned, setCleaned] = useState<CleanedSwqaInterfaceDetail | null>(null);
-  const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("update");
+  const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("create");
   const [storedPromptTemplates, , storedPromptTemplatesState] = useStorage(
     { key: SWQA_PROMPT_TEMPLATES_STORAGE_KEY, instance: storage },
     swqaPromptTemplatesDefaultValue
