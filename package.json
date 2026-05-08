@@ -99,19 +99,9 @@
       "webRequest",
       "webNavigation",
       "downloads"
-    ],
-    "web_accessible_resources": [
-      {
-        "resources": [
-          "src/templates/*/**"
-        ],
-        "matches": [
-          "<all_urls>"
-        ]
-      }
     ]
   },
-  "homepage": "https://dws.seewo.com/",
+  "homepage": "https://ai.cvte.com",
   "packageManager": "pnpm@9.14.4",
   "volta": {
     "node": "24.13.1",

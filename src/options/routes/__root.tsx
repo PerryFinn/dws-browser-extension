@@ -9,10 +9,10 @@ import "react-toastify/dist/ReactToastify.css";
 
 export const Route = createRootRoute({
   component: () => (
-    <div id="options-page">
-      <SidebarProvider>
+    <div id="options-page" className="h-svh overflow-hidden">
+      <SidebarProvider className="h-full min-h-0 overflow-hidden">
         <OptionPageSidebar />
-        <SidebarInset>
+        <SidebarInset className="h-full min-h-0 overflow-hidden">
           <header className="flex h-16 shrink-0 items-center gap-2 border-b">
             <div className="flex items-center gap-2 px-3">
               <SidebarTrigger />
@@ -32,7 +32,7 @@ export const Route = createRootRoute({
               </Breadcrumb> */}
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
             <UpdateNotice />
             <Outlet />
           </div>

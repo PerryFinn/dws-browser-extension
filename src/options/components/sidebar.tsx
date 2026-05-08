@@ -68,6 +68,7 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            {/*
             <SidebarMenuItem key="comps">
               <SidebarMenuButton asChild isActive={activeRoute?.fullPath.startsWith("/comps")}>
                 <Link to="/comps" className="font-medium">
@@ -75,6 +76,7 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            */}
             <SidebarMenuItem key="about">
               <SidebarMenuButton asChild isActive={activeRoute?.fullPath.startsWith("/about")}>
                 <Link to="/about" className="font-medium">
