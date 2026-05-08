@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk grep *)",
+      "Bash(rtk read *)",
+      "Bash(rtk ls *)",
+      "Bash(pnpm check:types)"
+    ]
+  }
+}
