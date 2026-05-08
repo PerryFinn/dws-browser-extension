@@ -10,6 +10,58 @@ export type GitlabFrequentProjectMeta = {
   webUrl: string;
 };
 
+export type GitlabProjectCustomNames = Record<string, string>;
+
+export type GitlabProjectNameView = {
+  customName: string;
+  displayName: string;
+  hasCustomName: boolean;
+  originalName: string;
+};
+
+export const GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY = "gitlabProjectCustomNames";
+export const gitlabProjectCustomNamesDefaultValue: GitlabProjectCustomNames = {};
+
+// 自定义名称只属于扩展，不回写 GitLab 自己的 frequent-projects 数据。
+// 这里用 GitLab project id 做键，保证 overlay 和 inline 能共享同一套显示规则。
+const getGitlabProjectCustomName = (
+  projectId: GitlabFrequentProjectMeta["id"],
+  customNames: GitlabProjectCustomNames
+) => customNames[String(projectId)]?.trim() ?? "";
+
+export const getGitlabProjectNameView = (
+  project: GitlabFrequentProjectMeta,
+  customNames: GitlabProjectCustomNames = {}
+): GitlabProjectNameView => {
+  const customName = getGitlabProjectCustomName(project.id, customNames);
+
+  return {
+    customName,
+    displayName: customName || project.name,
+    hasCustomName: Boolean(customName),
+    originalName: project.name
+  };
+};
+
+export const updateGitlabProjectCustomName = (
+  customNames: GitlabProjectCustomNames,
+  projectId: GitlabFrequentProjectMeta["id"],
+  nextName: string,
+  originalName?: string
+): GitlabProjectCustomNames => {
+  const nextCustomNames = { ...customNames };
+  const normalizedName = nextName.trim();
+
+  // 空值或与原始 GitLab 名称一致时，不保留冗余 override，避免列表中上下两行重复。
+  if (normalizedName && normalizedName !== originalName?.trim()) {
+    nextCustomNames[String(projectId)] = normalizedName;
+  } else {
+    delete nextCustomNames[String(projectId)];
+  }
+
+  return nextCustomNames;
+};
+
 export const getGitlabEmail = async (): Promise<string> => {
   try {
     const res = await fetch("https://gitlab.gz.cvte.cn/-/user_settings/profile").then((res) => res.text());

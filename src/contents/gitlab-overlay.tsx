@@ -1,6 +1,7 @@
 import cssText from "data-text:~/style.css";
 import { useStorage } from "@plasmohq/storage/hook";
 import { sortBy } from "lodash-es";
+import { Check, Pencil, X } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
 import { FamilyButton } from "@/components/complex-ui/family-button";
@@ -8,7 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
-import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
+import {
+  GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY,
+  type GitlabFrequentProjectMeta,
+  type GitlabProjectCustomNames,
+  getGitlabEmail,
+  getGitlabProjectNameView,
+  gitlabProjectCustomNamesDefaultValue,
+  updateGitlabProjectCustomName
+} from "@/utils/gitlab";
 import packageJson from "../../package.json";
 
 export const config: PlasmoCSConfig = {
@@ -90,13 +99,20 @@ const {
 
 export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => document.querySelector("body") as Element;
 
-const GitlabInline = () => {
+const GitlabOverlay = () => {
   const [gitlabProjectsDisplayMode] = useStorage<GitlabProjectsDisplayMode>(
     { key: "gitlabProjectsDisplayMode", instance: storage },
     defaultGitlabProjectsDisplayMode
   );
+  const [gitlabProjectCustomNames, , gitlabProjectCustomNamesState] = useStorage<GitlabProjectCustomNames>(
+    { key: GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY, instance: storage },
+    gitlabProjectCustomNamesDefaultValue
+  );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const resolvedCustomNames = gitlabProjectCustomNames ?? gitlabProjectCustomNamesDefaultValue;
 
   useEffect(() => {
     if (gitlabProjectsDisplayMode !== "overlay") return;
@@ -105,7 +121,7 @@ const GitlabInline = () => {
         setProjectList(projectList ?? []);
       })
       .catch((error) => {
-        console.error("GitlabInline error :>> ", error);
+        console.error("GitlabOverlay error :>> ", error);
         throw error;
       });
   }, [gitlabProjectsDisplayMode]);
@@ -120,12 +136,15 @@ const GitlabInline = () => {
 
   const searchableList = useMemo(() => {
     return sortedList.map((project) => {
+      const nameView = getGitlabProjectNameView(project, resolvedCustomNames);
+
       return {
         project,
-        searchText: `${project.name} ${project.namespace}`.toLocaleLowerCase()
+        // 搜索同时保留自定义名和 GitLab 原名，避免重命名后用户找不到旧项目。
+        searchText: `${nameView.displayName} ${nameView.originalName} ${project.namespace}`.toLocaleLowerCase()
       };
     });
-  }, [sortedList]);
+  }, [resolvedCustomNames, sortedList]);
 
   const renderList = useMemo(() => {
     if (!normalizedKeyword) return sortedList;
@@ -140,6 +159,41 @@ const GitlabInline = () => {
     window.open(url, "_self");
   }, []);
 
+  const startEditingProject = useCallback(
+    (project: GitlabFrequentProjectMeta) => {
+      const nameView = getGitlabProjectNameView(project, resolvedCustomNames);
+
+      setEditingProjectId(project.id);
+      setEditingName(nameView.displayName);
+    },
+    [resolvedCustomNames]
+  );
+
+  const cancelEditingProject = useCallback(() => {
+    setEditingProjectId(null);
+    setEditingName("");
+  }, []);
+
+  const saveEditingProject = useCallback(
+    async (project: GitlabFrequentProjectMeta) => {
+      try {
+        const latestCustomNames =
+          (await storage.get<GitlabProjectCustomNames>(GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY)) ??
+          gitlabProjectCustomNamesDefaultValue;
+
+        // GitLab 页面可能开多个标签页；保存前读最新 storage，避免旧 React 快照覆盖其他标签页的编辑。
+        await gitlabProjectCustomNamesState.setStoreValue(
+          updateGitlabProjectCustomName(latestCustomNames, project.id, editingName, project.name)
+        );
+        cancelEditingProject();
+      } catch (error) {
+        // 保存失败时保留编辑态，避免用户输入丢失；扩展 storage 异常通常只能先落日志排查。
+        console.error("saveGitlabProjectCustomName error :>> ", error);
+      }
+    },
+    [cancelEditingProject, editingName, gitlabProjectCustomNamesState]
+  );
+
   const handleKeyDown: KeyboardEventHandler<HTMLElement> = useCallback(
     (event) => {
       if (event.key === "Enter" || event.key === " ") {
@@ -151,6 +205,21 @@ const GitlabInline = () => {
       }
     },
     [navigateToProject]
+  );
+
+  const handleEditNameKeyDown = useCallback(
+    (project: GitlabFrequentProjectMeta): KeyboardEventHandler<HTMLInputElement> =>
+      (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          void saveEditingProject(project);
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          cancelEditingProject();
+        }
+      },
+    [cancelEditingProject, saveEditingProject]
   );
 
   if (gitlabProjectsDisplayMode !== "overlay") return null;
@@ -178,6 +247,9 @@ const GitlabInline = () => {
               <li className="py-6 text-center text-xs text-gray-400 cursor-default select-none">未找到匹配项目</li>
             ) : (
               renderList.map((project) => {
+                const nameView = getGitlabProjectNameView(project, resolvedCustomNames);
+                const isEditing = editingProjectId === project.id;
+
                 return (
                   <li key={project.id} className="flex space-x-3 items-center pb-2 last:pb-0">
                     <button
@@ -190,30 +262,88 @@ const GitlabInline = () => {
                       }}
                       data-url={project.webUrl}
                       onKeyDown={handleKeyDown}
-                      aria-label={`Open ${project.name}`}
+                      aria-label={`Open ${nameView.displayName}`}
                     >
                       <Avatar className="h-7 w-7" style={{ background: getStableWarmColor(project.id) }}>
                         <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
                         <AvatarFallback>
                           <div className="flex items-center justify-center rounded-full h-full w-full text-sm text-black">
-                            {project.name.substring(0, 1).toLocaleUpperCase()}
+                            {nameView.displayName.substring(0, 1).toLocaleUpperCase()}
                           </div>
                         </AvatarFallback>
                       </Avatar>
                     </button>
-                    <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
-                      <div className="max-w-[150px] truncate">
-                        <a
-                          href={project.webUrl}
-                          title={project.name}
-                          className="text-sm text-gray-500 font-medium hover:underline"
-                        >
-                          {project.name}
-                        </a>
-                      </div>
-                      <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                        <span>{project.frequency}</span>
-                      </div>
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                      {isEditing ? (
+                        <div className="flex min-w-0 flex-1 items-center gap-1">
+                          <Input
+                            autoFocus
+                            type="text"
+                            value={editingName}
+                            onChange={(event) => {
+                              setEditingName(event.target.value);
+                            }}
+                            onKeyDown={handleEditNameKeyDown(project)}
+                            placeholder={nameView.originalName}
+                            aria-label={`编辑 ${nameView.originalName} 的自定义名称`}
+                            className="h-7 min-w-0 px-2 py-1 text-xs focus-visible:ring-1 focus-visible:ring-offset-0"
+                          />
+                          <button
+                            type="button"
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-emerald-600 hover:bg-emerald-50"
+                            onClick={() => void saveEditingProject(project)}
+                            aria-label="保存自定义名称"
+                            title="保存"
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            onClick={cancelEditingProject}
+                            aria-label="取消编辑自定义名称"
+                            title="取消"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="min-w-0 flex-1">
+                            <a
+                              href={project.webUrl}
+                              title={
+                                nameView.hasCustomName
+                                  ? `${nameView.displayName}（${nameView.originalName}）`
+                                  : nameView.originalName
+                              }
+                              className="block truncate text-sm font-medium text-gray-500 hover:underline"
+                            >
+                              {nameView.displayName}
+                            </a>
+                            {nameView.hasCustomName ? (
+                              <div
+                                title={nameView.originalName}
+                                className="mt-0.5 truncate text-[10px] leading-3 text-gray-400 opacity-70"
+                              >
+                                {nameView.originalName}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1 whitespace-nowrap text-right text-sm text-gray-500">
+                            <span className="min-w-5">{project.frequency}</span>
+                            <button
+                              type="button"
+                              className="flex h-6 w-6 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                              onClick={() => startEditingProject(project)}
+                              aria-label={`编辑 ${nameView.displayName} 的自定义名称`}
+                              title="编辑名称"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </li>
                 );
@@ -229,4 +359,4 @@ const GitlabInline = () => {
   );
 };
 
-export default GitlabInline;
+export default GitlabOverlay;

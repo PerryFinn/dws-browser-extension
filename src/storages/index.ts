@@ -1,4 +1,5 @@
 import { Storage } from "@plasmohq/storage";
+import { GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY, gitlabProjectCustomNamesDefaultValue } from "@/utils/gitlab";
 import {
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
   GENERIC_MODEL_CONFIG_STORAGE_KEY,
@@ -45,6 +46,9 @@ export const localStorageInitialValue = {
   },
   gitlabProjectsDisplayMode: {
     defaultValue: "overlay" as GitlabProjectsDisplayMode
+  },
+  [GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY]: {
+    defaultValue: gitlabProjectCustomNamesDefaultValue
   },
   [SWQA_PROMPT_TEMPLATES_STORAGE_KEY]: {
     defaultValue: swqaPromptTemplatesDefaultValue

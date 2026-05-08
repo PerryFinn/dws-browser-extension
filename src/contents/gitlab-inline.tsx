@@ -6,7 +6,14 @@ import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
-import { type GitlabFrequentProjectMeta, getGitlabEmail } from "@/utils/gitlab";
+import {
+  GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY,
+  type GitlabFrequentProjectMeta,
+  type GitlabProjectCustomNames,
+  getGitlabEmail,
+  getGitlabProjectNameView,
+  gitlabProjectCustomNamesDefaultValue
+} from "@/utils/gitlab";
 
 import packageJson from "../../package.json";
 
@@ -91,7 +98,12 @@ const GitlabInline = () => {
     { key: "gitlabProjectsDisplayMode", instance: storage },
     defaultGitlabProjectsDisplayMode
   );
+  const [gitlabProjectCustomNames] = useStorage<GitlabProjectCustomNames>(
+    { key: GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY, instance: storage },
+    gitlabProjectCustomNamesDefaultValue
+  );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
+  const resolvedCustomNames = gitlabProjectCustomNames ?? gitlabProjectCustomNamesDefaultValue;
 
   useEffect(() => {
     if (gitlabProjectsDisplayMode !== "inline") return;
@@ -134,6 +146,8 @@ const GitlabInline = () => {
           <ul>
             {renderList.map((project, index) => {
               const isLast = index === renderList.length - 1;
+              const nameView = getGitlabProjectNameView(project, resolvedCustomNames);
+
               return (
                 <li key={project.id}>
                   <div className={cn("relative", { "pb-4": !isLast })}>
@@ -152,13 +166,13 @@ const GitlabInline = () => {
                           }}
                           data-url={project.webUrl}
                           onKeyDown={handleKeyDown}
-                          aria-label={`Open ${project.name}`}
+                          aria-label={`Open ${nameView.displayName}`}
                         >
                           <Avatar className="h-7 w-7" style={{ background: getRandomWarmColor() }}>
                             <AvatarImage draggable={false} src={project?.avatarUrl ?? ""} />
                             <AvatarFallback>
                               <div className="flex items-center justify-center rounded-full h-full w-full text-sm text-black">
-                                {project.name.substring(0, 1).toLocaleUpperCase()}
+                                {nameView.displayName.substring(0, 1).toLocaleUpperCase()}
                               </div>
                             </AvatarFallback>
                           </Avatar>
@@ -167,9 +181,26 @@ const GitlabInline = () => {
                       <div className="flex min-w-0 flex-1 justify-between space-x-4 items-center">
                         <div>
                           <p className="text-sm text-gray-500">
-                            <a href={project.webUrl} className="font-medium  hover:underline">
-                              {project.name}
+                            <a
+                              href={project.webUrl}
+                              title={
+                                nameView.hasCustomName
+                                  ? `${nameView.displayName}（${nameView.originalName}）`
+                                  : nameView.originalName
+                              }
+                              className="font-medium hover:underline"
+                            >
+                              {nameView.displayName}
                             </a>
+                            {/* inline 模式只消费 overlay 保存的自定义名，不提供编辑入口。 */}
+                            {nameView.hasCustomName ? (
+                              <span
+                                title={nameView.originalName}
+                                className="block max-w-[150px] truncate text-[10px] leading-3 text-gray-400 opacity-70"
+                              >
+                                {nameView.originalName}
+                              </span>
+                            ) : null}
                           </p>
                         </div>
                         <div className="whitespace-nowrap text-right text-sm text-gray-500">
