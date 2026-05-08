@@ -38,8 +38,7 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
                   <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  {/* <span className="font-semibold truncate">{packageJson.displayName}</span> */}
-                  <span className="font-semibold truncate">{123123}</span>
+                  <span className="font-semibold truncate">{packageJSON.displayName}</span>
                   <span className="">{packageJSON.version}</span>
                 </div>
               </Link>
