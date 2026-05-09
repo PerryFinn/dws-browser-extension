@@ -1,6 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateObject } from "ai";
+import { generateObject, jsonSchema } from "ai";
 import { normalizeGenericExtractionResult } from "@/generic-api-doc/normalize";
 import type {
   GenericExtractFromSessionInput,
@@ -174,7 +174,7 @@ export const testGenericModelConfig = async (
   const result = await dependencies.generateObject({
     model,
     output: "object",
-    schema: genericConnectivitySchema,
+    schema: jsonSchema(genericConnectivitySchema),
     schemaName: "generic_model_connectivity_check",
     prompt: buildGenericModelConfigTestPrompt()
   });
@@ -197,7 +197,7 @@ export const extractGenericApiDoc = async (
   const result = await dependencies.generateObject({
     model,
     output: "object",
-    schema: genericExtractionSchema,
+    schema: jsonSchema(genericExtractionSchema),
     schemaName: "generic_api_doc_extraction",
     prompt: buildGenericExtractionPrompt(input)
   });

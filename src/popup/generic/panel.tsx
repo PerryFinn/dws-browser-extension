@@ -18,6 +18,7 @@ import type {
 } from "@/background/messages/genericExtractApiDoc";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UpdateNotice } from "@/components/update-notice";
 import { bindGenericPickerSession } from "@/generic-api-doc/picker-message";
 import { buildGenericPrompt, resolveGenericPromptTemplateForCopy } from "@/generic-api-doc/prompt";
@@ -33,7 +34,9 @@ import { storage } from "@/storages";
 import {
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
   GENERIC_MODEL_CONFIG_STORAGE_KEY,
+  GENERIC_MODEL_CONNECTION_STATUS_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
+  type GenericModelConnectionStatus,
   genericApiDocCaptureSessionStorageDefaultValue,
   genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues,
@@ -91,6 +94,10 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const [savedModelConfig, , savedModelConfigState] = useStorage<GenericModelConfig>(
     { key: GENERIC_MODEL_CONFIG_STORAGE_KEY, instance: storage },
     genericApiDocModelConfigDefaultValue
+  );
+  const [connectionStatus] = useStorage<GenericModelConnectionStatus>(
+    { key: GENERIC_MODEL_CONNECTION_STATUS_KEY, instance: storage },
+    "untested" as GenericModelConnectionStatus
   );
   const [storedPromptTemplate, , storedPromptTemplateState] = useStorage<string>(
     { key: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
@@ -314,178 +321,205 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   };
 
   return (
-    <div className="w-[520px] p-4 space-y-4">
-      <UpdateNotice />
+    <TooltipProvider delayDuration={200}>
+      <div className="w-[520px] p-4 space-y-4">
+        <UpdateNotice />
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-sky-500" />
-            通用 API 文档提取
-          </h1>
-          <p className="text-xs text-gray-500">支持任意域名下的单接口文档提取，需用户辅助定位。</p>
-        </div>
-        <div className="flex items-center gap-1">
-          {isSwqaPage && onUseSwqa ? (
-            <Button variant="ghost" size="sm" onClick={onUseSwqa}>
-              <ExternalLink className="h-4 w-4 mr-1" />
-              改回 SWQA
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-sky-500" />
+              通用 API 文档提取
+            </h1>
+            <p className="text-xs text-gray-500">支持任意域名下的单接口文档提取，需用户辅助定位。</p>
+          </div>
+          <div className="flex items-center gap-1">
+            {isSwqaPage && onUseSwqa ? (
+              <Button variant="ghost" size="sm" onClick={onUseSwqa}>
+                <ExternalLink className="h-4 w-4 mr-1" />
+                改回 SWQA
+              </Button>
+            ) : null}
+            <Button variant="ghost" size="sm" onClick={handleOpenOptions}>
+              <Settings2 className="h-4 w-4 mr-1" />
+              设置
             </Button>
-          ) : null}
-          <Button variant="ghost" size="sm" onClick={handleOpenOptions}>
-            <Settings2 className="h-4 w-4 mr-1" />
-            设置
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => void onRefresh()}>
-            <RefreshCcw className="h-4 w-4" />
-          </Button>
+            <Button variant="ghost" size="sm" onClick={() => void onRefresh()}>
+              <RefreshCcw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="rounded-md border p-3 text-sm space-y-2">
-        <div className="font-semibold">{tab?.title || "当前页面"}</div>
-        <div className="break-all text-gray-600">{tab?.url || "未读取到当前页面 URL"}</div>
-        <div className={isConfigComplete ? "text-green-600" : "text-amber-600"}>
-          模型配置：
-          {!isModelConfigHydrated
-            ? "加载中..."
-            : isConfigComplete
-              ? "已完成"
-              : viewState.canStartCaptureWithoutConfig
-                ? "未完成，但仍可先采集，提取前需到设置页填写"
-                : "未完成，请先到设置页填写"}
+        <div className="rounded-md border p-3 text-sm space-y-2">
+          <div className="font-semibold">{tab?.title || "当前页面"}</div>
+          <div className="break-all text-gray-600">{tab?.url || "未读取到当前页面 URL"}</div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 text-xs cursor-pointer hover:opacity-80"
+                onClick={handleOpenOptions}
+              >
+                <span
+                  className={`inline-block h-2 w-2 shrink-0 rounded-full ${
+                    !isModelConfigHydrated || !isConfigComplete
+                      ? "bg-gray-300"
+                      : connectionStatus === "success"
+                        ? "bg-green-500"
+                        : connectionStatus === "failed"
+                          ? "bg-red-500"
+                          : "bg-gray-300"
+                  }`}
+                />
+                <span className="text-gray-500">模型服务</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>
+                {!isModelConfigHydrated
+                  ? "加载中..."
+                  : !isConfigComplete
+                    ? "未配置，点击前往设置"
+                    : connectionStatus === "success"
+                      ? "连接正常"
+                      : connectionStatus === "failed"
+                        ? "连接失败，点击前往设置"
+                        : "待测试，点击前往设置"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
         </div>
-      </div>
 
-      {viewState.isTabMismatch ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 space-y-2">
-          <div>当前采集内容来自其他标签页，不能直接提取。请清空后重新采集，或直接在当前页重新点选。</div>
-        </div>
-      ) : null}
+        {viewState.isTabMismatch ? (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 space-y-2">
+            <div>当前采集内容来自其他标签页，不能直接提取。请清空后重新采集，或直接在当前页重新点选。</div>
+          </div>
+        ) : null}
 
-      <div className="grid grid-cols-3 gap-2">
-        <Button
-          variant="default"
-          disabled={viewState.disableCaptureActions}
-          loading={isCapturing}
-          onClick={() => void handleCapture({ type: "generic-picker:start" })}
-        >
-          <MousePointer2 className="h-4 w-4 mr-1" />
-          开始点选
-        </Button>
-        <Button
-          variant="default"
-          disabled={viewState.disableCaptureActions}
-          loading={isCapturing}
-          onClick={() => void handleCapture({ type: "generic-picker:read-selection" })}
-        >
-          <FileSearch className="h-4 w-4 mr-1" />
-          读取选区
-        </Button>
-        <Button
-          variant="default"
-          disabled={viewState.disableExtract}
-          loading={isExtracting}
-          onClick={() => void handleExtract()}
-        >
-          提取并生成
-        </Button>
-      </div>
-
-      {viewState.canClearSession ? (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={() => void handleClearSession()}>
-            取消/清空当前采集
-          </Button>
-        </div>
-      ) : null}
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <Label>采集预览</Label>
-          {session.source ? (
-            <span className="text-xs text-gray-500">
-              {session.source.mode === "generic-dom" ? "DOM 点选" : "文本选区"}
-            </span>
-          ) : null}
-        </div>
-        <div className="min-h-24 rounded-md border bg-gray-50 p-2 text-xs text-gray-700 whitespace-pre-wrap">
-          {viewState.previewText}
-        </div>
-      </div>
-
-      {viewState.captureDiagnostics ? (
-        <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
-          <div>采集来源：{viewState.captureDiagnostics.sourceModeLabel}</div>
-          <div>结构摘要：{viewState.captureDiagnostics.hasDomSummary ? "已生成" : "缺失"}</div>
-          <div>正文长度：{viewState.captureDiagnostics.charCount} 字</div>
-          <div>已截断：{viewState.captureDiagnostics.truncated ? "是" : "否"}</div>
-          <div>不确定项：{viewState.captureDiagnostics.uncertaintyCount} 个</div>
-          {viewState.captureDiagnostics.shouldRepick ? (
-            <div className="text-amber-700">当前采集证据偏弱，建议重新点选更聚焦的接口文档区域。</div>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-start gap-2">
-          <Label>Prompt 预览</Label>
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant="default"
-            size="sm"
-            disabled={!isPromptTemplateHydrated || !promptText || isExtracting}
-            onClick={() => void handleCopyPrompt()}
+            disabled={viewState.disableCaptureActions}
+            loading={isCapturing}
+            onClick={() => void handleCapture({ type: "generic-picker:start" })}
           >
-            <ClipboardCheck className="h-4 w-4 mr-1" />
-            复制 Prompt
+            <MousePointer2 className="h-4 w-4 mr-1" />
+            开始点选
           </Button>
-        </div>
-        <div className="h-36 overflow-auto rounded-md border bg-gray-50 p-2 text-xs font-mono whitespace-pre-wrap">
-          {!isPromptTemplateHydrated
-            ? "正在加载已保存 Prompt 模板..."
-            : promptText || "提取完成后会在这里显示最终 Prompt"}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-start gap-2">
-          <Label>统一 JSON</Label>
           <Button
             variant="default"
-            size="sm"
-            disabled={!resultJsonText || isExtracting}
-            onClick={() => void handleCopyJson()}
+            disabled={viewState.disableCaptureActions}
+            loading={isCapturing}
+            onClick={() => void handleCapture({ type: "generic-picker:read-selection" })}
           >
-            <Clipboard className="h-4 w-4 mr-1" />
-            复制 JSON
+            <FileSearch className="h-4 w-4 mr-1" />
+            读取选区
+          </Button>
+          <Button
+            variant="default"
+            disabled={viewState.disableExtract}
+            loading={isExtracting}
+            onClick={() => void handleExtract()}
+          >
+            提取并生成
           </Button>
         </div>
-        <div className="h-40 overflow-auto rounded-md border bg-gray-50 p-2 text-xs font-mono whitespace-pre-wrap">
-          {resultJsonText || "提取完成后会在这里显示结构化 JSON"}
+
+        {viewState.canClearSession ? (
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => void handleClearSession()}>
+              取消/清空当前采集
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label>采集预览</Label>
+            {session.source ? (
+              <span className="text-xs text-gray-500">
+                {session.source.mode === "generic-dom" ? "DOM 点选" : "文本选区"}
+              </span>
+            ) : null}
+          </div>
+          <div className="min-h-24 rounded-md border bg-gray-50 p-2 text-xs text-gray-700 whitespace-pre-wrap">
+            {viewState.previewText}
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label>不确定项</Label>
-        <div className="rounded-md border bg-gray-50 p-2 text-xs text-gray-700 space-y-2">
-          {result?.uncertainties.length ? (
-            result.uncertainties.map((item) => (
-              <div key={`${item.field}:${item.reason}`} className="rounded bg-white p-2 border">
-                <div className="font-semibold">{item.field}</div>
-                <div className="text-gray-600">{item.reason}</div>
-              </div>
-            ))
-          ) : (
-            <span className="text-gray-400">暂无不确定项</span>
-          )}
+        {viewState.captureDiagnostics ? (
+          <div className="rounded-md border bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
+            <div>采集来源：{viewState.captureDiagnostics.sourceModeLabel}</div>
+            <div>结构摘要：{viewState.captureDiagnostics.hasDomSummary ? "已生成" : "缺失"}</div>
+            <div>正文长度：{viewState.captureDiagnostics.charCount} 字</div>
+            <div>已截断：{viewState.captureDiagnostics.truncated ? "是" : "否"}</div>
+            <div>不确定项：{viewState.captureDiagnostics.uncertaintyCount} 个</div>
+            {viewState.captureDiagnostics.shouldRepick ? (
+              <div className="text-amber-700">当前采集证据偏弱，建议重新点选更聚焦的接口文档区域。</div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-start gap-2">
+            <Label>Prompt 预览</Label>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={!isPromptTemplateHydrated || !promptText || isExtracting}
+              onClick={() => void handleCopyPrompt()}
+            >
+              <ClipboardCheck className="h-4 w-4 mr-1" />
+              复制 Prompt
+            </Button>
+          </div>
+          <div className="h-36 overflow-auto rounded-md border bg-gray-50 p-2 text-xs font-mono whitespace-pre-wrap">
+            {!isPromptTemplateHydrated
+              ? "正在加载已保存 Prompt 模板..."
+              : promptText || "提取完成后会在这里显示最终 Prompt"}
+          </div>
         </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-start gap-2">
+            <Label>统一 JSON</Label>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={!resultJsonText || isExtracting}
+              onClick={() => void handleCopyJson()}
+            >
+              <Clipboard className="h-4 w-4 mr-1" />
+              复制 JSON
+            </Button>
+          </div>
+          <div className="h-40 overflow-auto rounded-md border bg-gray-50 p-2 text-xs font-mono whitespace-pre-wrap">
+            {resultJsonText || "提取完成后会在这里显示结构化 JSON"}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>不确定项</Label>
+          <div className="rounded-md border bg-gray-50 p-2 text-xs text-gray-700 space-y-2">
+            {result?.uncertainties.length ? (
+              result.uncertainties.map((item) => (
+                <div key={`${item.field}:${item.reason}`} className="rounded bg-white p-2 border">
+                  <div className="font-semibold">{item.field}</div>
+                  <div className="text-gray-600">{item.reason}</div>
+                </div>
+              ))
+            ) : (
+              <span className="text-gray-400">暂无不确定项</span>
+            )}
+          </div>
+        </div>
+
+        {errorMessage ? (
+          <div className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">{errorMessage}</div>
+        ) : null}
+
+        <ToastContainer autoClose={1500} />
       </div>
-
-      {errorMessage ? (
-        <div className="rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">{errorMessage}</div>
-      ) : null}
-
-      <ToastContainer autoClose={1500} />
-    </div>
+    </TooltipProvider>
   );
 }

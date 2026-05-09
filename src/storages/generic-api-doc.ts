@@ -5,6 +5,9 @@ import type { GenericModelConfig, GenericProviderType } from "@/generic-api-doc/
 export const GENERIC_MODEL_CONFIG_STORAGE_KEY = "genericApiDocModelConfig";
 export const GENERIC_PROMPT_TEMPLATE_STORAGE_KEY = "genericApiDocPromptTemplate";
 export const GENERIC_CAPTURE_SESSION_STORAGE_KEY = "genericApiDocCaptureSession";
+export const GENERIC_MODEL_CONNECTION_STATUS_KEY = "genericApiDocConnectionStatus";
+
+export type GenericModelConnectionStatus = "untested" | "success" | "failed";
 
 export const genericProviderLabelMap: Record<GenericProviderType, string> = {
   "openai-compatible": "OpenAI Compatible",

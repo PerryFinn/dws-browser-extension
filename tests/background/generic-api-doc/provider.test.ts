@@ -148,28 +148,30 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
   assert.match(String(request.prompt), /页面标题：用户详情接口/);
   assert.match(String(request.prompt), /原始文本：/);
   assert.deepEqual(
-    (request.schema as { properties: { endpoint: { properties: { method: { enum: string[] } } } } }).properties.endpoint
-      .properties.method.enum,
+    (request.schema as { jsonSchema: { properties: { endpoint: { properties: { method: { enum: string[] } } } } } })
+      .jsonSchema.properties.endpoint.properties.method.enum,
     ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
   );
   assert.deepEqual(
     (
       request.schema as {
-        properties: {
-          request: {
-            properties: {
-              pathParams: {
-                items: {
-                  type: string;
-                  additionalProperties: boolean;
-                  required: string[];
+        jsonSchema: {
+          properties: {
+            request: {
+              properties: {
+                pathParams: {
+                  items: {
+                    type: string;
+                    additionalProperties: boolean;
+                    required: string[];
+                  };
                 };
               };
             };
           };
         };
       }
-    ).properties.request.properties.pathParams.items,
+    ).jsonSchema.properties.request.properties.pathParams.items,
     {
       type: "object",
       additionalProperties: false,

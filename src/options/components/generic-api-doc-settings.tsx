@@ -23,7 +23,9 @@ import { storage } from "@/storages";
 import {
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
   GENERIC_MODEL_CONFIG_STORAGE_KEY,
+  GENERIC_MODEL_CONNECTION_STATUS_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
+  type GenericModelConnectionStatus,
   genericApiDocCaptureSessionStorageDefaultValue,
   genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues,
@@ -72,7 +74,7 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
     defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   });
 
-  const canTestConnection = isGenericModelConfigComplete(savedModelConfig) && !isModelConfigDirty && !isTesting;
+  const canTestConnection = isGenericModelConfigComplete(modelConfigDraft) && !isTesting;
   const canSelfCheck =
     isGenericModelConfigComplete(savedModelConfig) &&
     !isModelConfigDirty &&
@@ -86,8 +88,12 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
     onUnsavedChangesChange?.(hasUnsavedChanges);
   }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
+  const updateConnectionStatus = (status: GenericModelConnectionStatus) => {
+    storage.set(GENERIC_MODEL_CONNECTION_STATUS_KEY, status);
+  };
+
   const handleTestConnection = async () => {
-    if (!isGenericModelConfigComplete(savedModelConfig)) {
+    if (!isGenericModelConfigComplete(modelConfigDraft)) {
       toast.error("请先填写完整的 Generic 模型配置");
       return;
     }
@@ -97,17 +103,20 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
     try {
       const response = await sendToBackground<GenericTestModelConfigReqBody, GenericTestModelConfigResBody>({
         name: "genericTestModelConfig" as never,
-        body: { config: savedModelConfig }
+        body: { config: modelConfigDraft }
       });
 
       if (!response.success) {
         toast.error(response.message);
+        updateConnectionStatus("failed");
         return;
       }
 
       toast.success("Generic 模型连接测试成功");
+      updateConnectionStatus("success");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
+      updateConnectionStatus("failed");
     } finally {
       setIsTesting(false);
     }
@@ -159,6 +168,7 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
   const handleSaveModelConfigDraft = async () => {
     try {
       await saveModelConfigDraft();
+      updateConnectionStatus("untested");
       toast.success("Generic 模型配置已保存");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
@@ -270,7 +280,7 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
           <div className="flex items-center justify-between gap-3">
             <div>
               <Label>测试连接</Label>
-              <Description>只验证已保存配置是否可发起请求以及是否能返回结构化对象。</Description>
+              <Description>验证当前填写的配置是否可发起请求以及是否能返回结构化对象。</Description>
             </div>
             <Button onClick={() => void handleTestConnection()} disabled={!isModelConfigHydrated || !canTestConnection}>
               {isTesting ? "测试中..." : "测试连接"}
@@ -295,9 +305,7 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
 
         {isModelConfigDirty ? (
           <Field>
-            <Description className="text-amber-600">
-              当前有未保存的模型配置变更，请先保存，再执行测试连接或样例自检。
-            </Description>
+            <Description className="text-amber-600">当前有未保存的模型配置变更，请先保存，再执行样例自检。</Description>
           </Field>
         ) : null}
 
