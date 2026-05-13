@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from "./routes/index";
 import { Route as SettingsIndexRouteImport } from "./routes/settings/index";
 import { Route as PostsIndexRouteImport } from "./routes/posts/index";
 import { Route as CompsIndexRouteImport } from "./routes/comps/index";
+import { Route as BookmarksIndexRouteImport } from "./routes/bookmarks/index";
 import { Route as AboutIndexRouteImport } from "./routes/about/index";
 import { Route as PostsPostIdRouteImport } from "./routes/posts/$postId";
 import { Route as SettingsBaseIndexRouteImport } from "./routes/settings/base/index";
@@ -37,6 +38,11 @@ const CompsIndexRoute = CompsIndexRouteImport.update({
   path: "/comps/",
   getParentRoute: () => rootRouteImport,
 } as any);
+const BookmarksIndexRoute = BookmarksIndexRouteImport.update({
+  id: "/bookmarks/",
+  path: "/bookmarks/",
+  getParentRoute: () => rootRouteImport,
+} as any);
 const AboutIndexRoute = AboutIndexRouteImport.update({
   id: "/about/",
   path: "/about/",
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/posts/$postId": typeof PostsPostIdRoute;
   "/about/": typeof AboutIndexRoute;
+  "/bookmarks/": typeof BookmarksIndexRoute;
   "/comps/": typeof CompsIndexRoute;
   "/posts/": typeof PostsIndexRoute;
   "/settings/": typeof SettingsIndexRoute;
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/posts/$postId": typeof PostsPostIdRoute;
   "/about": typeof AboutIndexRoute;
+  "/bookmarks": typeof BookmarksIndexRoute;
   "/comps": typeof CompsIndexRoute;
   "/posts": typeof PostsIndexRoute;
   "/settings": typeof SettingsIndexRoute;
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   "/": typeof IndexRoute;
   "/posts/$postId": typeof PostsPostIdRoute;
   "/about/": typeof AboutIndexRoute;
+  "/bookmarks/": typeof BookmarksIndexRoute;
   "/comps/": typeof CompsIndexRoute;
   "/posts/": typeof PostsIndexRoute;
   "/settings/": typeof SettingsIndexRoute;
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | "/"
     | "/posts/$postId"
     | "/about/"
+    | "/bookmarks/"
     | "/comps/"
     | "/posts/"
     | "/settings/"
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | "/"
     | "/posts/$postId"
     | "/about"
+    | "/bookmarks"
     | "/comps"
     | "/posts"
     | "/settings"
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | "/"
     | "/posts/$postId"
     | "/about/"
+    | "/bookmarks/"
     | "/comps/"
     | "/posts/"
     | "/settings/"
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   PostsPostIdRoute: typeof PostsPostIdRoute;
   AboutIndexRoute: typeof AboutIndexRoute;
+  BookmarksIndexRoute: typeof BookmarksIndexRoute;
   CompsIndexRoute: typeof CompsIndexRoute;
   PostsIndexRoute: typeof PostsIndexRoute;
   SettingsIndexRoute: typeof SettingsIndexRoute;
@@ -151,6 +164,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof CompsIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/bookmarks/": {
+      id: "/bookmarks/";
+      path: "/bookmarks";
+      fullPath: "/bookmarks/";
+      preLoaderRoute: typeof BookmarksIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     "/about/": {
       id: "/about/";
       path: "/about";
@@ -179,6 +199,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PostsPostIdRoute: PostsPostIdRoute,
   AboutIndexRoute: AboutIndexRoute,
+  BookmarksIndexRoute: BookmarksIndexRoute,
   CompsIndexRoute: CompsIndexRoute,
   PostsIndexRoute: PostsIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
