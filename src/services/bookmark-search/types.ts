@@ -12,18 +12,4 @@ export interface BookmarkSearchMatch {
   reason: string;
 }
 
-export interface BookmarkSearchResult {
-  ok: true;
-  matches: BookmarkSearchMatch[];
-  truncated: boolean;
-}
-
-export interface BookmarkSearchFailure {
-  ok: false;
-  message: string;
-  code: "invalid-config" | "no-bookmarks" | "network-error" | "parse-error" | "unknown-error";
-}
-
-export type BookmarkSearchResponse = BookmarkSearchResult | BookmarkSearchFailure;
-
 export type BookmarkSearchModelConfig = GenericModelConfig;

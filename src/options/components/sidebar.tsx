@@ -1,5 +1,5 @@
 import { Link, useMatches } from "@tanstack/react-router";
-import { Bookmark, GalleryVerticalEnd } from "lucide-react";
+import { GalleryVerticalEnd } from "lucide-react";
 import { useMemo } from "react";
 import {
   Sidebar,
@@ -71,7 +71,6 @@ export function OptionPageSidebar({ ...props }: React.ComponentProps<typeof Side
             <SidebarMenuItem key="bookmarks">
               <SidebarMenuButton asChild isActive={activeRoute?.fullPath.startsWith("/bookmarks")}>
                 <Link to="/bookmarks" className="font-medium">
-                  <Bookmark className="size-4" />
                   智能书签
                 </Link>
               </SidebarMenuButton>

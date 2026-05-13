@@ -24,12 +24,17 @@ export function buildBookmarkSearchPrompt(bookmarks: FlatBookmark[], query: stri
 }
 
 export function parseBookmarkSearchResponse(raw: string): BookmarkSearchMatch[] {
-  const jsonMatch = raw.match(/\[[\s\S]*\]/);
+  const jsonMatch = raw.match(/\[[\s\S]*?\]/);
   if (!jsonMatch) {
     return [];
   }
 
-  const parsed = JSON.parse(jsonMatch[0]) as unknown[];
+  let parsed: unknown[];
+  try {
+    parsed = JSON.parse(jsonMatch[0]) as unknown[];
+  } catch {
+    throw new Error("解析结果失败，请重试");
+  }
 
   if (!Array.isArray(parsed)) {
     return [];

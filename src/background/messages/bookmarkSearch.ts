@@ -47,8 +47,8 @@ const handler: PlasmoMessaging.MessageHandler<BookmarkSearchReqBody, BookmarkSea
     let candidates = filtered;
     let truncated = totalCount > filtered.length;
 
-    const prompt = buildBookmarkSearchPrompt(candidates, query);
-    const estimatedTokens = estimateTokenCount(prompt);
+    let finalPrompt = buildBookmarkSearchPrompt(candidates, query);
+    const estimatedTokens = estimateTokenCount(finalPrompt);
 
     if (estimatedTokens > MAX_PROMPT_TOKENS) {
       const ratio = MAX_PROMPT_TOKENS / estimatedTokens;
@@ -58,9 +58,8 @@ const handler: PlasmoMessaging.MessageHandler<BookmarkSearchReqBody, BookmarkSea
         b.index = i;
       });
       truncated = true;
+      finalPrompt = buildBookmarkSearchPrompt(candidates, query);
     }
-
-    const finalPrompt = buildBookmarkSearchPrompt(candidates, query);
 
     const model = createGenericModel(config);
     const { generateText } = await import("ai");

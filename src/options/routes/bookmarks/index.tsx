@@ -37,8 +37,8 @@ function BookmarkSearchPage() {
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [truncated, setTruncated] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [expandedReasons, setExpandedReasons] = useState<Set<string>>(new Set());
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [expandedReasons, setExpandedReasons] = useState<Set<number>>(new Set());
+  const searchIdRef = useRef(0);
 
   const [modelConfig] = useStorage<GenericModelConfig>(
     { key: BOOKMARK_SEARCH_MODEL_CONFIG_KEY, instance: storage },
@@ -75,10 +75,7 @@ function BookmarkSearchPage() {
         return;
       }
 
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
+      const currentSearchId = ++searchIdRef.current;
 
       setIsSearching(true);
       setHasSearched(true);
@@ -91,6 +88,8 @@ function BookmarkSearchPage() {
           body: { config: modelConfig, query: q }
         });
 
+        if (currentSearchId !== searchIdRef.current) return;
+
         if (!response.success) {
           toast.error(response.message);
           return;
@@ -100,7 +99,7 @@ function BookmarkSearchPage() {
         setTruncated(response.truncated);
         addToHistory(q);
       } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (currentSearchId !== searchIdRef.current) return;
         toast.error(error instanceof Error ? error.message : String(error));
       } finally {
         setIsSearching(false);
@@ -115,13 +114,13 @@ function BookmarkSearchPage() {
     }
   };
 
-  const toggleReason = (key: string) => {
+  const toggleReason = (index: number) => {
     setExpandedReasons((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
+      if (next.has(index)) {
+        next.delete(index);
       } else {
-        next.add(key);
+        next.add(index);
       }
       return next;
     });
@@ -191,9 +190,9 @@ function BookmarkSearchPage() {
       {!isSearching && results.length > 0 && (
         <div className="space-y-3">
           {truncated && <p className="text-xs text-amber-600 dark:text-amber-400">书签数量较多，结果可能不完整。</p>}
-          {results.map((r) => (
+          {results.map((r, i) => (
             <div
-              key={r.url}
+              key={`${r.url}-${r.index}`}
               className="rounded-lg border border-zinc-200 p-4 transition-colors hover:bg-zinc-50 dark:border-white/10 dark:hover:bg-white/5"
             >
               <div className="flex items-start justify-between gap-2">
@@ -225,9 +224,9 @@ function BookmarkSearchPage() {
                 <button
                   type="button"
                   className="mt-2 text-xs text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-                  onClick={() => toggleReason(r.url)}
+                  onClick={() => toggleReason(i)}
                 >
-                  {expandedReasons.has(r.url) ? `💡 ${r.reason}` : "💡 查看匹配理由"}
+                  {expandedReasons.has(i) ? `💡 ${r.reason}` : "💡 查看匹配理由"}
                 </button>
               )}
             </div>
