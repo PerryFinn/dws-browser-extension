@@ -6,5 +6,8 @@
       "Bash(rtk ls *)",
       "Bash(pnpm check:types)"
     ]
+  },
+  "skillOverrides": {
+    "dify-dsl-generator": "off"
   }
 }
