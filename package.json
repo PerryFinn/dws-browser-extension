@@ -1,8 +1,8 @@
 {
-  "name": "efficiency-assistant-extension",
-  "displayName": "提效助手",
+  "name": "breeze",
+  "displayName": "Breeze",
   "version": "0.4.1",
-  "description": "提效工具",
+  "description": "Just breeze it.",
   "author": "chenpengfei@cvte.com",
   "scripts": {
     "dev": "conc \"tsr watch\" \"plasmo dev\"",

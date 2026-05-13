@@ -1,6 +1,8 @@
-# DWS 提效助手 - 浏览器扩展
+# Breeze - 浏览器扩展
 
-基于 [Plasmo](https://docs.plasmo.com/) 框架开发的浏览器扩展，面向 DWS 团队日常提效。
+> Just breeze it.
+
+基于 [Plasmo](https://docs.plasmo.com/) 框架开发的浏览器扩展，面向团队日常提效。
 
 ## 功能概览
 
