@@ -22,7 +22,6 @@ import type {
   SwqaGetInterfaceDetailReqBody,
   SwqaGetInterfaceDetailResBody
 } from "@/background/messages/swqaGetInterfaceDetail";
-import type { ValidateHikReqBody, ValidateHikResBody } from "@/background/messages/validateHikAccounts";
 
 // Keep messaging metadata checked in so clean worktrees typecheck before Plasmo regenerates `.plasmo`.
 declare module "@plasmohq/messaging" {
@@ -74,10 +73,6 @@ declare module "@plasmohq/messaging" {
     swqaGetInterfaceDetail: {
       req: SwqaGetInterfaceDetailReqBody;
       res: SwqaGetInterfaceDetailResBody;
-    };
-    validateHikAccounts: {
-      req: ValidateHikReqBody;
-      res: ValidateHikResBody;
     };
   }
 }
