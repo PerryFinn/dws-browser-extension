@@ -98,7 +98,8 @@
       "contextMenus",
       "webRequest",
       "webNavigation",
-      "downloads"
+      "downloads",
+      "bookmarks"
     ]
   },
   "homepage": "https://ai.cvte.com",
