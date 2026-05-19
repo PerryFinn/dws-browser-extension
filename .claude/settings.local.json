@@ -1,6 +1,15 @@
 {
   "permissions": {
-    "allow": ["Bash(rtk grep *)", "Bash(rtk read *)", "Bash(rtk ls *)", "Bash(pnpm check:types)", "Bash(pnpm verify *)"]
+    "allow": [
+      "Bash(rtk grep *)",
+      "Bash(rtk read *)",
+      "Bash(rtk ls *)",
+      "Bash(pnpm check:types)",
+      "Bash(pnpm verify *)",
+      "Bash(rtk git status)",
+      "Bash(rtk git diff *)",
+      "Bash(rtk git log *)"
+    ]
   },
   "skillOverrides": {
     "dify-dsl-generator": "off"
