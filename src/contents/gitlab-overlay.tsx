@@ -155,6 +155,10 @@ const GitlabOverlay = () => {
       .map(({ project }) => project);
   }, [normalizedKeyword, searchableList, sortedList]);
 
+  const searchInputRef = useCallback((node: HTMLInputElement | null) => {
+    if (node) requestAnimationFrame(() => node.focus());
+  }, []);
+
   const navigateToProject = useCallback((url: string) => {
     window.open(url, "_self");
   }, []);
@@ -231,6 +235,7 @@ const GitlabOverlay = () => {
         </div>
         <div className="w-full px-4 pb-2">
           <Input
+            ref={searchInputRef}
             type="search"
             value={searchKeyword}
             onChange={(event) => {
