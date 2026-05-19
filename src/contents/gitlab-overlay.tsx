@@ -1,6 +1,5 @@
 import cssText from "data-text:~/style.css";
 import { useStorage } from "@plasmohq/storage/hook";
-import { sortBy } from "lodash-es";
 import { Check, Pencil, X } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
@@ -69,6 +68,14 @@ const getStableWarmColor = (projectId: number): string => {
   return warmColors[colorIndex];
 };
 
+// Frecency 半衰期：72h 后分数减半，使久未访问的高频项目自然下沉
+const FRECENCY_HALF_LIFE_HOURS = 72;
+
+const getFrecencyScore = (project: GitlabFrequentProjectMeta): number => {
+  const hoursSinceLastAccess = Math.max(0, (Date.now() - project.lastAccessedOn) / (1000 * 60 * 60));
+  return project.frequency * 2 ** (-hoursSinceLastAccess / FRECENCY_HALF_LIFE_HOURS);
+};
+
 const init = async () => {
   // ==============start: 初始化 gitlabUsername ==============
   const initialUsername = await storage.get("gitlabUserName");
@@ -127,7 +134,7 @@ const GitlabOverlay = () => {
   }, [gitlabProjectsDisplayMode]);
 
   const sortedList = useMemo(() => {
-    return sortBy(projectList, "frequency").reverse();
+    return [...projectList].sort((a, b) => getFrecencyScore(b) - getFrecencyScore(a));
   }, [projectList]);
 
   const normalizedKeyword = useMemo(() => {
