@@ -9,7 +9,12 @@
       "Bash(rtk git status)",
       "Bash(rtk git diff *)",
       "Bash(rtk git log *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(rtk find *)",
+      "WebFetch(domain:tanstack.com)",
+      "Bash(rtk pnpm run verify *)",
+      "Bash(rtk lint *)",
+      "Bash(rtk npx @biomejs/biome *)"
     ]
   },
   "skillOverrides": {

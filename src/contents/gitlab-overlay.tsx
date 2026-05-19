@@ -2,7 +2,7 @@ import cssText from "data-text:~/style.css";
 import { useStorage } from "@plasmohq/storage/hook";
 import { Check, Pencil, X } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
-import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useState } from "react";
+import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FamilyButton } from "@/components/complex-ui/family-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -99,6 +99,8 @@ const {
 
 export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => document.querySelector("body") as Element;
 
+const NO_SELECTION = -1;
+
 const GitlabOverlay = () => {
   const [gitlabProjectsDisplayMode] = useStorage<GitlabProjectsDisplayMode>(
     { key: "gitlabProjectsDisplayMode", instance: storage },
@@ -110,6 +112,7 @@ const GitlabOverlay = () => {
   );
   const [projectList, setProjectList] = useState<Array<GitlabFrequentProjectMeta>>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(NO_SELECTION);
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
   const resolvedCustomNames = gitlabProjectCustomNames ?? gitlabProjectCustomNamesDefaultValue;
@@ -161,9 +164,36 @@ const GitlabOverlay = () => {
     if (node) requestAnimationFrame(() => node.focus());
   }, []);
 
+  const clampedSelectedIndex = renderList.length === 0 ? NO_SELECTION : Math.min(selectedIndex, renderList.length - 1);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const listItemRefs = useRef<Map<number, HTMLLIElement>>(new Map());
+
   const navigateToProject = useCallback((url: string) => {
     window.open(url, "_self");
   }, []);
+
+  useEffect(() => {
+    if (clampedSelectedIndex >= 0 && renderList[clampedSelectedIndex]) {
+      listItemRefs.current.get(renderList[clampedSelectedIndex].id)?.scrollIntoView({ block: "nearest" });
+    }
+  }, [clampedSelectedIndex, renderList]);
+
+  const handlePanelKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (editingProjectId !== null) return;
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setSelectedIndex((i) => Math.min(i + 1, renderList.length - 1));
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setSelectedIndex((i) => Math.max(i - 1, 0));
+      } else if (event.key === "Enter" && clampedSelectedIndex >= 0 && renderList[clampedSelectedIndex]) {
+        event.preventDefault();
+        navigateToProject(renderList[clampedSelectedIndex].webUrl);
+      }
+    },
+    [editingProjectId, navigateToProject, renderList, clampedSelectedIndex]
+  );
 
   const startEditingProject = useCallback(
     (project: GitlabFrequentProjectMeta) => {
@@ -231,7 +261,13 @@ const GitlabOverlay = () => {
   if (gitlabProjectsDisplayMode !== "overlay") return null;
   return (
     <FamilyButton containerWidth={300} containerHeight={300} className="fixed bottom-20 right-20 bg-white">
-      <div className="w-full h-full flex flex-col items-center text-gray-700 pt-2">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        role="toolbar"
+        onKeyDown={handlePanelKeyDown}
+        className="w-full h-full flex flex-col items-center text-gray-700 pt-2 outline-none"
+      >
         <div className="pb-2 text-xs text-gray-500 opacity-60 tracking-wide cursor-default select-none">
           Frequent Visited Projects
         </div>
@@ -241,7 +277,9 @@ const GitlabOverlay = () => {
             type="search"
             value={searchKeyword}
             onChange={(event) => {
-              setSearchKeyword(event.target.value);
+              const value = event.target.value;
+              setSearchKeyword(value);
+              setSelectedIndex(value.trim() ? 0 : NO_SELECTION);
             }}
             placeholder="Search by project or namespace"
             aria-label="Search projects by name or namespace"
@@ -253,12 +291,23 @@ const GitlabOverlay = () => {
             {renderList.length === 0 && projectList.length > 0 ? (
               <li className="py-6 text-center text-xs text-gray-400 cursor-default select-none">未找到匹配项目</li>
             ) : (
-              renderList.map((project) => {
+              renderList.map((project, index) => {
                 const nameView = getGitlabProjectNameView(project, resolvedCustomNames);
                 const isEditing = editingProjectId === project.id;
+                const isSelected = clampedSelectedIndex === index;
 
                 return (
-                  <li key={project.id} className="flex space-x-3 items-center pb-2 last:pb-0">
+                  <li
+                    key={project.id}
+                    ref={(el) => {
+                      if (el) listItemRefs.current.set(project.id, el);
+                      else listItemRefs.current.delete(project.id);
+                    }}
+                    className={cn(
+                      "flex space-x-3 items-center pb-2 last:pb-0 px-2 py-1 rounded",
+                      isSelected && "bg-slate-100"
+                    )}
+                  >
                     <button
                       type="button"
                       className={cn(
