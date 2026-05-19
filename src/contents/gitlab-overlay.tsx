@@ -15,6 +15,7 @@ import {
   getGitlabEmail,
   getGitlabProjectNameView,
   gitlabProjectCustomNamesDefaultValue,
+  sortGitlabProjectsByFrecency,
   updateGitlabProjectCustomName
 } from "@/utils/gitlab";
 import packageJson from "../../package.json";
@@ -66,14 +67,6 @@ const warmColors = [
 const getStableWarmColor = (projectId: number): string => {
   const colorIndex = Math.abs(projectId) % warmColors.length;
   return warmColors[colorIndex];
-};
-
-// Frecency 半衰期：72h 后分数减半，使久未访问的高频项目自然下沉
-const FRECENCY_HALF_LIFE_HOURS = 72;
-
-const getFrecencyScore = (project: GitlabFrequentProjectMeta): number => {
-  const hoursSinceLastAccess = Math.max(0, (Date.now() - project.lastAccessedOn) / (1000 * 60 * 60));
-  return project.frequency * 2 ** (-hoursSinceLastAccess / FRECENCY_HALF_LIFE_HOURS);
 };
 
 const init = async () => {
@@ -134,7 +127,9 @@ const GitlabOverlay = () => {
   }, [gitlabProjectsDisplayMode]);
 
   const sortedList = useMemo(() => {
-    return [...projectList].sort((a, b) => getFrecencyScore(b) - getFrecencyScore(a));
+    // 同一次排序固定一个时间点，避免比较器多次调用 Date.now() 造成边界顺序抖动。
+    const now = Date.now();
+    return sortGitlabProjectsByFrecency(projectList, now);
   }, [projectList]);
 
   const normalizedKeyword = useMemo(() => {
