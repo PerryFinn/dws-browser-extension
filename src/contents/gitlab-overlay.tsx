@@ -3,7 +3,7 @@ import { useStorage } from "@plasmohq/storage/hook";
 import { Check, Pencil, X } from "lucide-react";
 import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FamilyButton } from "@/components/complex-ui/family-button";
+import { FamilyButton, type FamilyButtonHandle } from "@/components/complex-ui/family-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
@@ -116,6 +116,7 @@ const GitlabOverlay = () => {
   const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
   const resolvedCustomNames = gitlabProjectCustomNames ?? gitlabProjectCustomNamesDefaultValue;
+  const familyButtonRef = useRef<FamilyButtonHandle>(null);
 
   useEffect(() => {
     if (gitlabProjectsDisplayMode !== "overlay") return;
@@ -181,7 +182,10 @@ const GitlabOverlay = () => {
   const handlePanelKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (editingProjectId !== null) return;
-      if (event.key === "ArrowDown") {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        familyButtonRef.current?.collapse();
+      } else if (event.key === "ArrowDown") {
         event.preventDefault();
         setSelectedIndex((i) => Math.min(i + 1, renderList.length - 1));
       } else if (event.key === "ArrowUp") {
@@ -260,7 +264,12 @@ const GitlabOverlay = () => {
 
   if (gitlabProjectsDisplayMode !== "overlay") return null;
   return (
-    <FamilyButton containerWidth={300} containerHeight={300} className="fixed bottom-20 right-20 bg-white">
+    <FamilyButton
+      ref={familyButtonRef}
+      containerWidth={300}
+      containerHeight={300}
+      className="fixed bottom-20 right-20 bg-white"
+    >
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -281,6 +290,7 @@ const GitlabOverlay = () => {
               setSearchKeyword(value);
               setSelectedIndex(value.trim() ? 0 : NO_SELECTION);
             }}
+            maxLength={50}
             placeholder="Search by project or namespace"
             aria-label="Search projects by name or namespace"
             className="h-8 border-slate-200 text-xs placeholder:text-gray-400 focus-visible:ring-1"

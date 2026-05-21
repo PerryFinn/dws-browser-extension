@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { PlusIcon, XIcon } from "lucide-react";
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, forwardRef, type ReactNode, useImperativeHandle, useState } from "react";
 
 import { cn } from "@/utils";
 
@@ -131,6 +131,10 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({
 // FamilyButton —— 对外暴露的主组件，管理展开/收起状态
 // ─────────────────────────────────────────────
 
+export interface FamilyButtonHandle {
+  collapse: () => void;
+}
+
 interface FamilyButtonProps {
   /** 展开后要展示的自定义内容 */
   children: React.ReactNode;
@@ -146,46 +150,47 @@ interface FamilyButtonProps {
  * - 点击后展开为一个面板，展示传入的 children 内容
  * - 再次点击关闭按钮（X 图标）收起面板
  */
-const FamilyButton: React.FC<FamilyButtonProps> = ({
-  children,
-  containerWidth = DEFAULT_CONTAINER_SIZE,
-  containerHeight = DEFAULT_CONTAINER_SIZE,
-  className
-}) => {
-  /** 控制当前展开/收起状态 */
-  const [isExpanded, setIsExpanded] = useState(false);
-  /** 切换展开/收起 */
-  const toggleExpand = () => setIsExpanded(!isExpanded);
+const FamilyButton = forwardRef<FamilyButtonHandle, FamilyButtonProps>(
+  ({ children, containerWidth = DEFAULT_CONTAINER_SIZE, containerHeight = DEFAULT_CONTAINER_SIZE, className }, ref) => {
+    /** 控制当前展开/收起状态 */
+    const [isExpanded, setIsExpanded] = useState(false);
+    /** 切换展开/收起 */
+    const toggleExpand = () => setIsExpanded(!isExpanded);
 
-  return (
-    <FamilyButtonContainer
-      isExpanded={isExpanded}
-      onClick={toggleExpand}
-      containerWidth={containerWidth}
-      containerHeight={containerHeight}
-      className={className}
-    >
-      {isExpanded ? (
-        /**
-         * 5. 展开内容的淡入动画
-         *    - 延迟 0.3s 后开始（等容器展开动画基本完成）
-         *    - 0.4s 的 opacity 渐显，使用 easeOut 缓动
-         *    - 收起时直接卸载（返回 null），无退出动画
-         */
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: 1,
-            transition: { delay: 0.3, duration: 0.4, ease: "easeOut" }
-          }}
-          className="w-full"
-          style={{ height: containerHeight }}
-        >
-          {children}
-        </motion.div>
-      ) : null}
-    </FamilyButtonContainer>
-  );
-};
+    useImperativeHandle(ref, () => ({
+      collapse: () => setIsExpanded(false)
+    }));
+
+    return (
+      <FamilyButtonContainer
+        isExpanded={isExpanded}
+        onClick={toggleExpand}
+        containerWidth={containerWidth}
+        containerHeight={containerHeight}
+        className={className}
+      >
+        {isExpanded ? (
+          /**
+           * 5. 展开内容的淡入动画
+           *    - 延迟 0.3s 后开始（等容器展开动画基本完成）
+           *    - 0.4s 的 opacity 渐显，使用 easeOut 缓动
+           *    - 收起时直接卸载（返回 null），无退出动画
+           */
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1,
+              transition: { delay: 0.3, duration: 0.4, ease: "easeOut" }
+            }}
+            className="w-full"
+            style={{ height: containerHeight }}
+          >
+            {children}
+          </motion.div>
+        ) : null}
+      </FamilyButtonContainer>
+    );
+  }
+);
 
 export { FamilyButton };
