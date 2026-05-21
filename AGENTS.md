@@ -66,6 +66,10 @@
 - 禁止提交密钥、令牌或未审查的内部地址。
 - 运行 `scripts/upload-*` 前先确认上传目标路径和环境，避免误传生产资源。
 
+## 临时备忘
+
+- `src/contents/generic-api-doc-picker.tsx` 已重命名为 `.bak` 临时禁用（避免 `<all_urls>` 导致开发时所有页面刷新）。开发完成后执行 `git checkout src/contents/generic-api-doc-picker.tsx` 恢复。
+
 ## 语言规范
 
 除技术术语外，优先使用简体中文
