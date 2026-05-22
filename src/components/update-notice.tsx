@@ -1,6 +1,7 @@
 import { sendToBackground } from "@plasmohq/messaging";
 import { useStorage } from "@plasmohq/storage/hook";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { compareVersions, validate } from "compare-versions";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { fetchReqBody, fetchResBody } from "@/background/messages/fetch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -74,9 +75,14 @@ export function UpdateNotice() {
     cache?.localVersion === localVersion && cache?.checkUrl === checkUrl && cache?.ttlMinutes === ttlMinutes;
   const remoteVersion = cacheMatchesSettings ? cache?.remoteVersion : undefined;
   const normalizedRemoteVersion = remoteVersion ? normalizeVersion(remoteVersion) : null;
-  const hasUpdate = Boolean(normalizedRemoteVersion && normalizedRemoteVersion !== localVersion);
-  // const hasUpdate = true; // 测试用
-  const displayRemoteVersion = remoteVersion ?? normalizedRemoteVersion ?? "";
+  // validate 防止非 semver 字符串导致 compareVersions 抛异常
+  const hasUpdate = Boolean(
+    normalizedRemoteVersion &&
+      validate(normalizedRemoteVersion) &&
+      validate(localVersion) &&
+      compareVersions(normalizedRemoteVersion, localVersion) > 0
+  );
+  const displayRemoteVersion = remoteVersion ?? "";
 
   const updateUrl = useMemo(() => {
     return resolveUpdateUrl({
@@ -123,14 +129,12 @@ export function UpdateNotice() {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("版本检查失败:", message);
+        // 失败时清除旧版本信息，避免展示过期的更新提示和失效的下载链接
         await setCache({
           checkedAt: now,
           localVersion,
           checkUrl,
           ttlMinutes,
-          remoteVersion: cache?.remoteVersion,
-          downloadUrl: cache?.downloadUrl,
-          message: cache?.message,
           error: message
         });
       } finally {
@@ -140,9 +144,14 @@ export function UpdateNotice() {
     [cache, checkUrl, cacheMatchesSettings, loading, localVersion, setCache, ttlMinutes, ttlMs]
   );
 
+  // 用 ref 持有最新闭包，避免 checkVersion 引用变化导致 useEffect 无限循环
+  const checkVersionRef = useRef(checkVersion);
+  checkVersionRef.current = checkVersion;
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 需要在配置变化时重新触发检查
   useEffect(() => {
-    void checkVersion(false);
-  }, [checkVersion]);
+    void checkVersionRef.current(false);
+  }, [checkUrl, ttlMinutes, localVersion]);
 
   const handleOpenUpdate = () => {
     if (!updateUrl) return;
