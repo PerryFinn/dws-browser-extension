@@ -181,6 +181,7 @@ const GitlabOverlay = () => {
 
   const handlePanelKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
+      if (event.nativeEvent.isComposing) return;
       if (editingProjectId !== null) return;
       if (event.key === "Escape") {
         event.preventDefault();
