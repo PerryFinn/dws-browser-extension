@@ -1,3 +1,4 @@
+import type { CheckVersionReqBody, CheckVersionResBody } from "@/background/messages/checkVersion";
 import type { downloadReqBody, downloadResBody } from "@/background/messages/download";
 import type { ExportXLSXReqBody, ExportXLSXResBody } from "@/background/messages/exportXLSX";
 import type { fetchReqBody, fetchResBody } from "@/background/messages/fetch";
@@ -26,6 +27,10 @@ import type {
 // Keep messaging metadata checked in so clean worktrees typecheck before Plasmo regenerates `.plasmo`.
 declare module "@plasmohq/messaging" {
   interface MessagesMetadata {
+    checkVersion: {
+      req: CheckVersionReqBody;
+      res: CheckVersionResBody;
+    };
     download: {
       req: downloadReqBody;
       res: downloadResBody;

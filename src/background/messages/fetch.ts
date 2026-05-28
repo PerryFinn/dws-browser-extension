@@ -12,6 +12,10 @@ const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = asyn
       throw new Error("url is required");
     }
     const response = await fetch(url, resetConfig);
+    // fetch 不会把 HTTP 错误状态码（4xx/5xx）当作异常，需要主动校验 response.ok
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} ${response.statusText}`);
+    }
     let data: unknown = null;
     switch (respType) {
       case "json":
