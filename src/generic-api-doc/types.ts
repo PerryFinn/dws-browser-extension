@@ -1,4 +1,5 @@
-export type GenericProviderType = "openai-compatible" | "openai";
+// 目前仅支持 OpenAI 兼容协议；后续计划扩展 Anthropic 等 provider，届时在此联合类型追加成员。
+export type GenericProviderType = "openai-compatible";
 
 export type GenericCaptureMode = "generic-dom" | "generic-selection";
 

@@ -9,9 +9,9 @@ export const GENERIC_MODEL_CONNECTION_STATUS_KEY = "genericApiDocConnectionStatu
 
 export type GenericModelConnectionStatus = "untested" | "success" | "failed";
 
+// 仅保留 OpenAI 兼容协议；后续接入 Anthropic 等 provider 时在此补充对应文案。
 export const genericProviderLabelMap: Record<GenericProviderType, string> = {
-  "openai-compatible": "OpenAI Compatible",
-  openai: "OpenAI"
+  "openai-compatible": "OpenAI Compatible"
 };
 
 export const genericApiDocModelConfigDefaultValue: GenericModelConfig = {

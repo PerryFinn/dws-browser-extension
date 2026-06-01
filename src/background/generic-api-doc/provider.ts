@@ -1,4 +1,3 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateObject, jsonSchema } from "ai";
 import { normalizeGenericExtractionResult } from "@/generic-api-doc/normalize";
@@ -17,11 +16,6 @@ export interface GenericProviderDependencies {
     apiKey?: string;
     name: string;
   }) => (modelId: string) => GenericLanguageModel;
-  createOpenAIProvider: (options: {
-    baseURL?: string;
-    apiKey?: string;
-    name?: string;
-  }) => (modelId: string) => GenericLanguageModel;
   generateObject: (options: {
     model: GenericLanguageModel;
     output: "object";
@@ -33,7 +27,6 @@ export interface GenericProviderDependencies {
 
 const defaultDependencies: GenericProviderDependencies = {
   createOpenAICompatibleProvider: createOpenAICompatible,
-  createOpenAIProvider: createOpenAI,
   generateObject: generateObject as unknown as GenericProviderDependencies["generateObject"]
 };
 
@@ -115,8 +108,8 @@ const genericExtractionSchema = {
   required: ["endpoint", "request", "response", "uncertainties"]
 } as const;
 
-const getProviderName = (apiType: GenericModelConfig["apiType"]): string => {
-  return apiType === "openai" ? "generic-openai" : "generic-openai-compatible";
+const getProviderName = (_apiType: GenericModelConfig["apiType"]): string => {
+  return "generic-openai-compatible";
 };
 
 export const buildGenericModelConfigTestPrompt = (): string => {
@@ -151,19 +144,18 @@ export const createGenericModel = (
   config: GenericModelConfig,
   dependencies: GenericProviderDependencies = defaultDependencies
 ): GenericLanguageModel => {
-  if (config.apiType === "openai-compatible") {
-    return dependencies.createOpenAICompatibleProvider({
-      baseURL: config.baseUrl,
-      apiKey: config.apiKey,
-      name: getProviderName(config.apiType)
-    })(config.modelId);
-  }
+  // 统一去除首尾空白，避免复制粘贴携带空格/换行导致鉴权或地址错误。
+  const baseURL = config.baseUrl.trim();
+  const apiKey = config.apiKey.trim();
+  const modelId = config.modelId.trim();
 
-  return dependencies.createOpenAIProvider({
-    baseURL: config.baseUrl,
-    apiKey: config.apiKey,
+  // 目前仅支持 OpenAI 兼容协议；后续接入 Anthropic 等 provider 时，
+  // 在此按 config.apiType 分发到不同的 provider 工厂。
+  return dependencies.createOpenAICompatibleProvider({
+    baseURL,
+    apiKey,
     name: getProviderName(config.apiType)
-  })(config.modelId);
+  })(modelId);
 };
 
 export const testGenericModelConfig = async (

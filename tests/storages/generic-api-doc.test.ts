@@ -53,12 +53,12 @@ test("模型配置缺少任一项时都不完整", () => {
   );
 });
 
-test("openai provider 仍然要求填写 baseUrl", () => {
+test("openai-compatible provider 仍然要求填写 baseUrl", () => {
   assert.equal(
     isGenericModelConfigComplete({
-      apiType: "openai",
+      apiType: "openai-compatible",
       baseUrl: "",
-      modelId: "gpt-5.1",
+      modelId: "deepseek-chat",
       apiKey: "sk-test"
     }),
     false
@@ -75,7 +75,6 @@ test("storage 中的空 prompt 模板在复制时回退到默认模板", () => {
 
 test("provider 标签文案稳定", () => {
   assert.equal(getGenericProviderLabel("openai-compatible"), "OpenAI Compatible");
-  assert.equal(getGenericProviderLabel("openai"), "OpenAI");
 });
 
 test("Generic storage 默认值符合 v1 约束", () => {

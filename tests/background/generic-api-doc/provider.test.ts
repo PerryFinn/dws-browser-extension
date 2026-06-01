@@ -13,7 +13,7 @@ import type { GenericExtractFromSessionInput, GenericModelConfig } from "@/gener
 const createConfig = (apiType: GenericModelConfig["apiType"]): GenericModelConfig => ({
   apiType,
   baseUrl: "https://example.com/v1",
-  modelId: apiType === "openai" ? "gpt-5.1" : "deepseek-chat",
+  modelId: "deepseek-chat",
   apiKey: "sk-test"
 });
 
@@ -37,7 +37,6 @@ const createCaptureContext = (): GenericExtractFromSessionInput => ({
 const createDependencies = () => {
   const calls = {
     compatibleFactory: [] as Array<Record<string, unknown>>,
-    openaiFactory: [] as Array<Record<string, unknown>>,
     generated: [] as Array<Record<string, unknown>>
   };
 
@@ -46,19 +45,10 @@ const createDependencies = () => {
     modelId
   })) as (modelId: string) => unknown;
 
-  const openaiProvider = ((modelId: string) => ({
-    providerId: "openai",
-    modelId
-  })) as (modelId: string) => unknown;
-
   const dependencies: GenericProviderDependencies = {
     createOpenAICompatibleProvider: (options) => {
       calls.compatibleFactory.push(options as unknown as Record<string, unknown>);
       return compatibleProvider as ReturnType<GenericProviderDependencies["createOpenAICompatibleProvider"]>;
-    },
-    createOpenAIProvider: (options) => {
-      calls.openaiFactory.push(options as unknown as Record<string, unknown>);
-      return openaiProvider as ReturnType<GenericProviderDependencies["createOpenAIProvider"]>;
     },
     generateObject: async (options) => {
       calls.generated.push(options as unknown as Record<string, unknown>);
@@ -106,22 +96,26 @@ test("openai-compatible 会走兼容 provider 工厂", () => {
   };
 
   assert.equal(calls.compatibleFactory.length, 1);
-  assert.equal(calls.openaiFactory.length, 0);
   assert.equal(model.providerId, "compatible");
   assert.equal(model.modelId, "deepseek-chat");
 });
 
-test("openai 会走 OpenAI provider 工厂", () => {
+test("createGenericModel 会去除配置首尾空白", () => {
   const { calls, dependencies } = createDependencies();
-  const model = createGenericModel(createConfig("openai"), dependencies) as unknown as {
-    providerId: string;
-    modelId: string;
-  };
+  createGenericModel(
+    {
+      apiType: "openai-compatible",
+      baseUrl: "  https://example.com/v1  ",
+      modelId: " deepseek-chat\n",
+      apiKey: " sk-test "
+    },
+    dependencies
+  );
 
-  assert.equal(calls.compatibleFactory.length, 0);
-  assert.equal(calls.openaiFactory.length, 1);
-  assert.equal(model.providerId, "openai");
-  assert.equal(model.modelId, "gpt-5.1");
+  assert.equal(calls.compatibleFactory.length, 1);
+  const [options] = calls.compatibleFactory;
+  assert.equal(options.baseURL, "https://example.com/v1");
+  assert.equal(options.apiKey, "sk-test");
 });
 
 test("测试连接使用最小结构化请求", async () => {
