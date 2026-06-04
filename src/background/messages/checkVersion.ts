@@ -1,4 +1,5 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging";
+import { fetchWithTimeout, parseRemoteVersionInfo } from "@/background/version-check";
 import type { VersionCheckCache } from "@/components/update-notice-types";
 import { storage } from "@/storages";
 
@@ -27,25 +28,6 @@ export type CheckVersionResBody = {
 const CACHE_KEY = "versionCheckCache";
 // 失败后 5 分钟内不重复请求，避免频繁重试
 const ERROR_RETRY_TTL_MS = 5 * 60 * 1000;
-
-const normalizeVersion = (value: string) => value.trim().replace(/^v/i, "");
-
-type RemoteVersionInfo = {
-  version: string;
-  downloadUrl?: string;
-  message?: string;
-};
-
-const parseRemoteInfo = (data: unknown): RemoteVersionInfo | null => {
-  if (!data || typeof data !== "object") return null;
-  const record = data as Record<string, unknown>;
-  if (typeof record.version !== "string" || record.version.trim().length === 0) return null;
-  return {
-    version: record.version.trim(),
-    downloadUrl: typeof record.downloadUrl === "string" ? record.downloadUrl : undefined,
-    message: typeof record.message === "string" ? record.message : undefined
-  };
-};
 
 const isCacheValid = (cache: VersionCheckCache | null | undefined, ctx: CheckVersionReqBody, now: number) => {
   if (!cache?.checkedAt) return false;
@@ -82,7 +64,7 @@ const doCheck = async (req: CheckVersionReqBody): Promise<CheckVersionResBody> =
 
   let response: Response;
   try {
-    response = await fetch(req.checkUrl, { method: "GET" });
+    response = await fetchWithTimeout(req.checkUrl);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await writeCache(req, now, { error: message });
@@ -104,7 +86,7 @@ const doCheck = async (req: CheckVersionReqBody): Promise<CheckVersionResBody> =
     return { isSuccess: false, error: message };
   }
 
-  const info = parseRemoteInfo(data);
+  const info = parseRemoteVersionInfo(data);
   if (!info) {
     const message = "版本信息格式不正确";
     await writeCache(req, now, { error: message });
@@ -112,7 +94,7 @@ const doCheck = async (req: CheckVersionReqBody): Promise<CheckVersionResBody> =
   }
 
   await writeCache(req, now, {
-    remoteVersion: normalizeVersion(info.version),
+    remoteVersion: info.version,
     downloadUrl: info.downloadUrl,
     message: info.message
   });
