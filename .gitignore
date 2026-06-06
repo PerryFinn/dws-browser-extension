@@ -30,7 +30,11 @@ out/
 build/
 dist/
 
-# plasmo - https://www.plasmo.com
+# WXT
+.wxt
+.output
+
+# legacy Plasmo cache
 .plasmo
 /.superpowers/
 .worktrees/

@@ -1,20 +1,15 @@
 {
-  "extends": "plasmo/templates/tsconfig.base",
+  "extends": "./.wxt/tsconfig.json",
   "exclude": ["node_modules"],
-  "include": [
-    ".plasmo/index.d.ts",
-    "./**/*.ts",
-    "./**/*.tsx",
-    "node_modules/@types",
-    "assets/**/*",
-    "./src/global.d.ts"
-  ],
+  "include": [".wxt/**/*.d.ts", "./**/*.ts", "./**/*.tsx", "node_modules/@types", "assets/**/*", "./src/global.d.ts"],
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
       "assets/*": ["./assets/*"]
     },
+    "jsx": "react-jsx",
+    "types": ["chrome", "node"],
     "strictNullChecks": true,
-    "baseUrl": "."
+    "resolveJsonModule": true
   }
 }

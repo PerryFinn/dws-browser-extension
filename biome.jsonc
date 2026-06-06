@@ -6,8 +6,11 @@
     "includes": [
       "**",
       "!.plasmo/**/*",
+      "!.output/**/*",
+      "!.wxt/**/*",
       "!.git/**/*",
       "!build/**/*",
+      "!dist/**/*",
       "!node_modules/**/*",
       "!assets/**/*",
       "!src/background/libs/**/*",
