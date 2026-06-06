@@ -1,15 +1,15 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { testGenericModelConfig } from "@/background/generic-api-doc/provider";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import { isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 
 export type BookmarkSearchTestModelReqBody = { config: GenericModelConfig };
 export type BookmarkSearchTestModelResBody = { success: true } | { success: false; message: string };
 
-const handler: PlasmoMessaging.MessageHandler<BookmarkSearchTestModelReqBody, BookmarkSearchTestModelResBody> = async (
-  req,
-  res
-) => {
+const handler: ExtensionMessaging.MessageHandler<
+  BookmarkSearchTestModelReqBody,
+  BookmarkSearchTestModelResBody
+> = async (req, res) => {
   const config = req.body?.config;
 
   if (!config) {

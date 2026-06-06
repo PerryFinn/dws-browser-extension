@@ -1,6 +1,5 @@
-import windowConfigPreviewVideo from "raw:assets/previews/dws-window-config.mp4";
-import { useStorage } from "@plasmohq/storage/hook";
 import { createFileRoute } from "@tanstack/react-router";
+import windowConfigPreviewVideo from "assets/previews/dws-window-config.mp4?url";
 import { CircleHelp } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -14,6 +13,7 @@ import { Code } from "@/components/catalyst-ui-kit/text";
 import { Textarea } from "@/components/catalyst-ui-kit/textarea";
 import { LinkPreview } from "@/components/complex-ui/link-preview";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { GenericApiDocSettings } from "@/options/components/generic-api-doc-settings";
 import { SettingsSection } from "@/options/components/settings-section";
 import { areSwqaPromptTemplatesEqual } from "@/options/model-settings";

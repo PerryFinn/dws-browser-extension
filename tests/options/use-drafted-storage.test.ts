@@ -1,10 +1,10 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import type { StorageCallbackMap } from "@plasmohq/storage";
 import { parseHTML } from "linkedom";
 import React, { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
+import type { StorageCallback, StorageCallbackMap } from "@/lib/extension-storage";
 import { useDraftedStorageValue } from "@/options/use-drafted-storage";
 
 const STORAGE_KEY = "drafted-setting";
@@ -37,10 +37,7 @@ const createDeferred = <T>() => {
 class FakeStorage {
   private readonly values = new Map<string, unknown>();
   private readonly getResolvers = new Map<string, () => Promise<unknown>>();
-  private readonly watchers = new Map<
-    string,
-    Set<(change: chrome.storage.StorageChange, area: chrome.storage.AreaName) => void>
-  >();
+  private readonly watchers = new Map<string, Set<StorageCallback>>();
 
   constructor(initialValues: Record<string, unknown> = {}) {
     for (const [key, value] of Object.entries(initialValues)) {
@@ -111,7 +108,7 @@ class FakeStorage {
     }
 
     for (const callback of callbackSet) {
-      callback({ oldValue, newValue }, "local");
+      callback({ oldValue, newValue });
     }
   }
 }

@@ -1,14 +1,11 @@
-import cssText from "data-text:@/style.css";
-import { sendToBackground } from "@plasmohq/messaging";
-import { useStorage } from "@plasmohq/storage/hook";
 import { Info } from "lucide-react";
-import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo";
 import { useCallback, useEffect, useState } from "react";
-
 import type { ActiveTabIdReqBody, ActiveTabIdResBody } from "@/background/messages/getActiveTab";
 import type { GetWindowConfigReqBody, GetWindowConfigResBody } from "@/background/messages/getWindowConfig";
 import { Expandable, ExpandableCard, ExpandableContent, ExpandableTrigger } from "@/components/complex-ui/expandable";
 import CopyButton from "@/components/copy-btn";
+import { sendToBackground } from "@/lib/extension-messaging";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
 
@@ -17,23 +14,6 @@ const {
     defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig }
   }
 } = localStorageInitialValue;
-
-export const config: PlasmoCSConfig = {
-  matches: ["http://test.demo.com/*"],
-  run_at: "document_end"
-};
-
-export const getInlineAnchor: PlasmoGetInlineAnchor = async () => ({
-  element: document.body,
-  insertPosition: "beforeend"
-});
-
-export const getStyle = () => {
-  const style = document.createElement("style");
-  style.textContent = cssText.replaceAll(":root", ":host(plasmo-csui)");
-  // style.textContent = cssText;
-  return style;
-};
 
 function DwsConfigInline() {
   const [isOpenWindowConfig] = useStorage<boolean>(

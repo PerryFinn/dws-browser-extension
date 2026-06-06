@@ -1,5 +1,3 @@
-import { sendToBackground } from "@plasmohq/messaging";
-import { useStorage } from "@plasmohq/storage/hook";
 import {
   Clipboard,
   ClipboardCheck,
@@ -29,6 +27,8 @@ import {
 } from "@/generic-api-doc/session";
 import { deriveGenericPanelState } from "@/generic-api-doc/session-view";
 import type { GenericModelConfig, GenericPickerMessage, GenericPickerResponse } from "@/generic-api-doc/types";
+import { sendToBackground } from "@/lib/extension-messaging";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { openGenericApiSettingsTab } from "@/popup/generic/open-options";
 import { storage } from "@/storages";
 import {

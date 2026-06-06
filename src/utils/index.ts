@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 const reg = /<([a-zA-Z0-9]+)>([^<]+)<\/\1>/g;
 export function parseXMLtoObject(xmlString: string) {
-  const obj = {};
+  const obj: Record<string, string> = {};
   const tagPattern = reg;
   let match: RegExpExecArray | null;
 

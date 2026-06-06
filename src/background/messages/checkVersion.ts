@@ -1,6 +1,6 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { fetchWithTimeout, parseRemoteVersionInfo } from "@/background/version-check";
 import type { VersionCheckCache } from "@/components/update-notice-types";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import { storage } from "@/storages";
 
 /**
@@ -101,7 +101,7 @@ const doCheck = async (req: CheckVersionReqBody): Promise<CheckVersionResBody> =
   return { isSuccess: true };
 };
 
-const handler: PlasmoMessaging.MessageHandler<CheckVersionReqBody, CheckVersionResBody> = async (req, res) => {
+const handler: ExtensionMessaging.MessageHandler<CheckVersionReqBody, CheckVersionResBody> = async (req, res) => {
   const body = req.body;
   if (!body?.localVersion || !body?.checkUrl) {
     res.send({ isSuccess: false, error: "缺少必要参数" });

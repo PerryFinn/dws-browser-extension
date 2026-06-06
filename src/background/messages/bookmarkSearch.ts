@@ -1,6 +1,6 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { createGenericModel } from "@/background/generic-api-doc/provider";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import { getAllBookmarks, preFilterBookmarks } from "@/services/bookmark-search/bookmarks";
 import {
   buildBookmarkSearchPrompt,
@@ -21,7 +21,7 @@ export type BookmarkSearchResBody =
 
 const MAX_PROMPT_TOKENS = 30000;
 
-const handler: PlasmoMessaging.MessageHandler<BookmarkSearchReqBody, BookmarkSearchResBody> = async (req, res) => {
+const handler: ExtensionMessaging.MessageHandler<BookmarkSearchReqBody, BookmarkSearchResBody> = async (req, res) => {
   const { config, query } = req.body ?? {};
 
   if (!config || !query) {

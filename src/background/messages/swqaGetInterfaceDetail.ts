@@ -1,4 +1,4 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import type { RawSwqaDetailResponse } from "@/popup/swqa/clean";
 import { buildInterfaceDetailApiUrl } from "@/popup/swqa/const";
 
@@ -18,7 +18,7 @@ type InjectedResult =
 /**
  * 在页面 MAIN world 发起同源请求，确保带上站点的 cookie / token。
  */
-const handler: PlasmoMessaging.MessageHandler<SwqaGetInterfaceDetailReqBody, SwqaGetInterfaceDetailResBody> = async (
+const handler: ExtensionMessaging.MessageHandler<SwqaGetInterfaceDetailReqBody, SwqaGetInterfaceDetailResBody> = async (
   req,
   res
 ) => {

@@ -1,5 +1,3 @@
-import { sendToBackground } from "@plasmohq/messaging";
-import { useStorage } from "@plasmohq/storage/hook";
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
@@ -9,6 +7,8 @@ import { Button } from "@/components/catalyst-ui-kit/button";
 import { Field, Label } from "@/components/catalyst-ui-kit/fieldset";
 import { Input } from "@/components/catalyst-ui-kit/input";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import { sendToBackground } from "@/lib/extension-messaging";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { BookmarkSearchSettings } from "@/options/components/bookmark-search-settings";
 import {
   BOOKMARK_SEARCH_HISTORY_KEY,

@@ -1,4 +1,4 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 export type ActiveTabIdReqBody = undefined;
 export type ActiveTabIdResBody = chrome.tabs.Tab;
@@ -11,7 +11,10 @@ export const getActiveTab = () => {
   });
 };
 
-const handler: PlasmoMessaging.MessageHandler<ActiveTabIdReqBody, ActiveTabIdResBody> = async (request, response) => {
+const handler: ExtensionMessaging.MessageHandler<ActiveTabIdReqBody, ActiveTabIdResBody> = async (
+  request,
+  response
+) => {
   console.log("getActiveTab 收到消息：", request);
   response.send(await getActiveTab());
 };

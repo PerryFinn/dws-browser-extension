@@ -1,4 +1,3 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { extractGenericApiDoc } from "@/background/generic-api-doc/provider";
 import {
   doesGenericCaptureSessionMatchAttempt,
@@ -12,6 +11,7 @@ import type {
   GenericExtractionResult,
   GenericModelConfig
 } from "@/generic-api-doc/types";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import { storage } from "@/storages";
 import { GENERIC_CAPTURE_SESSION_STORAGE_KEY, isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 
@@ -73,7 +73,7 @@ export const executeGenericExtractApiDoc = async ({
   }
 };
 
-const handler: PlasmoMessaging.MessageHandler<GenericExtractApiDocReqBody, GenericExtractApiDocResBody> = async (
+const handler: ExtensionMessaging.MessageHandler<GenericExtractApiDocReqBody, GenericExtractApiDocResBody> = async (
   req,
   res
 ) => {

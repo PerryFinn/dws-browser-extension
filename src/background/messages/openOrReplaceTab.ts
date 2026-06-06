@@ -1,4 +1,4 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 import { getActiveTab } from "./getActiveTab";
 
@@ -35,7 +35,7 @@ export const openOrReplaceTab = async (host: string) => {
   return activeTab;
 };
 
-const handler: PlasmoMessaging.MessageHandler<OpenOrReplaceTabReqBody, OpenOrReplaceTabResBody> = async (
+const handler: ExtensionMessaging.MessageHandler<OpenOrReplaceTabReqBody, OpenOrReplaceTabResBody> = async (
   request,
   response
 ) => {

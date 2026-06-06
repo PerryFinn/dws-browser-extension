@@ -1,5 +1,5 @@
-import type { Storage, StorageCallbackMap } from "@plasmohq/storage";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Storage, StorageCallbackMap } from "@/lib/extension-storage";
 
 export interface UseDraftedStorageValueOptions<T> {
   storage: Storage;

@@ -1,4 +1,3 @@
-import { sendToBackground } from "@plasmohq/messaging";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import type {
@@ -10,6 +9,7 @@ import { Description, Field, Label } from "@/components/catalyst-ui-kit/fieldset
 import { Input } from "@/components/catalyst-ui-kit/input";
 import { Select } from "@/components/catalyst-ui-kit/select";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import { sendToBackground } from "@/lib/extension-messaging";
 import { SettingsSection } from "@/options/components/settings-section";
 import { areGenericModelConfigEqual } from "@/options/model-settings";
 import { useDraftedStorageValue } from "@/options/use-drafted-storage";

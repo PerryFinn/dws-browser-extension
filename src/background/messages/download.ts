@@ -1,9 +1,9 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 export type downloadReqBody = chrome.downloads.DownloadOptions;
 export type downloadResBody = { success: boolean; error?: string };
 
-const handler: PlasmoMessaging.MessageHandler<downloadReqBody, downloadResBody> = async (req, res) => {
+const handler: ExtensionMessaging.MessageHandler<downloadReqBody, downloadResBody> = async (req, res) => {
   try {
     const downloadOpt = req.body;
     if (!downloadOpt) {

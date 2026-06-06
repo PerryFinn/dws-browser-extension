@@ -1,5 +1,5 @@
-import { sendToBackground } from "@plasmohq/messaging";
 import { useCallback, useEffect, useState } from "react";
+import { sendToBackground } from "@/lib/extension-messaging";
 
 import "@/style.css";
 import "react-toastify/dist/ReactToastify.css";

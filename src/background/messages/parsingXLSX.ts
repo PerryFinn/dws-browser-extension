@@ -1,4 +1,4 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 import { sanitizeString } from "@/utils/index.js";
 
@@ -23,11 +23,15 @@ export interface parseXlsxInfo {
 
 // 遍历一个对象的所有键，如果值是字符串，则调用 sanitizeString
 const sanitizeObject = (obj: parseXlsxInfo) => {
-  const newObj = {} as parseXlsxInfo;
-  for (const key of Object.keys(obj)) {
-    newObj[key] = sanitizeString(String(obj[key]));
-  }
-  return newObj;
+  return {
+    name: sanitizeString(String(obj.name)),
+    username: sanitizeString(String(obj.username)),
+    password: sanitizeString(String(obj.password)),
+    host: sanitizeString(String(obj.host)),
+    device_id: sanitizeString(String(obj.device_id)),
+    rtsp_address: sanitizeString(String(obj.rtsp_address)),
+    count: Number(obj.count) || 0
+  };
 };
 
 const sanitizeJsonArray = (jsonArray: Array<parseXlsxInfo>) => {
@@ -44,7 +48,10 @@ export const parsingXLSX = async (ab: Uint8Array) => {
   return sanitizeJsonArray(json);
 };
 
-const handler: PlasmoMessaging.MessageHandler<parsingXLSXReqBody, parsingXLSXResBody> = async (request, response) => {
+const handler: ExtensionMessaging.MessageHandler<parsingXLSXReqBody, parsingXLSXResBody> = async (
+  request,
+  response
+) => {
   console.log("parsingXLSX 收到消息：", request);
   try {
     const data = request.body?.data;

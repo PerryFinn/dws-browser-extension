@@ -1,12 +1,12 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
 import { testGenericModelConfig } from "@/background/generic-api-doc/provider";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import { isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 
 export type GenericTestModelConfigReqBody = { config: GenericModelConfig };
 export type GenericTestModelConfigResBody = { success: true } | { success: false; message: string };
 
-const handler: PlasmoMessaging.MessageHandler<GenericTestModelConfigReqBody, GenericTestModelConfigResBody> = async (
+const handler: ExtensionMessaging.MessageHandler<GenericTestModelConfigReqBody, GenericTestModelConfigResBody> = async (
   req,
   res
 ) => {

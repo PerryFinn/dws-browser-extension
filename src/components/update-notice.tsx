@@ -1,10 +1,10 @@
-import { sendToBackground } from "@plasmohq/messaging";
-import { useStorage } from "@plasmohq/storage/hook";
 import { compareVersions, validate } from "compare-versions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CheckVersionReqBody, CheckVersionResBody } from "@/background/messages/checkVersion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { sendToBackground } from "@/lib/extension-messaging";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { localStorageInitialValue, storage } from "@/storages";
 import { homepage as pkgHomepage, version as pkgVersion } from "../../package.json";
 import type { VersionCheckCache } from "./update-notice-types";

@@ -1,4 +1,4 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 export type GetWindowConfigReqBody = {
   tabId: number;
@@ -8,7 +8,7 @@ export type GetWindowConfigResBody = {
   config: WindowConfig | null;
 };
 
-const handler: PlasmoMessaging.MessageHandler<GetWindowConfigReqBody, GetWindowConfigResBody> = async (req, res) => {
+const handler: ExtensionMessaging.MessageHandler<GetWindowConfigReqBody, GetWindowConfigResBody> = async (req, res) => {
   const tabId = req.body?.tabId;
   if (!tabId) {
     throw new Error("tabId 不能为空");

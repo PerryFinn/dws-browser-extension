@@ -1,4 +1,4 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 import * as XLSX from "../libs/xlsx/index.js";
 
@@ -15,7 +15,7 @@ export interface ExportXlsxRow {
 export type ExportXLSXReqBody = { data: ExportXlsxRow[] };
 export type ExportXLSXResBody = { success: boolean; error?: string };
 
-const handler: PlasmoMessaging.MessageHandler<ExportXLSXReqBody, ExportXLSXResBody> = async (request, response) => {
+const handler: ExtensionMessaging.MessageHandler<ExportXLSXReqBody, ExportXLSXResBody> = async (request, response) => {
   try {
     const data = request.body?.data;
     if (!data || !Array.isArray(data)) {

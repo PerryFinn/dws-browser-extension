@@ -1,11 +1,11 @@
-import type { PlasmoMessaging } from "@plasmohq/messaging";
+import type { ExtensionMessaging } from "@/lib/extension-messaging";
 
 type respType = "json" | "text" | "blob" | "arrayBuffer";
 
 export type fetchReqBody = { url: string | URL | Request; respType: respType } & RequestInit;
 export type fetchResBody = { isSuccess: boolean; data: unknown; error?: string };
 
-const handler: PlasmoMessaging.MessageHandler<fetchReqBody, fetchResBody> = async (req, res) => {
+const handler: ExtensionMessaging.MessageHandler<fetchReqBody, fetchResBody> = async (req, res) => {
   const { url, respType = "json", ...resetConfig } = req.body ?? {};
   try {
     if (!url) {

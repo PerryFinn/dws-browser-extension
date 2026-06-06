@@ -1,11 +1,9 @@
-import cssText from "data-text:~/style.css";
-import { useStorage } from "@plasmohq/storage/hook";
 import { Check, Pencil, X } from "lucide-react";
-import type { PlasmoCSConfig, PlasmoGetOverlayAnchor, PlasmoGetStyle } from "plasmo";
 import { type KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FamilyButton, type FamilyButtonHandle } from "@/components/complex-ui/family-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { type GitlabProjectsDisplayMode, localStorageInitialValue, storage } from "@/storages";
 import { cn } from "@/utils";
 import {
@@ -19,21 +17,6 @@ import {
   updateGitlabProjectCustomName
 } from "@/utils/gitlab";
 import packageJson from "../../package.json";
-
-export const config: PlasmoCSConfig = {
-  matches: ["https://gitlab.gz.cvte.cn/*"],
-  run_at: "document_end"
-};
-
-export const getStyle: PlasmoGetStyle = () => {
-  const style = document.createElement("style");
-  style.textContent = cssText.replaceAll(":root", ":host(plasmo-csui)");
-  // style.textContent = cssText;
-  return style;
-};
-
-// export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () =>
-//   document.querySelector("#super-sidebar-context-header");
 
 const getFrequentProjects = (localStorageKey: string): Array<GitlabFrequentProjectMeta> => {
   try {
@@ -83,21 +66,9 @@ const init = async () => {
   return projects;
 };
 
-// export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => {
-//   // return document.body;
-//   return document.getElementById("pinned");
-// };
-
 const {
   gitlabProjectsDisplayMode: { defaultValue: defaultGitlabProjectsDisplayMode }
 } = localStorageInitialValue;
-
-// export const getInlineAnchor: PlasmoGetInlineAnchor = () => ({
-//   element: document.querySelector("body") as Element, // 如果没有则不挂载
-//   insertPosition: "beforeend"
-// });
-
-export const getOverlayAnchor: PlasmoGetOverlayAnchor = async () => document.querySelector("body") as Element;
 
 const NO_SELECTION = -1;
 

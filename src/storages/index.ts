@@ -1,4 +1,4 @@
-import { Storage } from "@plasmohq/storage";
+import { Storage } from "@/lib/extension-storage";
 import { GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY, gitlabProjectCustomNamesDefaultValue } from "@/utils/gitlab";
 import {
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,

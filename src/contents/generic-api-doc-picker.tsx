@@ -1,4 +1,3 @@
-import type { PlasmoCSConfig } from "plasmo";
 import { useEffect } from "react";
 import { resolveGenericPickerTabId } from "@/generic-api-doc/picker-message";
 import { sanitizePickedElement, sanitizeSelectionText } from "@/generic-api-doc/sanitize";
@@ -11,11 +10,6 @@ import {
 import type { GenericPickerMessage, GenericPickerResponse, GenericSanitizedCapture } from "@/generic-api-doc/types";
 import { storage } from "@/storages";
 import { GENERIC_CAPTURE_SESSION_STORAGE_KEY } from "@/storages/generic-api-doc";
-
-export const config: PlasmoCSConfig = {
-  matches: ["<all_urls>"],
-  run_at: "document_idle"
-};
 
 // 页面采集不能依赖 popup 生命周期，因为用户一旦回到页面点击，popup 就会自动关闭，只能由页面脚本接管并直接写 session。
 

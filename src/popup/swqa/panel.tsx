@@ -1,5 +1,3 @@
-import { sendToBackground } from "@plasmohq/messaging";
-import { useStorage } from "@plasmohq/storage/hook";
 import { BookOpen, CircleHelp, Clipboard, ClipboardCheck, RefreshCcw, Settings2, Sparkles, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
@@ -16,6 +14,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UpdateNotice } from "@/components/update-notice";
+import { sendToBackground } from "@/lib/extension-messaging";
+import { useStorage } from "@/lib/extension-storage-hook";
 import { openBaseSettingsTab } from "@/popup/open-options";
 import { storage } from "@/storages";
 import { SWQA_PROMPT_TEMPLATES_STORAGE_KEY, swqaPromptTemplatesDefaultValue } from "@/storages/swqa-prompt-template";
