@@ -2,10 +2,11 @@
 
 ## 项目结构与模块组织
 
-本仓库是基于 Plasmo 的浏览器扩展，技术栈为 React + TypeScript。
+本仓库是基于 WXT 的浏览器扩展，技术栈为 React + TypeScript。
 
-- `src/background`：后台入口与消息处理（`messages/*`）。
-- `src/contents`：内容脚本与页面内覆盖层逻辑。
+- `src/entrypoints`：WXT 入口（background、popup、options、content scripts）。
+- `src/background`：后台业务逻辑与消息处理（`messages/*`）。
+- `src/contents`：内容脚本组件与页面内覆盖层逻辑。
 - `src/popup`：扩展弹窗；`src/options`：选项页应用（TanStack Router，含生成文件 `routeTree.gen.ts`）。
 - `src/components`：共享组件（`ui`、`catalyst-ui-kit`、`complex-ui`）。
 - `src/utils`、`src/services`、`src/storages`：工具函数、服务调用与存储封装。
@@ -13,13 +14,13 @@
 
 ## 构建、测试与开发命令
 
-- `pnpm dev`：并行启动 `tsr watch` 与 `plasmo dev`，用于本地开发。
+- `pnpm dev`：并行启动 `tsr watch` 与 `wxt dev`，用于本地开发。
 - `pnpm lint`：执行 Biome 检查并自动修复格式与部分规则问题。
 - `pnpm check:types`：执行 TypeScript 类型检查（不产出构建文件）。
 - `pnpm verify`：执行基础校验（当前为 `pnpm lint && pnpm check:types`）。
 - `pnpm build-zip`：生成路由产物并输出 zip 包到 `build/`。
 - `pnpm build`：执行 `scripts/build-upload.ts`（构建并上传 CDN），仅在发布场景使用。
-- `pnpm package`：通过 Plasmo 打包扩展。
+- `pnpm package`：通过 WXT 打包扩展。
 - `pnpm changeset`：创建版本变更记录（写入 `.changeset/*.md`）。
 - `pnpm changeset version`：根据 changeset 更新版本号并写入 `CHANGELOG.md`。
 - `pnpm changeset status`：查看待发布的变更摘要。
@@ -65,10 +66,6 @@
 - 扩展权限较宽（如 `<all_urls>`、`webRequest`、`downloads`），新增权限必须说明必要性。
 - 禁止提交密钥、令牌或未审查的内部地址。
 - 运行 `scripts/upload-*` 前先确认上传目标路径和环境，避免误传生产资源。
-
-## 临时备忘
-
-- `src/contents/generic-api-doc-picker.tsx` 已重命名为 `.bak` 临时禁用（避免 `<all_urls>` 导致开发时所有页面刷新）。开发完成后执行 `git checkout src/contents/generic-api-doc-picker.tsx` 恢复。
 
 ## 语言规范
 

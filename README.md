@@ -2,7 +2,7 @@
 
 > Just breeze it.
 
-基于 [Plasmo](https://docs.plasmo.com/) 框架开发的浏览器扩展，面向团队日常提效。
+基于 [WXT](https://wxt.dev/) 框架开发的浏览器扩展，面向团队日常提效。
 
 ## 功能概览
 
@@ -35,7 +35,7 @@
 pnpm dev
 ```
 
-打开浏览器并加载 `build/chrome-mv3-dev` 目录。
+打开浏览器并加载 `dist/chrome-mv3-dev` 目录。
 
 ### 添加公共组件
 
