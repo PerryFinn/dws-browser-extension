@@ -17,7 +17,8 @@
 - `pnpm dev`：并行启动 `tsr watch` 与 `wxt dev`，用于本地开发。
 - `pnpm lint`：执行 Biome 检查并自动修复格式与部分规则问题。
 - `pnpm check:types`：执行 TypeScript 类型检查（不产出构建文件）。
-- `pnpm verify`：执行基础校验（当前为 `pnpm lint && pnpm check:types`）。
+- `pnpm test`：使用 Node.js test runner + tsx 执行 `tests/**/*.test.ts(x)`。
+- `pnpm verify`：执行基础校验（当前为 `pnpm lint && pnpm check:types && pnpm test`）。
 - `pnpm build-zip`：生成路由产物并输出 zip 包到 `build/`。
 - `pnpm build`：执行 `scripts/build-upload.ts`（构建并上传 CDN），仅在发布场景使用。
 - `pnpm package`：通过 WXT 打包扩展。
@@ -39,10 +40,9 @@
 
 ## 测试指南
 
-当前 `package.json` 未提供 Jest/Vitest 等自动化测试命令。
-
 - PR 最低验证要求：运行 `pnpm verify`，并手动冒烟验证 popup/options/content-script 关键路径。
-- 测试文件统一放在仓库顶层 `tests/`，按 `src/` 镜像目录组织，例如 `tests/popup/generic/*.test.ts`。
+- 测试文件统一放在仓库顶层 `tests/`；业务代码按 `src/` 镜像目录组织，例如 `tests/popup/generic/*.test.ts`。
+- `scripts/*` 的测试放在 `tests/scripts/`，不要放在 `scripts/` 目录内。
 - 不要把 `*.test.ts` 或 `*.test.tsx` 放在 `src/` 内，尤其是 `src/background/messages`、`src/contents`、`src/options/routes` 这类约定式入口目录。
 
 ## Changeset 版本变更流程

@@ -10,9 +10,10 @@
     "build-zip": "tsx scripts/build-zip.ts",
     "build": "tsx scripts/build-upload.ts",
     "package": "wxt zip",
+    "test": "tsx --test \"tests/**/*.test.ts\" \"tests/**/*.test.tsx\"",
     "lint": "biome check --write .",
     "check:types": "tsc --noEmit",
-    "verify": "pnpm lint && pnpm check:types"
+    "verify": "pnpm lint && pnpm check:types && pnpm test"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.68",

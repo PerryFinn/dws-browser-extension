@@ -11,3 +11,8 @@
 
 - 需要直接运行脚本时，优先使用 `pnpm tsx scripts/<name>.ts`。
 - 脚本内保持 Node.js 运行时兼容，不依赖浏览器环境。
+
+## 测试约定
+
+- 脚本测试放在仓库顶层 `tests/scripts/`，不要放在 `scripts/` 目录内。
+- 脚本测试使用 Node.js test runner 编写，并通过 `pnpm test` 统一执行。

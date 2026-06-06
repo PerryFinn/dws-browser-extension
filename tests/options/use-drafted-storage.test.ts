@@ -119,7 +119,7 @@ const setupDom = () => {
   const previousGlobals = {
     window: globalThis.window,
     document: globalThis.document,
-    navigator: globalThis.navigator,
+    navigatorDescriptor: Object.getOwnPropertyDescriptor(globalThis, "navigator"),
     HTMLElement: globalThis.HTMLElement,
     Node: globalThis.Node,
     MutationObserver: globalThis.MutationObserver,
@@ -130,7 +130,11 @@ const setupDom = () => {
 
   globalThis.window = window as typeof globalThis.window;
   globalThis.document = window.document as typeof globalThis.document;
-  globalThis.navigator = window.navigator as typeof globalThis.navigator;
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: window.navigator,
+    writable: true
+  });
   globalThis.HTMLElement = window.HTMLElement as typeof globalThis.HTMLElement;
   globalThis.Node = window.Node as typeof globalThis.Node;
   globalThis.MutationObserver = window.MutationObserver as typeof globalThis.MutationObserver;
@@ -147,7 +151,11 @@ const setupDom = () => {
     restore: () => {
       globalThis.window = previousGlobals.window;
       globalThis.document = previousGlobals.document;
-      globalThis.navigator = previousGlobals.navigator;
+      if (previousGlobals.navigatorDescriptor) {
+        Object.defineProperty(globalThis, "navigator", previousGlobals.navigatorDescriptor);
+      } else {
+        Reflect.deleteProperty(globalThis, "navigator");
+      }
       globalThis.HTMLElement = previousGlobals.HTMLElement;
       globalThis.Node = previousGlobals.Node;
       globalThis.MutationObserver = previousGlobals.MutationObserver;

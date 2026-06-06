@@ -50,9 +50,10 @@ pnpm dlx shadcn@latest add dialog
 | 命令 | 说明 |
 |------|------|
 | `pnpm dev` | 启动开发服务器 |
+| `pnpm test` | 运行全部测试用例 |
 | `pnpm lint` | Biome 检查与自动修复 |
 | `pnpm check:types` | TypeScript 类型检查 |
-| `pnpm verify` | 基础校验（lint + 类型检查） |
+| `pnpm verify` | 基础校验（lint + 类型检查 + 测试） |
 | `pnpm build-zip` | 生成路由产物并输出 zip 包 |
 | `pnpm package` | 打包扩展 |
 
