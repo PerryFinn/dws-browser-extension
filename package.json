@@ -10,7 +10,7 @@
     "build-zip": "tsx scripts/build-zip.ts",
     "build": "tsx scripts/build-upload.ts",
     "package": "wxt zip",
-    "test": "tsx --test \"tests/**/*.test.ts\" \"tests/**/*.test.tsx\"",
+    "test": "vitest run",
     "lint": "biome check --write .",
     "check:types": "tsc --noEmit",
     "verify": "pnpm lint && pnpm check:types && pnpm test"
@@ -67,7 +67,6 @@
     "@types/tar-stream": "3.1.4",
     "@wxt-dev/module-react": "^1.2.2",
     "adm-zip": "^0.5.17",
-    "assert": "^2.1.0",
     "autoprefixer": "^10.5.0",
     "buffer-to-stream": "^1.0.0",
     "chalk": "^5.6.2",
@@ -85,6 +84,7 @@
     "tar-stream": "^3.2.0",
     "tsx": "^4.22.4",
     "typescript": "6.0.3",
+    "vitest": "^4.1.8",
     "wxt": "^0.20.26"
   },
   "manifest": {

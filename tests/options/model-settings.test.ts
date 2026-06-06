@@ -1,6 +1,4 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
-
+import { expect, test } from "vitest";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
 import {
   createSwqaPromptTemplateDraft,
@@ -15,51 +13,42 @@ const createSavedGenericModelConfig = (): GenericModelConfig => ({
   modelId: "gpt-5.1",
   apiKey: "sk-test"
 });
-
 test("SWQA prompt 草稿在 create 与 update 都未变化时视为已保存", () => {
   const savedDraft = createSwqaPromptTemplateDraft({
     createTemplate: "create-template",
     updateTemplate: "update-template"
   });
-
-  assert.equal(hasSwqaPromptTemplateDraftChanges(savedDraft, savedDraft), false);
-  assert.equal(
+  expect(hasSwqaPromptTemplateDraftChanges(savedDraft, savedDraft)).toBe(false);
+  expect(
     hasSwqaPromptTemplateDraftChanges(savedDraft, {
       create: "create-template-2",
       update: "update-template"
-    }),
-    true
-  );
-  assert.equal(
+    })
+  ).toBe(true);
+  expect(
     hasSwqaPromptTemplateDraftChanges(savedDraft, {
       create: "create-template",
       update: "update-template-2"
-    }),
-    true
-  );
+    })
+  ).toBe(true);
 });
-
 test("Generic 模型配置草稿按字段比较脏值", () => {
   const savedConfig = createSavedGenericModelConfig();
-
-  assert.equal(hasGenericModelConfigDraftChanges(savedConfig, savedConfig), false);
-  assert.equal(
+  expect(hasGenericModelConfigDraftChanges(savedConfig, savedConfig)).toBe(false);
+  expect(
     hasGenericModelConfigDraftChanges(savedConfig, {
       ...savedConfig,
       baseUrl: "https://proxy.example.com/v1"
-    }),
-    true
-  );
-  assert.equal(
+    })
+  ).toBe(true);
+  expect(
     hasGenericModelConfigDraftChanges(savedConfig, {
       ...savedConfig,
       apiKey: "sk-other"
-    }),
-    true
-  );
+    })
+  ).toBe(true);
 });
-
 test("Generic Prompt 模板草稿只有文本变化时才标记未保存", () => {
-  assert.equal(hasGenericPromptTemplateDraftChanges("{{json}}", "{{json}}"), false);
-  assert.equal(hasGenericPromptTemplateDraftChanges("{{json}}", "URL: {{url}}"), true);
+  expect(hasGenericPromptTemplateDraftChanges("{{json}}", "{{json}}")).toBe(false);
+  expect(hasGenericPromptTemplateDraftChanges("{{json}}", "URL: {{url}}")).toBe(true);
 });

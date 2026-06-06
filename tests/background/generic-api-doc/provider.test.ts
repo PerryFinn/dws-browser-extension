@@ -1,5 +1,4 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
+import { expect, test } from "vitest";
 import {
   buildGenericExtractionPrompt,
   buildGenericModelConfigTestPrompt,
@@ -16,7 +15,6 @@ const createConfig = (apiType: GenericModelConfig["apiType"]): GenericModelConfi
   modelId: "deepseek-chat",
   apiKey: "sk-test"
 });
-
 const createCaptureContext = (): GenericExtractFromSessionInput => ({
   source: {
     url: "https://example.com/docs/user-detail",
@@ -33,18 +31,15 @@ const createCaptureContext = (): GenericExtractFromSessionInput => ({
     qualityHints: []
   }
 });
-
 const createDependencies = () => {
   const calls = {
     compatibleFactory: [] as Array<Record<string, unknown>>,
     generated: [] as Array<Record<string, unknown>>
   };
-
   const compatibleProvider = ((modelId: string) => ({
     providerId: "compatible",
     modelId
   })) as (modelId: string) => unknown;
-
   const dependencies: GenericProviderDependencies = {
     createOpenAICompatibleProvider: (options) => {
       calls.compatibleFactory.push(options as unknown as Record<string, unknown>);
@@ -52,7 +47,6 @@ const createDependencies = () => {
     },
     generateObject: async (options) => {
       calls.generated.push(options as unknown as Record<string, unknown>);
-
       return {
         object: {
           source: {
@@ -81,25 +75,21 @@ const createDependencies = () => {
       } as Awaited<ReturnType<GenericProviderDependencies["generateObject"]>>;
     }
   };
-
   return {
     calls,
     dependencies
   };
 };
-
 test("openai-compatible 会走兼容 provider 工厂", () => {
   const { calls, dependencies } = createDependencies();
   const model = createGenericModel(createConfig("openai-compatible"), dependencies) as unknown as {
     providerId: string;
     modelId: string;
   };
-
-  assert.equal(calls.compatibleFactory.length, 1);
-  assert.equal(model.providerId, "compatible");
-  assert.equal(model.modelId, "deepseek-chat");
+  expect(calls.compatibleFactory.length).toBe(1);
+  expect(model.providerId).toBe("compatible");
+  expect(model.modelId).toBe("deepseek-chat");
 });
-
 test("createGenericModel 会去除配置首尾空白", () => {
   const { calls, dependencies } = createDependencies();
   createGenericModel(
@@ -111,42 +101,49 @@ test("createGenericModel 会去除配置首尾空白", () => {
     },
     dependencies
   );
-
-  assert.equal(calls.compatibleFactory.length, 1);
+  expect(calls.compatibleFactory.length).toBe(1);
   const [options] = calls.compatibleFactory;
-  assert.equal(options.baseURL, "https://example.com/v1");
-  assert.equal(options.apiKey, "sk-test");
+  expect(options.baseURL).toBe("https://example.com/v1");
+  expect(options.apiKey).toBe("sk-test");
 });
-
 test("测试连接使用最小结构化请求", async () => {
   const { calls, dependencies } = createDependencies();
   await testGenericModelConfig(createConfig("openai-compatible"), dependencies);
-
-  assert.equal(calls.generated.length, 1);
+  expect(calls.generated.length).toBe(1);
   const [request] = calls.generated;
-  assert.equal(request.schemaName, "generic_model_connectivity_check");
-  assert.equal(request.prompt, buildGenericModelConfigTestPrompt());
-  assert.equal(request.output, "object");
-  assert.doesNotMatch(String(request.prompt), /接口名称：获取用户详情/);
+  expect(request.schemaName).toBe("generic_model_connectivity_check");
+  expect(request.prompt).toBe(buildGenericModelConfigTestPrompt());
+  expect(request.output).toBe("object");
+  expect(String(request.prompt)).not.toMatch(/接口名称：获取用户详情/);
 });
-
 test("正式提取会把 capture context 序列化到模型输入中", async () => {
   const { calls, dependencies } = createDependencies();
   const context = createCaptureContext();
   const result = await extractGenericApiDoc(createConfig("openai-compatible"), context, dependencies);
-
-  assert.equal(calls.generated.length, 1);
+  expect(calls.generated.length).toBe(1);
   const [request] = calls.generated;
-  assert.equal(request.schemaName, "generic_api_doc_extraction");
-  assert.equal(request.prompt, buildGenericExtractionPrompt(context));
-  assert.match(String(request.prompt), /页面标题：用户详情接口/);
-  assert.match(String(request.prompt), /原始文本：/);
-  assert.deepEqual(
-    (request.schema as { jsonSchema: { properties: { endpoint: { properties: { method: { enum: string[] } } } } } })
-      .jsonSchema.properties.endpoint.properties.method.enum,
-    ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
-  );
-  assert.deepEqual(
+  expect(request.schemaName).toBe("generic_api_doc_extraction");
+  expect(request.prompt).toBe(buildGenericExtractionPrompt(context));
+  expect(String(request.prompt)).toMatch(/页面标题：用户详情接口/);
+  expect(String(request.prompt)).toMatch(/原始文本：/);
+  expect(
+    (
+      request.schema as {
+        jsonSchema: {
+          properties: {
+            endpoint: {
+              properties: {
+                method: {
+                  enum: string[];
+                };
+              };
+            };
+          };
+        };
+      }
+    ).jsonSchema.properties.endpoint.properties.method.enum
+  ).toEqual(["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]);
+  expect(
     (
       request.schema as {
         jsonSchema: {
@@ -165,23 +162,21 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
           };
         };
       }
-    ).jsonSchema.properties.request.properties.pathParams.items,
-    {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        name: { type: "string" },
-        type: { type: "string" },
-        required: { type: "boolean" },
-        description: { type: "string" },
-        example: {}
-      },
-      required: ["name"]
-    }
-  );
-  assert.equal(result.endpoint.path, "/api/user/detail");
+    ).jsonSchema.properties.request.properties.pathParams.items
+  ).toEqual({
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      name: { type: "string" },
+      type: { type: "string" },
+      required: { type: "boolean" },
+      description: { type: "string" },
+      example: {}
+    },
+    required: ["name"]
+  });
+  expect(result.endpoint.path).toBe("/api/user/detail");
 });
-
 test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 source", async () => {
   const { dependencies } = createDependencies();
   dependencies.generateObject = async () => ({
@@ -193,7 +188,6 @@ test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 sourc
       uncertainties: []
     }
   });
-
   const result = await extractGenericApiDoc(
     createConfig("openai-compatible"),
     {
@@ -210,7 +204,6 @@ test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 sourc
     },
     dependencies
   );
-
-  assert.equal(result.source.url, "https://example.com/users");
-  assert.equal(result.source.mode, "generic-dom");
+  expect(result.source.url).toBe("https://example.com/users");
+  expect(result.source.mode).toBe("generic-dom");
 });

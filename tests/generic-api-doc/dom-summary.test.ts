@@ -1,7 +1,5 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
 import { parseHTML } from "linkedom";
-
+import { expect, test } from "vitest";
 import { buildGenericDomSummary } from "@/generic-api-doc/dom-summary";
 
 test("buildGenericDomSummary 输出标题路径、章节命中和结构概况", () => {
@@ -21,20 +19,18 @@ test("buildGenericDomSummary 输出标题路径、章节命中和结构概况", 
     </section>
   `);
   const summary = buildGenericDomSummary(document.querySelector("section") as HTMLElement);
-  assert.match(summary ?? "", /headingPath: 用户服务 > 获取用户详情 > 请求参数 > 返回参数 > 示例/);
-  assert.match(summary ?? "", /sections: request, response, example/);
-  assert.match(summary ?? "", /tables: 1 \(参数, 类型\)/);
-  assert.match(summary ?? "", /lists: 1/);
-  assert.match(summary ?? "", /codeExamples: 1/);
+  expect(summary ?? "").toMatch(/headingPath: 用户服务 > 获取用户详情 > 请求参数 > 返回参数 > 示例/);
+  expect(summary ?? "").toMatch(/sections: request, response, example/);
+  expect(summary ?? "").toMatch(/tables: 1 \(参数, 类型\)/);
+  expect(summary ?? "").toMatch(/lists: 1/);
+  expect(summary ?? "").toMatch(/codeExamples: 1/);
 });
-
 test("buildGenericDomSummary 在只有代码示例时仍保留代码概况", () => {
   const { document } = parseHTML(`
     <section>
       <pre><code>curl https://example.com/api/user/detail</code></pre>
     </section>
   `);
-
   const summary = buildGenericDomSummary(document.querySelector("section") as HTMLElement);
-  assert.equal(summary, "codeExamples: 1");
+  expect(summary).toBe("codeExamples: 1");
 });

@@ -1,6 +1,4 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
-
+import { expect, test } from "vitest";
 import {
   canTransitionGenericCaptureSession,
   createEmptyGenericCaptureSession,
@@ -25,30 +23,27 @@ const createCapture = (domSummary: string | null) => ({
     ? ([] as Array<"truncated-visible-text" | "missing-dom-summary">)
     : (["missing-dom-summary"] as Array<"truncated-visible-text" | "missing-dom-summary">)
 });
-
 test("createEmptyGenericCaptureSession 返回 idle 默认值", () => {
   const session = createEmptyGenericCaptureSession("session-1");
-  assert.equal(session.sessionId, "session-1");
-  assert.equal(typeof session.attemptId, "string");
-  assert.ok(session.attemptId.length > 0);
-  assert.equal(session.status, "idle");
-  assert.equal(session.source, null);
-  assert.equal(session.capture, null);
-  assert.equal(session.result, null);
-  assert.equal(session.error, null);
+  expect(session.sessionId).toBe("session-1");
+  expect(typeof session.attemptId).toBe("string");
+  expect(session.attemptId.length).toBeGreaterThan(0);
+  expect(session.status).toBe("idle");
+  expect(session.source).toBe(null);
+  expect(session.capture).toBe(null);
+  expect(session.result).toBe(null);
+  expect(session.error).toBe(null);
 });
-
 test("只允许合法状态迁移", () => {
-  assert.equal(canTransitionGenericCaptureSession("idle", "picking"), true);
-  assert.equal(canTransitionGenericCaptureSession("idle", "picked"), false);
-  assert.equal(canTransitionGenericCaptureSession("picking", "error"), true);
-  assert.equal(canTransitionGenericCaptureSession("picking", "done"), false);
-  assert.equal(canTransitionGenericCaptureSession("extracting", "idle"), false);
-  assert.equal(canTransitionGenericCaptureSession("done", "idle"), false);
-  assert.equal(canTransitionGenericCaptureSession("done", "picking"), true);
-  assert.equal(canTransitionGenericCaptureSession("error", "extracting"), true);
+  expect(canTransitionGenericCaptureSession("idle", "picking")).toBe(true);
+  expect(canTransitionGenericCaptureSession("idle", "picked")).toBe(false);
+  expect(canTransitionGenericCaptureSession("picking", "error")).toBe(true);
+  expect(canTransitionGenericCaptureSession("picking", "done")).toBe(false);
+  expect(canTransitionGenericCaptureSession("extracting", "idle")).toBe(false);
+  expect(canTransitionGenericCaptureSession("done", "idle")).toBe(false);
+  expect(canTransitionGenericCaptureSession("done", "picking")).toBe(true);
+  expect(canTransitionGenericCaptureSession("error", "extracting")).toBe(true);
 });
-
 test("markGenericCaptureSessionPicking 允许从 done 重启并保留旧 capture", () => {
   const done = markGenericCaptureSessionDone(
     markGenericCaptureSessionExtracting(
@@ -74,36 +69,29 @@ test("markGenericCaptureSessionPicking 允许从 done 重启并保留旧 capture
       uncertainties: []
     }
   );
-
   const restarted = markGenericCaptureSessionPicking(done);
-
-  assert.equal(restarted.status, "picking");
-  assert.notEqual(restarted.attemptId, done.attemptId);
-  assert.equal(restarted.capture?.previewText, "GET /users");
-  assert.equal(restarted.source?.url, "https://example.com/users");
-  assert.equal(restarted.result, null);
-  assert.equal(restarted.error, null);
+  expect(restarted.status).toBe("picking");
+  expect(restarted.attemptId).not.toBe(done.attemptId);
+  expect(restarted.capture?.previewText).toBe("GET /users");
+  expect(restarted.source?.url).toBe("https://example.com/users");
+  expect(restarted.result).toBe(null);
+  expect(restarted.error).toBe(null);
 });
-
 test("doesGenericCaptureSessionMatchAttempt 同时校验 sessionId 和 attemptId", () => {
   const session = createEmptyGenericCaptureSession("session-attempt");
-
-  assert.equal(
+  expect(
     doesGenericCaptureSessionMatchAttempt(session, {
       sessionId: "session-attempt",
       attemptId: session.attemptId
-    }),
-    true
-  );
-  assert.equal(
+    })
+  ).toBe(true);
+  expect(
     doesGenericCaptureSessionMatchAttempt(session, {
       sessionId: "session-attempt",
       attemptId: "stale-attempt"
-    }),
-    false
-  );
+    })
+  ).toBe(false);
 });
-
 test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 error", () => {
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),
@@ -112,12 +100,11 @@ test("markGenericCaptureSessionPicked 会写入 source 与 capture 并清空 err
       capture: createCapture("headingPath: Users")
     }
   );
-  assert.equal(session.status, "picked");
-  assert.equal(session.source?.url, "https://example.com");
-  assert.equal(session.capture?.domSummary, "headingPath: Users");
-  assert.equal(session.error, null);
+  expect(session.status).toBe("picked");
+  expect(session.source?.url).toBe("https://example.com");
+  expect(session.capture?.domSummary).toBe("headingPath: Users");
+  expect(session.error).toBe(null);
 });
-
 test("markGenericCaptureSessionError 会保留已有 capture", () => {
   const base = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-3")),
@@ -127,11 +114,10 @@ test("markGenericCaptureSessionError 会保留已有 capture", () => {
     }
   );
   const session = markGenericCaptureSessionError(markGenericCaptureSessionExtracting(base), "provider timeout");
-  assert.equal(session.status, "error");
-  assert.equal(session.capture?.visibleText, "GET /users");
-  assert.equal(session.error, "provider timeout");
+  expect(session.status).toBe("error");
+  expect(session.capture?.visibleText).toBe("GET /users");
+  expect(session.error).toBe("provider timeout");
 });
-
 test("markGenericCaptureSessionDone 会写入 result 并保留 capture", () => {
   const capture = createCapture("headingPath: Users");
   const result = {
@@ -159,23 +145,19 @@ test("markGenericCaptureSessionDone 会写入 result 并保留 capture", () => {
     ),
     result
   );
-
-  assert.equal(session.status, "done");
-  assert.equal(session.result, result);
-  assert.equal(session.error, null);
-  assert.equal(session.capture, capture);
+  expect(session.status).toBe("done");
+  expect(session.result).toBe(result);
+  expect(session.error).toBe(null);
+  expect(session.capture).toBe(capture);
 });
-
 test("关键非法 helper 调用会抛错", () => {
-  assert.throws(() => markGenericCaptureSessionExtracting(createEmptyGenericCaptureSession("session-7")));
-
-  assert.throws(() =>
+  expect(() => markGenericCaptureSessionExtracting(createEmptyGenericCaptureSession("session-7"))).toThrow();
+  expect(() =>
     markGenericCaptureSessionPicked(createEmptyGenericCaptureSession("session-7"), {
       source: { tabId: 9, url: "https://example.com/users", title: "Users", mode: "generic-dom" },
       capture: createCapture(null)
     })
-  );
-
+  ).toThrow();
   const picked = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-8")),
     {
@@ -183,8 +165,7 @@ test("关键非法 helper 调用会抛错", () => {
       capture: createCapture(null)
     }
   );
-
-  assert.throws(() =>
+  expect(() =>
     markGenericCaptureSessionDone(picked, {
       source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" as const },
       endpoint: { name: "列表", path: "/api/users", method: "GET" },
@@ -201,8 +182,7 @@ test("关键非法 helper 调用会抛错", () => {
       },
       uncertainties: []
     })
-  );
-
+  ).toThrow();
   const done = markGenericCaptureSessionDone(markGenericCaptureSessionExtracting(picked), {
     source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" as const },
     endpoint: { name: "列表", path: "/api/users", method: "GET" },
@@ -219,12 +199,10 @@ test("关键非法 helper 调用会抛错", () => {
     },
     uncertainties: []
   });
-
   const restarted = markGenericCaptureSessionPicking(done);
-  assert.equal(restarted.status, "picking");
-  assert.equal(restarted.capture?.visibleText, "GET /users");
+  expect(restarted.status).toBe("picking");
+  expect(restarted.capture?.visibleText).toBe("GET /users");
 });
-
 test("resetGenericCaptureSession 会回到初始 idle 状态", () => {
   const base = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-4")),
@@ -234,14 +212,13 @@ test("resetGenericCaptureSession 会回到初始 idle 状态", () => {
     }
   );
   const session = resetGenericCaptureSession(base);
-  assert.equal(session.sessionId, "session-4");
-  assert.equal(session.status, "idle");
-  assert.equal(session.source, null);
-  assert.equal(session.capture, null);
-  assert.equal(session.result, null);
-  assert.equal(session.error, null);
+  expect(session.sessionId).toBe("session-4");
+  expect(session.status).toBe("idle");
+  expect(session.source).toBe(null);
+  expect(session.capture).toBe(null);
+  expect(session.result).toBe(null);
+  expect(session.error).toBe(null);
 });
-
 test("isGenericCaptureSessionBoundToTab 会校验 tabId 与 url", () => {
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-5")),
@@ -250,6 +227,6 @@ test("isGenericCaptureSessionBoundToTab 会校验 tabId 与 url", () => {
       capture: createCapture(null)
     }
   );
-  assert.equal(isGenericCaptureSessionBoundToTab(session, { id: 9, url: "https://example.com/users" }), true);
-  assert.equal(isGenericCaptureSessionBoundToTab(session, { id: 10, url: "https://example.com/users" }), false);
+  expect(isGenericCaptureSessionBoundToTab(session, { id: 9, url: "https://example.com/users" })).toBe(true);
+  expect(isGenericCaptureSessionBoundToTab(session, { id: 10, url: "https://example.com/users" })).toBe(false);
 });

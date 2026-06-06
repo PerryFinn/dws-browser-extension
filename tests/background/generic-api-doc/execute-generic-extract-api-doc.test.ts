@@ -1,5 +1,4 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
+import { expect, test } from "vitest";
 import { executeGenericExtractApiDoc } from "@/background/messages/genericExtractApiDoc";
 import {
   createEmptyGenericCaptureSession,
@@ -14,7 +13,6 @@ const createConfig = (): GenericModelConfig => ({
   modelId: "gpt-test",
   apiKey: "sk-test"
 });
-
 test("executeGenericExtractApiDoc 提取失败时保留 capture 并回写 error", async () => {
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-1")),
@@ -31,7 +29,6 @@ test("executeGenericExtractApiDoc 提取失败时保留 capture 并回写 error"
       }
     }
   );
-
   const states: string[] = [];
   const result = await executeGenericExtractApiDoc({
     session,
@@ -43,11 +40,9 @@ test("executeGenericExtractApiDoc 提取失败时保留 capture 并回写 error"
       throw new Error("provider timeout");
     }
   });
-
-  assert.equal(result.success, false);
-  assert.deepEqual(states, ["extracting", "error"]);
+  expect(result.success).toBe(false);
+  expect(states).toEqual(["extracting", "error"]);
 });
-
 test("executeGenericExtractApiDoc 提取成功时回写 done 并返回结果", async () => {
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-2")),
@@ -71,7 +66,6 @@ test("executeGenericExtractApiDoc 提取成功时回写 done 并返回结果", a
     response: { successBody: null, errorNotes: null },
     uncertainties: []
   };
-
   const states: string[] = [];
   const result = await executeGenericExtractApiDoc({
     session,
@@ -80,16 +74,14 @@ test("executeGenericExtractApiDoc 提取成功时回写 done 并返回结果", a
       states.push(next.status);
     },
     extract(input) {
-      assert.equal(input.source.url, "https://example.com/users");
-      assert.equal(input.capture.visibleText, "GET /users");
+      expect(input.source.url).toBe("https://example.com/users");
+      expect(input.capture.visibleText).toBe("GET /users");
       return Promise.resolve(resultData);
     }
   });
-
-  assert.deepEqual(states, ["extracting", "done"]);
-  assert.deepEqual(result, { success: true, data: resultData });
+  expect(states).toEqual(["extracting", "done"]);
+  expect(result).toEqual({ success: true, data: resultData });
 });
-
 test("executeGenericExtractApiDoc 在 session 缺少可用采集结果时直接失败", async () => {
   const states: string[] = [];
   const result = await executeGenericExtractApiDoc({
@@ -102,7 +94,6 @@ test("executeGenericExtractApiDoc 在 session 缺少可用采集结果时直接�
       throw new Error("should not run");
     }
   });
-
-  assert.deepEqual(states, []);
-  assert.deepEqual(result, { success: false, message: "缺少可用的采集结果" });
+  expect(states).toEqual([]);
+  expect(result).toEqual({ success: false, message: "缺少可用的采集结果" });
 });

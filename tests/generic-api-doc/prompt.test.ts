@@ -1,6 +1,4 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
-
+import { expect, test } from "vitest";
 import {
   buildGenericPrompt,
   defaultGenericPromptTemplate,
@@ -33,16 +31,13 @@ const createBaseExtractionResult = (): GenericExtractionResult => ({
   },
   uncertainties: []
 });
-
 test("复制 Generic Prompt 时 undefined 会回退到默认模板", () => {
-  assert.equal(resolveGenericPromptTemplateForCopy(undefined), defaultGenericPromptTemplate);
+  expect(resolveGenericPromptTemplateForCopy(undefined)).toBe(defaultGenericPromptTemplate);
 });
-
 test("复制 Generic Prompt 时空字符串会回退到默认模板", () => {
-  assert.equal(resolveGenericPromptTemplateForCopy(""), defaultGenericPromptTemplate);
-  assert.equal(resolveGenericPromptTemplateForCopy("   "), defaultGenericPromptTemplate);
+  expect(resolveGenericPromptTemplateForCopy("")).toBe(defaultGenericPromptTemplate);
+  expect(resolveGenericPromptTemplateForCopy("   ")).toBe(defaultGenericPromptTemplate);
 });
-
 test("buildGenericPrompt 会替换 {{json}} 与 {{url}}", () => {
   const extractionResult = createBaseExtractionResult();
   const prompt = buildGenericPrompt({
@@ -50,11 +45,9 @@ test("buildGenericPrompt 会替换 {{json}} 与 {{url}}", () => {
     extractionResult,
     url: extractionResult.source.url
   });
-
-  assert.match(prompt, /"path": "\/api\/user\/detail"/);
-  assert.match(prompt, /URL: https:\/\/example\.com\/api\/user\/detail/);
+  expect(prompt).toMatch(/"path": "\/api\/user\/detail"/);
+  expect(prompt).toMatch(/URL: https:\/\/example\.com\/api\/user\/detail/);
 });
-
 test("uncertainties 为空时不追加确认引导语", () => {
   const extractionResult = createBaseExtractionResult();
   const prompt = buildGenericPrompt({
@@ -62,10 +55,8 @@ test("uncertainties 为空时不追加确认引导语", () => {
     extractionResult,
     url: extractionResult.source.url
   });
-
-  assert.doesNotMatch(prompt, /先向用户确认以下不确定项/);
+  expect(prompt).not.toMatch(/先向用户确认以下不确定项/);
 });
-
 test("uncertainties 非空时追加确认引导语", () => {
   const extractionResult = createBaseExtractionResult();
   extractionResult.uncertainties = [
@@ -74,14 +65,12 @@ test("uncertainties 非空时追加确认引导语", () => {
       reason: "文档只有示例值，没有明确字段枚举"
     }
   ];
-
   const prompt = buildGenericPrompt({
     template: defaultGenericPromptTemplate,
     extractionResult,
     url: extractionResult.source.url
   });
-
-  assert.match(prompt, /先向用户确认以下不确定项/);
-  assert.match(prompt, /response\.successBody\.data\.status/);
-  assert.match(prompt, /不要对这些字段做主观假设/);
+  expect(prompt).toMatch(/先向用户确认以下不确定项/);
+  expect(prompt).toMatch(/response\.successBody\.data\.status/);
+  expect(prompt).toMatch(/不要对这些字段做主观假设/);
 });

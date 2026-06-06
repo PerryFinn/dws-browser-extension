@@ -1,23 +1,18 @@
-import { strict as assert } from "node:assert";
-import test from "node:test";
-
+import { expect, test } from "vitest";
 import { normalizeGenericExtractionResult, normalizeGenericSchemaNode } from "@/generic-api-doc/normalize";
 import type { GenericExtractionResult } from "@/generic-api-doc/types";
 
 test("顶层缺少关键字段时报错", () => {
-  assert.throws(
-    () =>
-      normalizeGenericExtractionResult({
-        endpoint: {
-          name: "获取用户详情",
-          path: "/api/user/detail",
-          method: "GET"
-        }
-      }),
-    /Missing required field: source/
-  );
+  expect(() =>
+    normalizeGenericExtractionResult({
+      endpoint: {
+        name: "获取用户详情",
+        path: "/api/user/detail",
+        method: "GET"
+      }
+    })
+  ).toThrow(/Missing required field: source/);
 });
-
 test("request.body 支持多层 object 和 array 嵌套", () => {
   const result = normalizeGenericExtractionResult({
     source: {
@@ -64,21 +59,17 @@ test("request.body 支持多层 object 和 array 嵌套", () => {
     },
     uncertainties: []
   });
-
-  assert.equal(result.request.body?.type, "object");
+  expect(result.request.body?.type).toBe("object");
   if (result.request.body?.type !== "object") {
-    assert.fail("request.body 应为 object");
+    throw new Error("request.body 应为 object");
   }
-
   const filtersNode = result.request.body.properties.filters;
-  assert.equal(filtersNode.type, "array");
+  expect(filtersNode.type).toBe("array");
   if (filtersNode.type !== "array") {
-    assert.fail("filters 应为 array");
+    throw new Error("filters 应为 array");
   }
-
-  assert.equal(filtersNode.items.type, "object");
+  expect(filtersNode.items.type).toBe("object");
 });
-
 test("response.successBody 保留分页壳结构", () => {
   const result = normalizeGenericExtractionResult({
     source: {
@@ -127,22 +118,18 @@ test("response.successBody 保留分页壳结构", () => {
     },
     uncertainties: []
   });
-
-  assert.equal(result.response.successBody?.type, "object");
+  expect(result.response.successBody?.type).toBe("object");
   if (result.response.successBody?.type !== "object") {
-    assert.fail("response.successBody 应为 object");
+    throw new Error("response.successBody 应为 object");
   }
-
   const dataNode = result.response.successBody.properties.data;
-  assert.equal(dataNode.type, "object");
+  expect(dataNode.type).toBe("object");
   if (dataNode.type !== "object") {
-    assert.fail("data 应为 object");
+    throw new Error("data 应为 object");
   }
-
-  assert.equal(dataNode.properties.list.type, "array");
-  assert.equal(dataNode.properties.total.type, "number");
+  expect(dataNode.properties.list.type).toBe("array");
+  expect(dataNode.properties.total.type).toBe("number");
 });
-
 test("未知深层节点会降级为 unknown", () => {
   const normalized = normalizeGenericSchemaNode(
     {
@@ -155,14 +142,12 @@ test("未知深层节点会降级为 unknown", () => {
     },
     "request.body"
   );
-
-  assert.equal(normalized.node?.type, "object");
+  expect(normalized.node?.type).toBe("object");
   if (normalized.node?.type !== "object") {
-    assert.fail("schema 根节点应为 object");
+    throw new Error("schema 根节点应为 object");
   }
-
-  assert.equal(normalized.node.properties.metadata.type, "unknown");
-  assert.deepEqual(normalized.uncertainties, [
+  expect(normalized.node.properties.metadata.type).toBe("unknown");
+  expect(normalized.uncertainties).toEqual([
     {
       field: "request.body.metadata",
       reason: "节点类型 mystery 不在 v1 支持范围内，已降级为 unknown",
@@ -170,7 +155,6 @@ test("未知深层节点会降级为 unknown", () => {
     }
   ]);
 });
-
 test("高复杂结构会落到 uncertainties 而不是抛弃整个结果", () => {
   const result = normalizeGenericExtractionResult({
     source: {
@@ -215,47 +199,42 @@ test("高复杂结构会落到 uncertainties 而不是抛弃整个结果", () =>
     },
     uncertainties: []
   });
-
-  assert.equal(result.response.successBody?.type, "object");
-  assert.equal(result.uncertainties.length, 1);
-  assert.deepEqual(result.uncertainties[0], {
+  expect(result.response.successBody?.type).toBe("object");
+  expect(result.uncertainties.length).toBe(1);
+  expect(result.uncertainties[0]).toEqual({
     field: "response.successBody.data.children",
     reason: "检测到 oneOf 结构，v1 仅保留外层节点并将其降级为 unknown",
     kind: "degraded"
   });
 });
-
 test("endpoint.method 必须是支持的 HTTP 方法", () => {
-  assert.throws(
-    () =>
-      normalizeGenericExtractionResult({
-        source: {
-          url: "https://example.com/api/user/detail",
-          title: "用户详情接口",
-          mode: "generic-dom"
-        },
-        endpoint: {
-          name: "获取用户详情",
-          path: "/api/user/detail",
-          method: "FETCH"
-        },
-        request: {
-          pathParams: [],
-          queryParams: [],
-          headers: [],
-          body: null,
-          auth: null
-        },
-        response: {
-          successBody: null,
-          errorNotes: null
-        },
-        uncertainties: []
-      }),
-    /Field endpoint.method must be a supported HTTP method/
-  );
+  expect(() =>
+    normalizeGenericExtractionResult({
+      source: {
+        url: "https://example.com/api/user/detail",
+        title: "用户详情接口",
+        mode: "generic-dom"
+      },
+      endpoint: {
+        name: "获取用户详情",
+        path: "/api/user/detail",
+        method: "FETCH"
+      },
+      request: {
+        pathParams: [],
+        queryParams: [],
+        headers: [],
+        body: null,
+        auth: null
+      },
+      response: {
+        successBody: null,
+        errorNotes: null
+      },
+      uncertainties: []
+    })
+  ).toThrow(/Field endpoint.method must be a supported HTTP method/);
 });
-
 test("异常 endpoint.path 会保留值并标记 conflict uncertainty", () => {
   const result = normalizeGenericExtractionResult({
     source: {
@@ -281,9 +260,8 @@ test("异常 endpoint.path 会保留值并标记 conflict uncertainty", () => {
     },
     uncertainties: []
   });
-
-  assert.equal(result.endpoint.path, "用户详情接口");
-  assert.deepEqual(result.uncertainties, [
+  expect(result.endpoint.path).toBe("用户详情接口");
+  expect(result.uncertainties).toEqual([
     {
       field: "endpoint.path",
       reason: "endpoint.path 看起来不像 URL 或接口路径，请确认是否提取错误",
@@ -291,7 +269,6 @@ test("异常 endpoint.path 会保留值并标记 conflict uncertainty", () => {
     }
   ]);
 });
-
 test("参数缺少 name 时会回退占位名并标记 missing uncertainty", () => {
   const result = normalizeGenericExtractionResult({
     source: {
@@ -317,9 +294,8 @@ test("参数缺少 name 时会回退占位名并标记 missing uncertainty", () 
     },
     uncertainties: []
   });
-
-  assert.equal(result.request.queryParams[0]?.name, "request.queryParams[0]");
-  assert.deepEqual(result.uncertainties, [
+  expect(result.request.queryParams[0]?.name).toBe("request.queryParams[0]");
+  expect(result.uncertainties).toEqual([
     {
       field: "request.queryParams[0].name",
       reason: "参数缺少 name，已回退为索引占位名，请用户确认真实参数名",
@@ -327,7 +303,6 @@ test("参数缺少 name 时会回退占位名并标记 missing uncertainty", () 
     }
   ]);
 });
-
 test("原始 uncertainties 会被规范化保留", () => {
   const result = normalizeGenericExtractionResult({
     source: {
@@ -353,6 +328,5 @@ test("原始 uncertainties 会被规范化保留", () => {
     },
     uncertainties: [{ field: "endpoint.method", reason: "标题写 GET，正文写 POST" }]
   } satisfies GenericExtractionResult);
-
-  assert.deepEqual(result.uncertainties, [{ field: "endpoint.method", reason: "标题写 GET，正文写 POST" }]);
+  expect(result.uncertainties).toEqual([{ field: "endpoint.method", reason: "标题写 GET，正文写 POST" }]);
 });

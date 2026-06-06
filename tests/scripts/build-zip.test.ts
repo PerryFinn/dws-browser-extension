@@ -1,22 +1,20 @@
-import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
-import path from "node:path";
-import test from "node:test";
+import { basename, join } from "pathe";
+import { expect, test } from "vitest";
 import { runBuildZip } from "../../scripts/build-zip";
 
-type ErrorWithStatus = Error & { status?: number };
-
+type ErrorWithStatus = Error & {
+  status?: number;
+};
 test("runBuildZip 在子命令失败时也会恢复临时隐藏的测试文件", () => {
-  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "generic-build-zip-"));
-  const srcDir = path.join(rootDir, "src");
-  const testFile = path.join(srcDir, "sample.test.ts");
+  const rootDir = fs.mkdtempSync(join(os.tmpdir(), "generic-build-zip-"));
+  const srcDir = join(rootDir, "src");
+  const testFile = join(srcDir, "sample.test.ts");
   const hiddenFile = `${testFile}.build-skip`;
-
   fs.mkdirSync(srcDir, { recursive: true });
   fs.writeFileSync(testFile, "export {};\n");
-
-  assert.throws(() => {
+  expect(() => {
     runBuildZip({
       rootDir,
       runCommand: () => {
@@ -25,25 +23,20 @@ test("runBuildZip 在子命令失败时也会恢复临时隐藏的测试文件",
         throw error;
       }
     });
-  });
-
-  assert.equal(fs.existsSync(testFile), true);
-  assert.equal(fs.existsSync(hiddenFile), false);
-
+  }).toThrow();
+  expect(fs.existsSync(testFile)).toBe(true);
+  expect(fs.existsSync(hiddenFile)).toBe(false);
   fs.rmSync(rootDir, { recursive: true, force: true });
 });
-
 test("runBuildZip 会恢复构建过程中被改写的 tsconfig.json", () => {
-  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "generic-build-zip-tsconfig-"));
-  const srcDir = path.join(rootDir, "src");
-  const tsconfigPath = path.join(rootDir, "tsconfig.json");
+  const rootDir = fs.mkdtempSync(join(os.tmpdir(), "generic-build-zip-tsconfig-"));
+  const srcDir = join(rootDir, "src");
+  const tsconfigPath = join(rootDir, "tsconfig.json");
   const originalTsconfig = JSON.stringify({ include: ["./src/**/*.ts"] }, null, 2);
-
   fs.mkdirSync(srcDir, { recursive: true });
-  fs.writeFileSync(path.join(srcDir, "sample.test.ts"), "export {};\n");
+  fs.writeFileSync(join(srcDir, "sample.test.ts"), "export {};\n");
   fs.writeFileSync(tsconfigPath, `${originalTsconfig}\n`);
-
-  assert.throws(() => {
+  expect(() => {
     runBuildZip({
       rootDir,
       runCommand: () => {
@@ -53,33 +46,26 @@ test("runBuildZip 会恢复构建过程中被改写的 tsconfig.json", () => {
         throw error;
       }
     });
-  });
-
-  assert.equal(fs.readFileSync(tsconfigPath, "utf8"), `${originalTsconfig}\n`);
-
+  }).toThrow();
+  expect(fs.readFileSync(tsconfigPath, "utf8")).toBe(`${originalTsconfig}\n`);
   fs.rmSync(rootDir, { recursive: true, force: true });
 });
-
 test("runBuildZip 会从 dist 目录复制 WXT zip 产物到 build 目录", () => {
-  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "generic-build-zip-output-"));
-  const srcDir = path.join(rootDir, "src");
-  const distDir = path.join(rootDir, "dist");
-  const zipFile = path.join(distDir, "breeze-0.4.1-chrome.zip");
-  const copiedZipFile = path.join(rootDir, "build", "breeze-0.4.1-chrome.zip");
-
+  const rootDir = fs.mkdtempSync(join(os.tmpdir(), "generic-build-zip-output-"));
+  const srcDir = join(rootDir, "src");
+  const distDir = join(rootDir, "dist");
+  const zipFile = join(distDir, "breeze-0.4.1-chrome.zip");
+  const copiedZipFile = join(rootDir, "build", "breeze-0.4.1-chrome.zip");
   fs.mkdirSync(srcDir, { recursive: true });
-
   runBuildZip({
     rootDir,
     runCommand: (command) => {
-      if (path.basename(command) === "wxt") {
+      if (basename(command) === "wxt") {
         fs.mkdirSync(distDir, { recursive: true });
         fs.writeFileSync(zipFile, "zip content");
       }
     }
   });
-
-  assert.equal(fs.readFileSync(copiedZipFile, "utf8"), "zip content");
-
+  expect(fs.readFileSync(copiedZipFile, "utf8")).toBe("zip content");
   fs.rmSync(rootDir, { recursive: true, force: true });
 });
