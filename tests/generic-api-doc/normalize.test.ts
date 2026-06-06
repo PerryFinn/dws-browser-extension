@@ -66,7 +66,7 @@ test("request.body 支持多层 object 和 array 嵌套", () => {
   });
 
   assert.equal(result.request.body?.type, "object");
-  if (!result.request.body || result.request.body.type !== "object") {
+  if (result.request.body?.type !== "object") {
     assert.fail("request.body 应为 object");
   }
 
@@ -129,7 +129,7 @@ test("response.successBody 保留分页壳结构", () => {
   });
 
   assert.equal(result.response.successBody?.type, "object");
-  if (!result.response.successBody || result.response.successBody.type !== "object") {
+  if (result.response.successBody?.type !== "object") {
     assert.fail("response.successBody 应为 object");
   }
 
@@ -157,7 +157,7 @@ test("未知深层节点会降级为 unknown", () => {
   );
 
   assert.equal(normalized.node?.type, "object");
-  if (!normalized.node || normalized.node.type !== "object") {
+  if (normalized.node?.type !== "object") {
     assert.fail("schema 根节点应为 object");
   }
 
