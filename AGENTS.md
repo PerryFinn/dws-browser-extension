@@ -17,7 +17,7 @@
 - `pnpm dev`：并行启动 `tsr watch` 与 `wxt dev`，用于本地开发。
 - `pnpm lint`：执行 Biome 检查并自动修复格式与部分规则问题。
 - `pnpm check:types`：执行 TypeScript 类型检查（不产出构建文件）。
-- `pnpm test`：使用 Node.js test runner + tsx 执行 `tests/**/*.test.ts(x)`。
+- `pnpm test`：使用 Vitest 执行 `tests/**/*.test.ts(x)`。
 - `pnpm verify`：执行基础校验（当前为 `pnpm lint && pnpm check:types && pnpm test`）。
 - `pnpm build-zip`：生成路由产物并输出 zip 包到 `build/`。
 - `pnpm build`：执行 `scripts/build-upload.ts`（构建并上传 CDN），仅在发布场景使用。
@@ -35,6 +35,7 @@
 - 使用 TypeScript，2 空格缩进，分号，双引号，行宽上限 120。
 - 以 `biome.jsonc` 为主规范；Prettier 用于导入排序。
 - 文件名优先使用 kebab-case，例如 `copy-btn.tsx`、`getActiveTab.ts`。
+- 路径处理优先使用 `pathe`，不要新增 `node:path` 用法。
 - TanStack 路由文件遵循约定命名，如 `__root.tsx`、`$postId.tsx`。
 - 不要手动编辑生成文件（如 `src/options/routeTree.gen.ts`）。
 

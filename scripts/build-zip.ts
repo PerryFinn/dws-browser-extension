@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { basename, join } from "pathe";
 
 const rootDir = process.cwd();
 const temporarySuffix = ".build-skip";
@@ -16,13 +16,13 @@ interface RunBuildZipOptions {
   runCommand?: RunCommand;
 }
 
-// 浏览器扩展构建不需要测试文件，测试里的 node:assert/polyfill 可能污染浏览器构建。
+// 浏览器扩展构建不需要测试文件，测试依赖可能污染浏览器构建。
 // 打包前临时隐藏 *.test.ts(x)，结束后再恢复，避免为了构建去改测试目录结构。
 export const collectTestFiles = (dir: string): string[] => {
   const files: string[] = [];
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const absolutePath = path.join(dir, entry.name);
+    const absolutePath = join(dir, entry.name);
 
     if (entry.isDirectory()) {
       files.push(...collectTestFiles(absolutePath));
@@ -45,7 +45,7 @@ export const collectZipFiles = (dir: string): string[] => {
   }
 
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const absolutePath = path.join(dir, entry.name);
+    const absolutePath = join(dir, entry.name);
 
     if (entry.isDirectory()) {
       files.push(...collectZipFiles(absolutePath));
@@ -61,8 +61,8 @@ export const collectZipFiles = (dir: string): string[] => {
 };
 
 const copyOutputZipFiles = (workingDirectory: string) => {
-  const outputDir = path.join(workingDirectory, wxtOutputDir);
-  const buildDir = path.join(workingDirectory, "build");
+  const outputDir = join(workingDirectory, wxtOutputDir);
+  const buildDir = join(workingDirectory, "build");
   const zipFiles = collectZipFiles(outputDir);
 
   if (!zipFiles.length) {
@@ -73,7 +73,7 @@ const copyOutputZipFiles = (workingDirectory: string) => {
   fs.mkdirSync(buildDir, { recursive: true });
 
   for (const zipFile of zipFiles) {
-    fs.copyFileSync(zipFile, path.join(buildDir, path.basename(zipFile)));
+    fs.copyFileSync(zipFile, join(buildDir, basename(zipFile)));
   }
 };
 
@@ -94,9 +94,9 @@ export const runBuildZip = ({
   rootDir: workingDirectory = rootDir,
   runCommand: runCommandImpl = runCommand
 }: RunBuildZipOptions = {}) => {
-  const srcDir = path.join(workingDirectory, "src");
+  const srcDir = join(workingDirectory, "src");
   const renamedFiles: Array<[string, string]> = [];
-  const absoluteTsconfigPath = path.join(workingDirectory, tsconfigPath);
+  const absoluteTsconfigPath = join(workingDirectory, tsconfigPath);
   const originalTsconfig = fs.existsSync(absoluteTsconfigPath) ? fs.readFileSync(absoluteTsconfigPath, "utf8") : null;
 
   try {
@@ -106,8 +106,8 @@ export const runBuildZip = ({
       renamedFiles.push([hiddenPath, filePath]);
     }
 
-    runCommandImpl(path.join(workingDirectory, "node_modules/.bin/tsr"), ["generate"], workingDirectory);
-    runCommandImpl(path.join(workingDirectory, "node_modules/.bin/wxt"), ["zip"], workingDirectory);
+    runCommandImpl(join(workingDirectory, "node_modules/.bin/tsr"), ["generate"], workingDirectory);
+    runCommandImpl(join(workingDirectory, "node_modules/.bin/wxt"), ["zip"], workingDirectory);
     copyOutputZipFiles(workingDirectory);
   } finally {
     for (const [hiddenPath, originalPath] of renamedFiles.reverse()) {
