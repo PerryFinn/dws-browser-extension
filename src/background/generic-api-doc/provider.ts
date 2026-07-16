@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateObject, jsonSchema } from "ai";
+import { generateText, jsonSchema, Output } from "ai";
 import { normalizeGenericExtractionResult } from "@/generic-api-doc/normalize";
 import type {
   GenericExtractFromSessionInput,
@@ -16,18 +16,16 @@ export interface GenericProviderDependencies {
     apiKey?: string;
     name: string;
   }) => (modelId: string) => GenericLanguageModel;
-  generateObject: (options: {
+  generateText: (options: {
     model: GenericLanguageModel;
-    output: "object";
-    schema: unknown;
-    schemaName: string;
+    output: unknown;
     prompt: string;
-  }) => Promise<{ object: unknown }>;
+  }) => Promise<{ output: unknown }>;
 }
 
 const defaultDependencies: GenericProviderDependencies = {
   createOpenAICompatibleProvider: createOpenAICompatible,
-  generateObject: generateObject as unknown as GenericProviderDependencies["generateObject"]
+  generateText: generateText as unknown as GenericProviderDependencies["generateText"]
 };
 
 const genericConnectivitySchema = {
@@ -163,15 +161,16 @@ export const testGenericModelConfig = async (
   dependencies: GenericProviderDependencies = defaultDependencies
 ): Promise<GenericModelTestResult> => {
   const model = createGenericModel(config, dependencies);
-  const result = await dependencies.generateObject({
+  const result = await dependencies.generateText({
     model,
-    output: "object",
-    schema: jsonSchema(genericConnectivitySchema),
-    schemaName: "generic_model_connectivity_check",
+    output: Output.object({
+      schema: jsonSchema(genericConnectivitySchema),
+      name: "generic_api_doc_connectivity"
+    }),
     prompt: buildGenericModelConfigTestPrompt()
   });
 
-  const response = result.object as { ok?: boolean; message?: string };
+  const response = result.output as { ok?: boolean; message?: string };
 
   return {
     ok: response.ok ?? true,
@@ -186,17 +185,18 @@ export const extractGenericApiDoc = async (
   dependencies: GenericProviderDependencies = defaultDependencies
 ): Promise<GenericExtractionResult> => {
   const model = createGenericModel(config, dependencies);
-  const result = await dependencies.generateObject({
+  const result = await dependencies.generateText({
     model,
-    output: "object",
-    schema: jsonSchema(genericExtractionSchema),
-    schemaName: "generic_api_doc_extraction",
+    output: Output.object({
+      schema: jsonSchema(genericExtractionSchema),
+      name: "generic_api_doc_extraction"
+    }),
     prompt: buildGenericExtractionPrompt(input)
   });
 
   // 可信边界只来自本地 session，模型返回的 source 不参与归一化。
   const normalized = normalizeGenericExtractionResult({
-    ...(result.object as Record<string, unknown>),
+    ...(result.output as Record<string, unknown>),
     source: input.source
   });
 

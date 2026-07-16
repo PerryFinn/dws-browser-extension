@@ -31,6 +31,19 @@ const createCaptureContext = (): GenericExtractFromSessionInput => ({
     qualityHints: []
   }
 });
+
+const getResponseFormat = async (request: Record<string, unknown>) => {
+  const output = request.output as {
+    responseFormat: PromiseLike<{
+      name?: string;
+      schema?: Record<string, unknown>;
+      type: string;
+    }>;
+  };
+
+  return output.responseFormat;
+};
+
 const createDependencies = () => {
   const calls = {
     compatibleFactory: [] as Array<Record<string, unknown>>,
@@ -45,10 +58,10 @@ const createDependencies = () => {
       calls.compatibleFactory.push(options as unknown as Record<string, unknown>);
       return compatibleProvider as ReturnType<GenericProviderDependencies["createOpenAICompatibleProvider"]>;
     },
-    generateObject: async (options) => {
+    generateText: async (options) => {
       calls.generated.push(options as unknown as Record<string, unknown>);
       return {
-        object: {
+        output: {
           source: {
             url: "https://example.com/docs/user-detail",
             title: "用户详情接口",
@@ -72,7 +85,7 @@ const createDependencies = () => {
           },
           uncertainties: []
         }
-      } as Awaited<ReturnType<GenericProviderDependencies["generateObject"]>>;
+      } as Awaited<ReturnType<GenericProviderDependencies["generateText"]>>;
     }
   };
   return {
@@ -111,9 +124,14 @@ test("测试连接使用最小结构化请求", async () => {
   await testGenericModelConfig(createConfig("openai-compatible"), dependencies);
   expect(calls.generated.length).toBe(1);
   const [request] = calls.generated;
-  expect(request.schemaName).toBe("generic_model_connectivity_check");
+  const responseFormat = await getResponseFormat(request);
+  expect(responseFormat.name).toBe("generic_api_doc_connectivity");
+  expect(responseFormat.type).toBe("json");
+  expect(responseFormat.schema).toMatchObject({
+    type: "object",
+    required: ["ok", "message"]
+  });
   expect(request.prompt).toBe(buildGenericModelConfigTestPrompt());
-  expect(request.output).toBe("object");
   expect(String(request.prompt)).not.toMatch(/接口名称：获取用户详情/);
 });
 test("正式提取会把 capture context 序列化到模型输入中", async () => {
@@ -122,47 +140,45 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
   const result = await extractGenericApiDoc(createConfig("openai-compatible"), context, dependencies);
   expect(calls.generated.length).toBe(1);
   const [request] = calls.generated;
-  expect(request.schemaName).toBe("generic_api_doc_extraction");
+  const responseFormat = await getResponseFormat(request);
+  expect(responseFormat.name).toBe("generic_api_doc_extraction");
+  expect(responseFormat.type).toBe("json");
   expect(request.prompt).toBe(buildGenericExtractionPrompt(context));
   expect(String(request.prompt)).toMatch(/页面标题：用户详情接口/);
   expect(String(request.prompt)).toMatch(/原始文本：/);
   expect(
     (
-      request.schema as {
-        jsonSchema: {
-          properties: {
-            endpoint: {
-              properties: {
-                method: {
-                  enum: string[];
-                };
+      responseFormat.schema as {
+        properties: {
+          endpoint: {
+            properties: {
+              method: {
+                enum: string[];
               };
             };
           };
         };
       }
-    ).jsonSchema.properties.endpoint.properties.method.enum
+    ).properties.endpoint.properties.method.enum
   ).toEqual(["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]);
   expect(
     (
-      request.schema as {
-        jsonSchema: {
-          properties: {
-            request: {
-              properties: {
-                pathParams: {
-                  items: {
-                    type: string;
-                    additionalProperties: boolean;
-                    required: string[];
-                  };
+      responseFormat.schema as {
+        properties: {
+          request: {
+            properties: {
+              pathParams: {
+                items: {
+                  type: string;
+                  additionalProperties: boolean;
+                  required: string[];
                 };
               };
             };
           };
         };
       }
-    ).jsonSchema.properties.request.properties.pathParams.items
+    ).properties.request.properties.pathParams.items
   ).toEqual({
     type: "object",
     additionalProperties: false,
@@ -179,8 +195,8 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
 });
 test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 source", async () => {
   const { dependencies } = createDependencies();
-  dependencies.generateObject = async () => ({
-    object: {
+  dependencies.generateText = async () => ({
+    output: {
       source: { url: "https://wrong.example.com", title: "Wrong", mode: "generic-selection" },
       endpoint: { name: "获取用户详情", path: "/api/user/detail", method: "GET" },
       request: { pathParams: [], queryParams: [], headers: [], body: null, auth: null },
