@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { splitShadowRootCss } from "wxt/utils/split-shadow-root-css";
 
 type InsertPosition = "beforebegin" | "afterbegin" | "beforeend" | "afterend";
 
@@ -83,8 +84,17 @@ export const mountReactShadowUi = async ({
   resolvedAnchor.insertAdjacentElement(insertPosition, host);
 
   const shadow = host.attachShadow({ mode: "open" });
+  const { documentCss, shadowCss } = splitShadowRootCss(cssText.replaceAll(":root", ":host"));
   const style = document.createElement("style");
-  style.textContent = cssText.replaceAll(":root", ":host");
+  style.textContent = shadowCss;
+
+  let documentStyle: HTMLStyleElement | null = null;
+  if (documentCss) {
+    documentStyle = document.createElement("style");
+    documentStyle.textContent = documentCss;
+    documentStyle.setAttribute("data-breeze-shadow-root-document-styles", hostId);
+    (document.head ?? document.body).append(documentStyle);
+  }
 
   const rootElement = document.createElement("div");
   shadow.append(style, rootElement);
@@ -97,6 +107,7 @@ export const mountReactShadowUi = async ({
     root,
     unmount() {
       root.unmount();
+      documentStyle?.remove();
       host.remove();
     }
   };
