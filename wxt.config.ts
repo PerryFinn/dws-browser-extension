@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from "node:url";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "wxt";
 import packageJson from "./package.json";
 
@@ -28,6 +29,7 @@ export default defineConfig({
     permissions: manifestSource.permissions
   },
   vite: () => ({
+    plugins: [tailwindcss()],
     optimizeDeps: {
       // 仅影响 Vite dev 依赖预构建；避免 Router Devtools 在 WXT 扩展页中出现 optimized-dep 失效。
       exclude: ["@tanstack/react-router-devtools", "@tanstack/router-devtools-core"]

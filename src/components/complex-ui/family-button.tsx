@@ -43,7 +43,7 @@ const FamilyButtonContainer: FC<FamilyButtonContainerProps> = ({
       className={cn(
         "relative border shadow-lg flex flex-col space-y-1 items-center text-white cursor-pointer z-10",
         // 收起时添加渐变背景，展开时去掉（让内容区域自行展示）
-        !isExpanded ? "bg-gradient-to-b from-neutral-900 to-stone-900 dark:from-stone-700 dark:to-neutral-800/80" : "",
+        !isExpanded ? "bg-linear-to-b from-neutral-900 to-stone-900 dark:from-stone-700 dark:to-neutral-800/80" : "",
         className
       )}
       layoutRoot

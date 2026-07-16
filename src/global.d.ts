@@ -67,10 +67,3 @@ declare module "*.css?inline" {
   const content: string;
   export default content;
 }
-
-declare module "daisyui" {
-  import type { PluginCreator } from "tailwindcss/types/config";
-
-  const plugin: PluginCreator;
-  export default plugin;
-}

@@ -186,7 +186,7 @@ const GitlabInline = () => {
               );
             })}
           </ul>
-          <div className="mt-2 bg-black bg-opacity-20 rounded-sm text-xs w-fit h-fit px-1 pointer-events-none">
+          <div className="mt-2 bg-black/20 rounded-sm text-xs w-fit h-fit px-1 pointer-events-none">
             Powered by {packageJson.displayName}
           </div>
         </div>

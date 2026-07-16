@@ -351,7 +351,7 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
             value={isPromptTemplateHydrated ? (promptTemplateDraft ?? "") : ""}
             disabled={!isPromptTemplateHydrated || isSavingPromptTemplate}
             onChange={(event) => setPromptTemplateDraft(event.target.value)}
-            className="relative block w-full appearance-none rounded-lg border border-zinc-950/10 bg-transparent px-[calc(theme(spacing[3.5])-1px)] py-[calc(theme(spacing[2.5])-1px)] text-base/6 text-zinc-950 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:data-[hover]:border-white/20"
+            className="relative block w-full appearance-none rounded-lg border border-zinc-950/10 bg-transparent px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] text-base/6 text-zinc-950 placeholder:text-zinc-500 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 sm:text-sm/6 dark:border-white/10 dark:bg-white/5 dark:text-white dark:data-hover:border-white/20"
           />
           <div className="mt-3 flex justify-end gap-2">
             <Button

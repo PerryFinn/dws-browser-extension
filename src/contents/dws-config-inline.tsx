@@ -64,12 +64,12 @@ function DwsConfigInline() {
       expandBehavior="replace"
       initialDelay={0.2}
       onExpandStart={handleExpandStart}
-      className="fixed top-1 right-1 z-[9999]"
+      className="fixed top-1 right-1 z-9999"
     >
       {({ isExpanded }) => (
         <ExpandableTrigger>
           <ExpandableCard
-            className={cn("w-full bg-white bg-opacity-90 rounded-sm", { "overflow-y-auto": isExpanded })}
+            className={cn("w-full bg-white/90 rounded-sm", { "overflow-y-auto": isExpanded })}
             collapsedSize={{ width: 24, height: 24 }}
             expandedSize={{ width: 300, height: 320 }}
             expandDelay={200}

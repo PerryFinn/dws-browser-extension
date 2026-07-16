@@ -247,7 +247,7 @@ const GitlabOverlay = () => {
         tabIndex={-1}
         role="toolbar"
         onKeyDown={handlePanelKeyDown}
-        className="w-full h-full flex flex-col items-center text-gray-700 pt-2 outline-none"
+        className="w-full h-full flex flex-col items-center text-gray-700 pt-2 outline-hidden"
       >
         <div className="pb-2 text-xs text-gray-500 opacity-60 tracking-wide cursor-default select-none">
           Frequent Visited Projects
@@ -388,7 +388,7 @@ const GitlabOverlay = () => {
               })
             )}
           </ul>
-          <div className="mt-2 bg-black bg-opacity-20 rounded-sm text-xs w-fit h-fit px-1 cursor-default select-none">
+          <div className="mt-2 bg-black/20 rounded-sm text-xs w-fit h-fit px-1 cursor-default select-none">
             Powered by {packageJson.displayName}
           </div>
         </div>

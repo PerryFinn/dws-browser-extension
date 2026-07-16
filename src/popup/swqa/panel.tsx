@@ -224,7 +224,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
               value={promptPurpose}
               onChange={handlePromptPurposeChange}
               disabled={!isPromptTemplatesHydrated}
-              className="flex items-center gap-4 !space-y-0"
+              className="flex items-center gap-4 space-y-0!"
             >
               {promptPurposeOptions.map((purpose) => (
                 <RadioField key={purpose}>
@@ -269,7 +269,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
             </div>
             <Textarea
               id="swqa-prompt-template"
-              className="w-full rounded-md p-2 text-sm font-mono focus:border-gray-400 focus:outline-none"
+              className="w-full rounded-md p-2 text-sm font-mono focus:border-gray-400 focus:outline-hidden"
               rows={6}
               value={isPromptTemplatesHydrated ? promptTemplateForCopy : ""}
               readOnly
