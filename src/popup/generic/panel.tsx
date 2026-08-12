@@ -6,7 +6,8 @@ import {
   MousePointer2,
   RefreshCcw,
   Settings2,
-  Sparkles
+  Sparkles,
+  Zap
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
@@ -30,6 +31,7 @@ import type { GenericModelConfig, GenericPickerMessage, GenericPickerResponse } 
 import { sendToBackground } from "@/lib/extension-messaging";
 import { useStorage } from "@/lib/extension-storage-hook";
 import { openGenericApiSettingsTab } from "@/popup/generic/open-options";
+import { isQuickExtractShortcut, resolveQuickExtractSession } from "@/popup/generic/quick-extract";
 import { storage } from "@/storages";
 import {
   GENERIC_CAPTURE_SESSION_STORAGE_KEY,
@@ -111,6 +113,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   const [isCapturing, setIsCapturing] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const shouldResetPickerOnUnmountRef = useRef(true);
+  const quickExtractButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setTransientError(pageError ?? null);
@@ -239,6 +242,38 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     }
   };
 
+  const extractSession = async (sessionToExtract: GenericCaptureSession, successMessage: string) => {
+    setIsExtracting(true);
+    setTransientError(null);
+
+    try {
+      const response = await sendToBackground<GenericExtractApiDocReqBody, GenericExtractApiDocResBody>({
+        name: "genericExtractApiDoc" as never,
+        body: {
+          sessionId: sessionToExtract.sessionId,
+          attemptId: sessionToExtract.attemptId,
+          config: modelConfig
+        }
+      });
+
+      if (!response.success) {
+        setTransientError(response.message);
+        toast.error(response.message);
+        return false;
+      }
+
+      toast.success(successMessage);
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setTransientError(message);
+      toast.error(message);
+      return false;
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
   const handleExtract = async () => {
     if (!session.capture || !session.source || viewState.isTabMismatch) {
       const message = "请先点选区域或读取当前选中文本";
@@ -254,33 +289,65 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       return;
     }
 
-    setIsExtracting(true);
-    setTransientError(null);
+    await extractSession(session, "通用提取完成");
+  };
 
-    try {
-      const response = await sendToBackground<GenericExtractApiDocReqBody, GenericExtractApiDocResBody>({
-        name: "genericExtractApiDoc" as never,
-        body: {
-          sessionId: session.sessionId,
-          attemptId: session.attemptId,
-          config: modelConfig
-        }
-      });
+  const handleQuickExtract = async () => {
+    if (!ensureReadyToCapture()) {
+      return;
+    }
 
-      if (!response.success) {
-        setTransientError(response.message);
-        toast.error(response.message);
-        return;
-      }
-
-      toast.success("通用提取完成");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    if (!isModelConfigHydrated || !isConfigComplete) {
+      const message = "通用提取模型配置未完成，请先到设置页填写";
       setTransientError(message);
       toast.error(message);
-    } finally {
-      setIsExtracting(false);
+      return;
     }
+
+    const previousSession = session;
+    const pickingSession = markGenericCaptureSessionPicking(session);
+    await sessionSetter.setStoreValue(pickingSession);
+    setIsCapturing(true);
+    setTransientError(null);
+
+    const response = await sendPickerMessage(
+      bindGenericPickerSession(
+        { type: "generic-picker:read-selection" },
+        pickingSession.sessionId,
+        pickingSession.attemptId,
+        tab?.id
+      )
+    );
+
+    if (!response.success) {
+      await sessionSetter.setStoreValue(previousSession);
+      setIsCapturing(false);
+      setTransientError(response.message);
+      toast.error(response.message);
+      return;
+    }
+
+    let capturedSession: GenericCaptureSession | undefined;
+    try {
+      capturedSession = await storage.get<GenericCaptureSession>(GENERIC_CAPTURE_SESSION_STORAGE_KEY);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setIsCapturing(false);
+      setTransientError(message);
+      toast.error(message);
+      return;
+    }
+
+    const resolution = resolveQuickExtractSession(capturedSession, pickingSession, tab ?? {});
+    if (!resolution.success) {
+      setIsCapturing(false);
+      setTransientError(resolution.message);
+      toast.error(resolution.message);
+      return;
+    }
+
+    setIsCapturing(false);
+    await extractSession(resolution.session, "选区已提取，可以复制了");
   };
 
   const handleClearSession = async () => {
@@ -319,6 +386,20 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       createTab: (createProperties) => chrome.tabs.create(createProperties)
     });
   };
+
+  const disableQuickExtract = viewState.disableCaptureActions || !isModelConfigHydrated || !isConfigComplete;
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!disableQuickExtract && isQuickExtractShortcut(event)) {
+        event.preventDefault();
+        quickExtractButtonRef.current?.click();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [disableQuickExtract]);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -395,6 +476,40 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
             <div>当前采集内容来自其他标签页，不能直接提取。请清空后重新采集，或直接在当前页重新点选。</div>
           </div>
         ) : null}
+
+        <div className="relative overflow-hidden rounded-xl border border-sky-200 bg-sky-50/80 p-3 shadow-xs">
+          <div
+            aria-hidden="true"
+            className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-cyan-200/50 blur-2xl"
+          />
+          <div className="relative flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sky-600 shadow-sm ring-1 ring-sky-100">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-slate-900">选中，一步成稿</div>
+              <div className="text-xs text-slate-600">先在网页选中接口文档，再一键完成读取与提取。</div>
+            </div>
+            <Button
+              ref={quickExtractButtonRef}
+              disabled={disableQuickExtract}
+              loading={isCapturing || isExtracting}
+              onClick={() => void handleQuickExtract()}
+              className="shrink-0 bg-sky-600 text-white shadow-sm hover:bg-sky-700"
+            >
+              一键提取
+              <kbd className="ml-2 rounded border border-white/25 bg-white/15 px-1.5 py-0.5 text-[10px] leading-none font-medium">
+                ⌘↵
+              </kbd>
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-[11px] text-gray-400">
+          <span className="h-px flex-1 bg-gray-200" />
+          或分步操作
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
 
         <div className="grid grid-cols-3 gap-2">
           <Button
