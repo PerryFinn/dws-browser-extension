@@ -13,7 +13,11 @@ const getClasses = (source: string, pattern: RegExp) => {
   if (!match) {
     throw new Error(`未找到匹配的 className：${pattern}`);
   }
-  return new Set(match[1].split(/\s+/).filter(Boolean));
+  const className = match[1];
+  if (className === undefined) {
+    throw new Error(`匹配结果中缺少 className：${pattern}`);
+  }
+  return new Set(className.split(/\s+/).filter(Boolean));
 };
 const assertHasClasses = (classes: Set<string>, expectedClasses: string[]) => {
   for (const expectedClass of expectedClasses) {

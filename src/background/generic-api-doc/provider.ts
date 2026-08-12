@@ -1,5 +1,5 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, jsonSchema, Output } from "ai";
+import { generateText, type JSONSchema7, jsonSchema, Output } from "ai";
 import { normalizeGenericExtractionResult } from "@/generic-api-doc/normalize";
 import type {
   GenericExtractFromSessionInput,
@@ -28,7 +28,7 @@ const defaultDependencies: GenericProviderDependencies = {
   generateText: generateText as unknown as GenericProviderDependencies["generateText"]
 };
 
-const genericConnectivitySchema = {
+const genericConnectivitySchema: JSONSchema7 = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -36,9 +36,9 @@ const genericConnectivitySchema = {
     message: { type: "string" }
   },
   required: ["ok", "message"]
-} as const;
+};
 
-const genericParameterSchema = {
+const genericParameterSchema: JSONSchema7 = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -49,9 +49,9 @@ const genericParameterSchema = {
     example: {}
   },
   required: ["name"]
-} as const;
+};
 
-const genericExtractionSchema = {
+const genericExtractionSchema: JSONSchema7 = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -104,7 +104,7 @@ const genericExtractionSchema = {
     }
   },
   required: ["endpoint", "request", "response", "uncertainties"]
-} as const;
+};
 
 const getProviderName = (_apiType: GenericModelConfig["apiType"]): string => {
   return "generic-openai-compatible";

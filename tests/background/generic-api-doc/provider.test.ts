@@ -44,6 +44,14 @@ const getResponseFormat = async (request: Record<string, unknown>) => {
   return output.responseFormat;
 };
 
+const getOnlyCall = <T>(calls: T[], label: string): T => {
+  const call = calls[0];
+  if (call === undefined) {
+    throw new Error(`未捕获到${label}调用`);
+  }
+  return call;
+};
+
 const createDependencies = () => {
   const calls = {
     compatibleFactory: [] as Array<Record<string, unknown>>,
@@ -115,7 +123,7 @@ test("createGenericModel 会去除配置首尾空白", () => {
     dependencies
   );
   expect(calls.compatibleFactory.length).toBe(1);
-  const [options] = calls.compatibleFactory;
+  const options = getOnlyCall(calls.compatibleFactory, "兼容 provider 工厂");
   expect(options.baseURL).toBe("https://example.com/v1");
   expect(options.apiKey).toBe("sk-test");
 });
@@ -123,7 +131,7 @@ test("测试连接使用最小结构化请求", async () => {
   const { calls, dependencies } = createDependencies();
   await testGenericModelConfig(createConfig("openai-compatible"), dependencies);
   expect(calls.generated.length).toBe(1);
-  const [request] = calls.generated;
+  const request = getOnlyCall(calls.generated, "模型生成");
   const responseFormat = await getResponseFormat(request);
   expect(responseFormat.name).toBe("generic_api_doc_connectivity");
   expect(responseFormat.type).toBe("json");
@@ -139,7 +147,7 @@ test("正式提取会把 capture context 序列化到模型输入中", async () 
   const context = createCaptureContext();
   const result = await extractGenericApiDoc(createConfig("openai-compatible"), context, dependencies);
   expect(calls.generated.length).toBe(1);
-  const [request] = calls.generated;
+  const request = getOnlyCall(calls.generated, "模型生成");
   const responseFormat = await getResponseFormat(request);
   expect(responseFormat.name).toBe("generic_api_doc_extraction");
   expect(responseFormat.type).toBe("json");

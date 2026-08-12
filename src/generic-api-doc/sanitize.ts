@@ -160,6 +160,9 @@ const buildElementVisibleText = (root: HTMLElement): { visibleText: string; trun
     }
 
     const block = blocks[index];
+    if (block === undefined) {
+      continue;
+    }
     const fitted = fitTextIntoBudget(block, MAX_VISIBLE_TEXT_LENGTH - usedChars, MAX_VISIBLE_TEXT_LINES - usedLines);
 
     if (!fitted.text) {

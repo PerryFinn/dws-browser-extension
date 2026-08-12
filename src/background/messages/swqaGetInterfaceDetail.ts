@@ -33,7 +33,7 @@ const handler: ExtensionMessaging.MessageHandler<SwqaGetInterfaceDetailReqBody, 
   const apiUrl = buildInterfaceDetailApiUrl();
 
   try {
-    const [{ result }] = await chrome.scripting.executeScript({
+    const [injectionResult] = await chrome.scripting.executeScript({
       target: { tabId },
       world: "MAIN",
       args: [apiUrl, interfaceId],
@@ -57,6 +57,7 @@ const handler: ExtensionMessaging.MessageHandler<SwqaGetInterfaceDetailReqBody, 
         }
       }
     });
+    const result = injectionResult?.result;
 
     if (!result) {
       res.send({ success: false, message: "ExecuteScript returned empty result" });

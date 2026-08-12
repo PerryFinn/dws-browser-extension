@@ -10,12 +10,12 @@
 
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
-import { Route as SettingsIndexRouteImport } from "./routes/settings/index";
-import { Route as PostsIndexRouteImport } from "./routes/posts/index";
-import { Route as CompsIndexRouteImport } from "./routes/comps/index";
-import { Route as BookmarksIndexRouteImport } from "./routes/bookmarks/index";
 import { Route as AboutIndexRouteImport } from "./routes/about/index";
+import { Route as BookmarksIndexRouteImport } from "./routes/bookmarks/index";
+import { Route as CompsIndexRouteImport } from "./routes/comps/index";
+import { Route as PostsIndexRouteImport } from "./routes/posts/index";
 import { Route as PostsPostIdRouteImport } from "./routes/posts/$postId";
+import { Route as SettingsIndexRouteImport } from "./routes/settings/index";
 import { Route as SettingsBaseIndexRouteImport } from "./routes/settings/base/index";
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,19 +23,9 @@ const IndexRoute = IndexRouteImport.update({
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any);
-const SettingsIndexRoute = SettingsIndexRouteImport.update({
-  id: "/settings/",
-  path: "/settings/",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const PostsIndexRoute = PostsIndexRouteImport.update({
-  id: "/posts/",
-  path: "/posts/",
-  getParentRoute: () => rootRouteImport,
-} as any);
-const CompsIndexRoute = CompsIndexRouteImport.update({
-  id: "/comps/",
-  path: "/comps/",
+const AboutIndexRoute = AboutIndexRouteImport.update({
+  id: "/about/",
+  path: "/about/",
   getParentRoute: () => rootRouteImport,
 } as any);
 const BookmarksIndexRoute = BookmarksIndexRouteImport.update({
@@ -43,14 +33,24 @@ const BookmarksIndexRoute = BookmarksIndexRouteImport.update({
   path: "/bookmarks/",
   getParentRoute: () => rootRouteImport,
 } as any);
-const AboutIndexRoute = AboutIndexRouteImport.update({
-  id: "/about/",
-  path: "/about/",
+const CompsIndexRoute = CompsIndexRouteImport.update({
+  id: "/comps/",
+  path: "/comps/",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const PostsIndexRoute = PostsIndexRouteImport.update({
+  id: "/posts/",
+  path: "/posts/",
   getParentRoute: () => rootRouteImport,
 } as any);
 const PostsPostIdRoute = PostsPostIdRouteImport.update({
   id: "/posts/$postId",
   path: "/posts/$postId",
+  getParentRoute: () => rootRouteImport,
+} as any);
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: "/settings/",
+  path: "/settings/",
   getParentRoute: () => rootRouteImport,
 } as any);
 const SettingsBaseIndexRoute = SettingsBaseIndexRouteImport.update({
@@ -143,25 +143,11 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/settings/": {
-      id: "/settings/";
-      path: "/settings";
-      fullPath: "/settings/";
-      preLoaderRoute: typeof SettingsIndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/posts/": {
-      id: "/posts/";
-      path: "/posts";
-      fullPath: "/posts/";
-      preLoaderRoute: typeof PostsIndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/comps/": {
-      id: "/comps/";
-      path: "/comps";
-      fullPath: "/comps/";
-      preLoaderRoute: typeof CompsIndexRouteImport;
+    "/about/": {
+      id: "/about/";
+      path: "/about";
+      fullPath: "/about/";
+      preLoaderRoute: typeof AboutIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/bookmarks/": {
@@ -171,11 +157,18 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof BookmarksIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/about/": {
-      id: "/about/";
-      path: "/about";
-      fullPath: "/about/";
-      preLoaderRoute: typeof AboutIndexRouteImport;
+    "/comps/": {
+      id: "/comps/";
+      path: "/comps";
+      fullPath: "/comps/";
+      preLoaderRoute: typeof CompsIndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/posts/": {
+      id: "/posts/";
+      path: "/posts";
+      fullPath: "/posts/";
+      preLoaderRoute: typeof PostsIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/posts/$postId": {
@@ -183,6 +176,13 @@ declare module "@tanstack/react-router" {
       path: "/posts/$postId";
       fullPath: "/posts/$postId";
       preLoaderRoute: typeof PostsPostIdRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/settings/": {
+      id: "/settings/";
+      path: "/settings";
+      fullPath: "/settings/";
+      preLoaderRoute: typeof SettingsIndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
     "/settings/base/": {

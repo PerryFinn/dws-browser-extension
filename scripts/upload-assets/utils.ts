@@ -2,6 +2,15 @@ import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import md5File from "md5-file";
 import { join } from "pathe";
+import type { UploadPolicy } from "./types.js";
+
+export function getPrimaryUploadPolicy(policy: UploadPolicy): UploadPolicy["policyList"][number] {
+  const primaryPolicy = policy.policyList[0];
+  if (!primaryPolicy) {
+    throw new Error("上传策略为空");
+  }
+  return primaryPolicy;
+}
 
 /**
  * 递归遍历目录，返回所有文件路径

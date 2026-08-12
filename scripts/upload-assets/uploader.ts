@@ -6,7 +6,7 @@ import FormData from "form-data";
 import fs from "fs-extra";
 import { DEFAULT_CONFIG, UPLOAD_CONFIG } from "./config.js";
 import type { UploadOptions, UploadPolicy, UploadProgressCallback, UploadResult } from "./types.js";
-import { delay } from "./utils.js";
+import { delay, getPrimaryUploadPolicy } from "./utils.js";
 
 export class Uploader {
   private readonly options: Required<UploadOptions>;
@@ -65,7 +65,7 @@ export class Uploader {
     while (retries < UPLOAD_CONFIG.maxRetries) {
       try {
         const policy = await this.getUploadPolicy();
-        const { formFields, uploadUrl } = policy.policyList[0];
+        const { formFields, uploadUrl } = getPrimaryUploadPolicy(policy);
 
         const form = new FormData();
         const fileStream = fs.createReadStream(filePath);
@@ -168,7 +168,7 @@ export class Uploader {
     while (retries < UPLOAD_CONFIG.maxRetries) {
       try {
         const policy = await this.getUploadPolicy();
-        const { formFields, uploadUrl } = policy.policyList[0];
+        const { formFields, uploadUrl } = getPrimaryUploadPolicy(policy);
 
         const form = new FormData();
         form.append("file", toStream(buffer));

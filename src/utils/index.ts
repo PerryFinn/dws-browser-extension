@@ -16,6 +16,7 @@ export function parseXMLtoObject(xmlString: string) {
     match = tagPattern.exec(xmlString);
     if (match === null) break;
     const [, tag, value] = match;
+    if (tag === undefined || value === undefined) continue;
     obj[tag] = value;
   }
   return obj;

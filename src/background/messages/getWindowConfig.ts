@@ -13,14 +13,14 @@ const handler: ExtensionMessaging.MessageHandler<GetWindowConfigReqBody, GetWind
   if (!tabId) {
     throw new Error("tabId 不能为空");
   }
-  const [{ result }] = await chrome.scripting.executeScript({
+  const [injectionResult] = await chrome.scripting.executeScript({
     target: { tabId },
     world: "MAIN",
     func: () => window.config
   });
 
   res.send({
-    config: result || null
+    config: injectionResult?.result ?? null
   });
 };
 

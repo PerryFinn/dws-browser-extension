@@ -69,7 +69,7 @@ export const buildGenericPrompt = ({
     "{{url}}": url
   };
 
-  const prompt = template.replaceAll(/{{json}}|{{url}}/g, (placeholder) => replacements[placeholder]);
+  const prompt = template.replaceAll(/{{json}}|{{url}}/g, (placeholder) => replacements[placeholder] ?? placeholder);
 
   return `${prompt}${buildGenericUncertaintyPromptSuffix(
     resolveGenericPromptUncertainties({ extractionResult, uncertainties })

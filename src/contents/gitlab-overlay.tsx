@@ -49,7 +49,7 @@ const warmColors = [
 
 const getStableWarmColor = (projectId: number): string => {
   const colorIndex = Math.abs(projectId) % warmColors.length;
-  return warmColors[colorIndex];
+  return warmColors[colorIndex] ?? "#FFB3A7";
 };
 
 const init = async () => {

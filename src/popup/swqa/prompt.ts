@@ -96,5 +96,8 @@ export const buildPrompt = ({ template, cleanedJson, url, interfaceId }: BuildPr
     "{{interfaceId}}": interfaceId
   };
 
-  return template.replaceAll(/{{json}}|{{url}}|{{interfaceId}}/g, (placeholder) => replacements[placeholder]);
+  return template.replaceAll(
+    /{{json}}|{{url}}|{{interfaceId}}/g,
+    (placeholder) => replacements[placeholder] ?? placeholder
+  );
 };

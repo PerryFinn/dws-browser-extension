@@ -45,7 +45,7 @@ const getRandomWarmColor = (): string => {
     "#FFDAB9" // Light Light Salmon
   ];
   const randomIndex = Math.floor(Math.random() * warmColors.length);
-  return warmColors[randomIndex];
+  return warmColors[randomIndex] ?? "#FFB3A7";
 };
 
 const init = async () => {

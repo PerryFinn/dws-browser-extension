@@ -4,9 +4,14 @@ export type ActiveTabIdReqBody = undefined;
 export type ActiveTabIdResBody = chrome.tabs.Tab;
 
 export const getActiveTab = () => {
-  return new Promise<chrome.tabs.Tab>((resolve) => {
+  return new Promise<chrome.tabs.Tab>((resolve, reject) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      resolve(tabs[0]);
+      const activeTab = tabs[0];
+      if (!activeTab) {
+        reject(new Error("未找到当前活动标签页"));
+        return;
+      }
+      resolve(activeTab);
     });
   });
 };

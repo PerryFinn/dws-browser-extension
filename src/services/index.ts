@@ -21,8 +21,8 @@ export function xhrRequest<T = unknown>({
     xhr.responseType = responseType as XMLHttpRequestResponseType;
 
     // 设置请求头
-    for (const key in headers) {
-      xhr.setRequestHeader(key, headers[key]);
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value);
     }
 
     // 处理响应

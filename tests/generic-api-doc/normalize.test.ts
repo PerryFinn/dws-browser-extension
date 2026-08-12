@@ -1,6 +1,14 @@
 import { expect, test } from "vitest";
 import { normalizeGenericExtractionResult, normalizeGenericSchemaNode } from "@/generic-api-doc/normalize";
-import type { GenericExtractionResult } from "@/generic-api-doc/types";
+import type { GenericExtractionResult, GenericSchemaNode } from "@/generic-api-doc/types";
+
+const getRequiredProperty = (properties: Record<string, GenericSchemaNode>, name: string): GenericSchemaNode => {
+  const property = properties[name];
+  if (property === undefined) {
+    throw new Error(`缺少 schema 属性：${name}`);
+  }
+  return property;
+};
 
 test("顶层缺少关键字段时报错", () => {
   expect(() =>
@@ -63,7 +71,7 @@ test("request.body 支持多层 object 和 array 嵌套", () => {
   if (result.request.body?.type !== "object") {
     throw new Error("request.body 应为 object");
   }
-  const filtersNode = result.request.body.properties.filters;
+  const filtersNode = getRequiredProperty(result.request.body.properties, "filters");
   expect(filtersNode.type).toBe("array");
   if (filtersNode.type !== "array") {
     throw new Error("filters 应为 array");
@@ -122,13 +130,13 @@ test("response.successBody 保留分页壳结构", () => {
   if (result.response.successBody?.type !== "object") {
     throw new Error("response.successBody 应为 object");
   }
-  const dataNode = result.response.successBody.properties.data;
+  const dataNode = getRequiredProperty(result.response.successBody.properties, "data");
   expect(dataNode.type).toBe("object");
   if (dataNode.type !== "object") {
     throw new Error("data 应为 object");
   }
-  expect(dataNode.properties.list.type).toBe("array");
-  expect(dataNode.properties.total.type).toBe("number");
+  expect(getRequiredProperty(dataNode.properties, "list").type).toBe("array");
+  expect(getRequiredProperty(dataNode.properties, "total").type).toBe("number");
 });
 test("未知深层节点会降级为 unknown", () => {
   const normalized = normalizeGenericSchemaNode(
@@ -146,7 +154,7 @@ test("未知深层节点会降级为 unknown", () => {
   if (normalized.node?.type !== "object") {
     throw new Error("schema 根节点应为 object");
   }
-  expect(normalized.node.properties.metadata.type).toBe("unknown");
+  expect(getRequiredProperty(normalized.node.properties, "metadata").type).toBe("unknown");
   expect(normalized.uncertainties).toEqual([
     {
       field: "request.body.metadata",

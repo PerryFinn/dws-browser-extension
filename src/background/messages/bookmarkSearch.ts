@@ -70,18 +70,26 @@ const handler: ExtensionMessaging.MessageHandler<BookmarkSearchReqBody, Bookmark
 
     const matches = parseBookmarkSearchResponse(result.text);
 
-    const resolvedMatches = matches
-      .filter((m) => m.index >= 1 && m.index <= candidates.length)
-      .map((m) => {
-        const bookmark = candidates[m.index - 1];
-        return {
+    const resolvedMatches = matches.flatMap((m) => {
+      if (m.index < 1 || m.index > candidates.length) {
+        return [];
+      }
+
+      const bookmark = candidates[m.index - 1];
+      if (!bookmark) {
+        return [];
+      }
+
+      return [
+        {
           index: m.index,
           reason: m.reason,
           title: bookmark.title,
           url: bookmark.url,
           path: bookmark.path
-        };
-      });
+        }
+      ];
+    });
 
     res.send({ success: true, matches: resolvedMatches, truncated });
   } catch (error) {
