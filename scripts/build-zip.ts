@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
-import { pathToFileURL } from "node:url";
 import { basename, join } from "pathe";
+import { isMainModule } from "./is-main-module.js";
+
+export { isMainModule } from "./is-main-module.js";
 
 const rootDir = process.cwd();
 const temporarySuffix = ".build-skip";
@@ -134,11 +136,7 @@ const getErrorStatus = (error: unknown) => {
   return 1;
 };
 
-const isMainModule = () => {
-  return Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]).href;
-};
-
-if (isMainModule()) {
+if (isMainModule(import.meta.url)) {
   try {
     runBuildZip();
   } catch (error) {

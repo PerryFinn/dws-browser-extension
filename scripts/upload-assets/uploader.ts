@@ -4,9 +4,9 @@ import axios, { type AxiosInstance } from "axios";
 import toStream from "buffer-to-stream";
 import FormData from "form-data";
 import fs from "fs-extra";
-import { DEFAULT_CONFIG, UPLOAD_CONFIG } from "./config";
-import type { UploadOptions, UploadPolicy, UploadProgressCallback, UploadResult } from "./types";
-import { delay } from "./utils";
+import { DEFAULT_CONFIG, UPLOAD_CONFIG } from "./config.js";
+import type { UploadOptions, UploadPolicy, UploadProgressCallback, UploadResult } from "./types.js";
+import { delay } from "./utils.js";
 
 export class Uploader {
   private readonly options: Required<UploadOptions>;

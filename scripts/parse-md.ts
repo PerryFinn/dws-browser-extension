@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "pathe";
+import { isMainModule } from "./is-main-module.js";
 
-function parseMdFile() {
+export function parseMdFile() {
   try {
     // 读取 demo.md 文件
     const filePath = resolve(process.cwd(), "demo.md");
@@ -20,5 +21,6 @@ function parseMdFile() {
   }
 }
 
-// 执行函数
-parseMdFile();
+if (isMainModule(import.meta.url)) {
+  parseMdFile();
+}

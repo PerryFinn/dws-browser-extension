@@ -1,15 +1,18 @@
 import { execSync } from "node:child_process";
-import { readdir } from "fs-extra";
+import fs from "fs-extra";
 import { resolve } from "pathe";
-import { name as pkgName, version as pkgVersion } from "../package.json";
-import { CdnUploader } from "./upload-dist";
+import packageJson from "../package.json" with { type: "json" };
+import { isMainModule } from "./is-main-module.js";
+import { CdnUploader } from "./upload-dist/index.js";
+
+const { name: pkgName, version: pkgVersion } = packageJson;
 
 const CDN_PATH = "https://s0.seewo.com/cloud-static";
 const CDN_SUBPATH_BASE = "/kdl-gis3d";
 
 async function findZipFile(): Promise<string | null> {
   const buildDir = resolve(process.cwd(), "build");
-  const files = await readdir(buildDir);
+  const files = await fs.readdir(buildDir);
   const zipFile = files.find((file) => file.endsWith(".zip"));
   return zipFile ? resolve(buildDir, zipFile) : null;
 }
@@ -55,4 +58,6 @@ async function main() {
   }
 }
 
-main();
+if (isMainModule(import.meta.url)) {
+  void main();
+}

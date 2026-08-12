@@ -4,6 +4,7 @@
   "version": "0.4.1",
   "description": "Just breeze it.",
   "author": "chenpengfei@cvte.com",
+  "type": "module",
   "scripts": {
     "postinstall": "wxt prepare",
     "dev": "conc \"tsr watch\" \"wxt\"",

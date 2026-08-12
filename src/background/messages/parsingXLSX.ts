@@ -40,9 +40,18 @@ const sanitizeJsonArray = (jsonArray: Array<parseXlsxInfo>) => {
   });
 };
 
+export const getFirstWorksheet = (workbook: XLSX.WorkBook): XLSX.WorkSheet => {
+  const firstWorksheetName = workbook.SheetNames[0];
+  const firstWorksheet = firstWorksheetName === undefined ? undefined : workbook.Sheets[firstWorksheetName];
+  if (!firstWorksheet) {
+    throw new Error("Excel 文件中未找到工作表");
+  }
+  return firstWorksheet;
+};
+
 export const parsingXLSX = async (ab: Uint8Array) => {
   const workbook = XLSX.read(ab.buffer);
-  const firstWorksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const firstWorksheet = getFirstWorksheet(workbook);
   // https://docs.sheetjs.com/docs/api/utilities/array
   const json = XLSX.utils.sheet_to_json<parseXlsxInfo>(firstWorksheet, { range: 1, defval: "" });
   return sanitizeJsonArray(json);

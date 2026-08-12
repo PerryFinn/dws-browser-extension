@@ -1,6 +1,6 @@
-import { resolve } from "pathe";
-import packageJson from "../../package.json";
-import { CdnUploader } from "../upload-dist/index";
+import packageJson from "../../package.json" with { type: "json" };
+import { CdnUploader } from "../upload-dist/index.js";
+import { ASSETS_CONFIG } from "./config.js";
 
 /**
  * 上传资源目录中的所有文件
@@ -12,7 +12,7 @@ export async function uploadAssetsDir(): Promise<void> {
   const cdnPath = "https://s0.seewo.com/cloud-static";
   const subpath = "/kdl-gis3d";
   const cdnSubPath = `${subpath}/v${version}/assets`;
-  const resourcePath = resolve(__dirname, "../..", "assets");
+  const resourcePath = ASSETS_CONFIG.defaultDir;
   const cdnFilePath = `${cdnPath}${cdnSubPath}/hdr/sky6.webp`;
   console.log("正在部署到cdn...", resourcePath);
   const cdnUploader = new CdnUploader({

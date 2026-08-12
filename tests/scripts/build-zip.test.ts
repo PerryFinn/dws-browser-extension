@@ -1,12 +1,22 @@
 import fs from "node:fs";
 import os from "node:os";
+import { pathToFileURL } from "node:url";
 import { basename, join } from "pathe";
 import { expect, test } from "vitest";
-import { runBuildZip } from "../../scripts/build-zip";
+import { isMainModule, runBuildZip } from "../../scripts/build-zip.js";
 
 type ErrorWithStatus = Error & {
   status?: number;
 };
+
+test("build-zip 只在 import.meta.url 对应入口脚本时判定为主模块", () => {
+  const entryPath = join(process.cwd(), "scripts", "build-zip.ts");
+
+  expect(isMainModule(pathToFileURL(entryPath).href, entryPath)).toBe(true);
+  expect(isMainModule(pathToFileURL(join(process.cwd(), "scripts", "parse-md.ts")).href, entryPath)).toBe(false);
+  expect(isMainModule(pathToFileURL(entryPath).href, undefined)).toBe(false);
+});
+
 test("runBuildZip 在子命令失败时也会恢复临时隐藏的测试文件", () => {
   const rootDir = fs.mkdtempSync(join(os.tmpdir(), "generic-build-zip-"));
   const srcDir = join(rootDir, "src");

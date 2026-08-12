@@ -1,9 +1,9 @@
 import { existsSync, readFile, statSync, unlink } from "node:fs";
 import { promisify } from "node:util";
 import { basename, resolve } from "pathe";
-import { TarFactory } from "./tar";
-import type { CdnUploaderOptions, TaskResponse, UploadResponse } from "./types";
-import { formatBytes, sleep } from "./utils";
+import { TarFactory } from "./tar.js";
+import type { CdnUploaderOptions, TaskResponse, UploadResponse } from "./types.js";
+import { formatBytes, sleep } from "./utils.js";
 
 const readFileAsync = promisify(readFile);
 const unlinkAsync = promisify(unlink);

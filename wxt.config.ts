@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "wxt";
-import packageJson from "./package.json";
+import packageJson from "./package.json" with { type: "json" };
 
 const resolvePath = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 const manifestSource = packageJson.manifest as {

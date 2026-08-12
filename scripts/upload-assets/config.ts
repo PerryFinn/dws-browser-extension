@@ -1,7 +1,8 @@
-import { resolve } from "pathe";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "pathe";
 
 // 获取包的根目录路径（packages/kdl-gis3d/）
-const PACKAGE_ROOT = resolve(__dirname, "../..");
+export const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export const DEFAULT_CONFIG = {
   // enow-cloud_ , 10094 测试环境

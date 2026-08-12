@@ -1,9 +1,9 @@
 import dayjs from "dayjs";
 import fs from "fs-extra";
 import { join, parse } from "pathe";
-import { CdnUploader } from "../upload-dist/index";
-import { ASSETS_CONFIG } from "./config";
-import { calculateMD5, copyDir, ensureDir, removeDir, writeJsonFile, zipDirectory } from "./utils";
+import { CdnUploader } from "../upload-dist/index.js";
+import { ASSETS_CONFIG } from "./config.js";
+import { calculateMD5, copyDir, ensureDir, removeDir, writeJsonFile, zipDirectory } from "./utils.js";
 
 export async function zipAssetsAndUpload(): Promise<void> {
   const sourceDir = ASSETS_CONFIG.defaultDir;
