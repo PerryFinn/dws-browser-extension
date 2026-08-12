@@ -272,7 +272,11 @@ const startSessionBackedPicker = (sessionId: string, attemptId: string, tabId?: 
   });
 };
 
-const readSelectionIntoSession = async (sessionId: string, attemptId: string, tabId?: number) => {
+const readSelectionIntoSession = async (
+  sessionId: string,
+  attemptId: string,
+  tabId?: number
+): Promise<GenericPickerResponse> => {
   try {
     const result = sanitizeSelectionText({
       text: window.getSelection()?.toString() ?? "",
@@ -286,8 +290,11 @@ const readSelectionIntoSession = async (sessionId: string, attemptId: string, ta
       source: result.source,
       capture: result.capture
     });
+    return { success: true };
   } catch (error) {
-    await persistPickerError(sessionId, attemptId, error instanceof Error ? error.message : String(error));
+    const message = error instanceof Error ? error.message : String(error);
+    await persistPickerError(sessionId, attemptId, message);
+    return { success: false, message };
   }
 };
 
@@ -323,16 +330,15 @@ function GenericApiDocPicker() {
         return undefined;
       }
 
-      sendResponse({ success: true });
-
       const targetTabId = resolveGenericPickerTabId(message);
 
       if (message.type === "generic-picker:read-selection") {
-        // 选区模式同样走 session 回写链路，popup 不再等待页面把正文直接回传回来。
-        void readSelectionIntoSession(message.sessionId, message.attemptId, targetTabId);
-        return undefined;
+        // 等待选区写入 session 后再响应，保证 popup 可以安全地紧接着发起模型提取。
+        void readSelectionIntoSession(message.sessionId, message.attemptId, targetTabId).then(sendResponse);
+        return true;
       }
 
+      sendResponse({ success: true });
       startSessionBackedPicker(message.sessionId, message.attemptId, targetTabId);
       return undefined;
     };
