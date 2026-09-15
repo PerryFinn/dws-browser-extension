@@ -16,7 +16,7 @@ export const Route = createFileRoute("/posts/$postId")({
     const router = useRouter();
     return (
       <div className="text-red-500">
-        <div>/posts/$postId error:{error.message}</div>
+        <div>/posts/$postId error:{error instanceof Error ? error.message : "未知错误"}</div>
         <div>
           <button type="button" onClick={reset}>
             重试
