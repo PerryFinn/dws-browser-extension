@@ -36,6 +36,7 @@ const {
     defaultValue: { isOpenWindowConfig: defaultOpenWindowConfig }
   },
   gitlabProjectsDisplayMode: { defaultValue: defaultGitlabProjectsDisplayMode },
+  gitlabAbsoluteTimeEnabled: { defaultValue: defaultGitlabAbsoluteTimeEnabled },
   versionCheckUrl: { defaultValue: defaultVersionCheckUrl },
   versionCheckTtlMinutes: { defaultValue: defaultVersionCheckTtlMinutes }
 } = localStorageInitialValue;
@@ -52,6 +53,10 @@ function RouteComponent() {
   const [gitlabProjectsDisplayMode, , gitlabProjectsDisplayModeSetter] = useStorage<GitlabProjectsDisplayMode>(
     { key: "gitlabProjectsDisplayMode", instance: storage },
     defaultGitlabProjectsDisplayMode
+  );
+  const [gitlabAbsoluteTimeEnabled, , gitlabAbsoluteTimeSetter] = useStorage<boolean>(
+    { key: "gitlabAbsoluteTimeEnabled", instance: storage },
+    defaultGitlabAbsoluteTimeEnabled
   );
   const [versionCheckUrl, , versionCheckUrlSetter] = useStorage<string>(
     { key: "versionCheckUrl", instance: storage },
@@ -177,6 +182,34 @@ function RouteComponent() {
               <option value="off">关闭</option>
             </Select>
           </Field>
+          <SwitchField>
+            <div data-slot="label" className="flex items-center gap-2">
+              <Label>GitLab 绝对时间</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="GitLab 绝对时间说明"
+                    className="cursor-help rounded text-zinc-500 hover:text-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  >
+                    <CircleHelp size={20} aria-hidden="true" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs space-y-1.5 leading-relaxed">
+                  <p>
+                    开启后，把 GitLab 中的“2 周前”显示为具体时间，例如
+                    <span className="whitespace-nowrap">“2026-10-13 18:18:53”</span>。
+                  </p>
+                  <p>使用你电脑的时区，精确到秒。关闭后恢复原来的显示，无需刷新页面。</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Switch
+              name="gitlabAbsoluteTimeEnabled"
+              checked={gitlabAbsoluteTimeEnabled}
+              onChange={(checked) => void gitlabAbsoluteTimeSetter.setStoreValue(checked)}
+            />
+          </SwitchField>
         </SettingsSection>
 
         <SettingsSection

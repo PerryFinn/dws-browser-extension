@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
 import { LEGACY_LOCAL_STORAGE_KEYS, localStorageInitialValue } from "@/storages";
 
+test("GitLab 绝对时间默认开启", () => {
+  expect(localStorageInitialValue.gitlabAbsoluteTimeEnabled.defaultValue).toBe(true);
+});
+
 test("localStorage 初始化不再写入遗留的 SWQA prompt purpose key", () => {
   expect("swqaPromptPurpose" in localStorageInitialValue).toBe(false);
 });

@@ -47,6 +47,9 @@ export const localStorageInitialValue = {
   gitlabProjectsDisplayMode: {
     defaultValue: "overlay" as GitlabProjectsDisplayMode
   },
+  gitlabAbsoluteTimeEnabled: {
+    defaultValue: true
+  },
   [GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY]: {
     defaultValue: gitlabProjectCustomNamesDefaultValue
   },
