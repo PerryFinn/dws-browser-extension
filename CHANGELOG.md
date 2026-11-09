@@ -15,13 +15,11 @@
 - 29995f9: 新增通用 API 文档选区一键提取，可通过按钮或 Command/Ctrl + Enter 连续完成读取与模型提取。
 - d18473c: 移除海康（Hikvision）相关功能代码，包括密码加密、会话登录及批量凭证验证模块。
 - 727f6ed: 新增通用 API 文档提取能力：
-
   - 在保留现有 SWQA 快路径的前提下，popup 新增通用提取面板
   - 支持用户点选页面区域或读取当前选中文本，生成统一 JSON 和可复制 Prompt
   - options 新增 Generic 模型配置、测试连接和 Prompt 模板设置
 
 - 49ce212: 通用 API 文档提取调整 AI 服务配置：
-
   - 移除官方 OpenAI provider，模型服务统一走 OpenAI 兼容协议（`openai-compatible`），保留 `apiType` 字段以便后续扩展其它 provider。
   - 构造模型前对 Base URL、Model ID、API Key 做首尾空白清理，避免复制粘贴携带空格或换行导致鉴权或地址错误。
 

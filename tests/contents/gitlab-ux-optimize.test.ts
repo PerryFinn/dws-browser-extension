@@ -21,7 +21,7 @@ const captureMutations = () => {
   };
   vi.stubGlobal(
     "MutationObserver",
-    vi.fn(function MockMutationObserver(next: MutationCallback) {
+    vi.fn(function mutationObserverMock(next: MutationCallback) {
       callback = next;
       return observer;
     })

@@ -12,24 +12,25 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|---------------|
-| `src/services/bookmark-search/types.ts` | 书签搜索相关类型定义 |
-| `src/services/bookmark-search/bookmarks.ts` | 书签读取、扁平化、预过滤 |
-| `src/services/bookmark-search/prompt.ts` | Prompt 组装与结果解析 |
-| `src/services/bookmark-search/storage.ts` | Storage key 常量与默认值 |
-| `src/background/messages/bookmarkSearch.ts` | Background message handler |
-| `src/background/messages/bookmarkSearchTestModel.ts` | 模型连接测试 message handler |
-| `src/options/routes/bookmarks/index.tsx` | 书签搜索路由页面 |
-| `src/options/components/bookmark-search-settings.tsx` | 模型配置 UI 组件 |
-| `src/options/components/sidebar.tsx` | 修改：注册新菜单项 |
-| `package.json` | 修改：添加 `bookmarks` 权限 |
+| File                                                  | Responsibility               |
+| ----------------------------------------------------- | ---------------------------- |
+| `src/services/bookmark-search/types.ts`               | 书签搜索相关类型定义         |
+| `src/services/bookmark-search/bookmarks.ts`           | 书签读取、扁平化、预过滤     |
+| `src/services/bookmark-search/prompt.ts`              | Prompt 组装与结果解析        |
+| `src/services/bookmark-search/storage.ts`             | Storage key 常量与默认值     |
+| `src/background/messages/bookmarkSearch.ts`           | Background message handler   |
+| `src/background/messages/bookmarkSearchTestModel.ts`  | 模型连接测试 message handler |
+| `src/options/routes/bookmarks/index.tsx`              | 书签搜索路由页面             |
+| `src/options/components/bookmark-search-settings.tsx` | 模型配置 UI 组件             |
+| `src/options/components/sidebar.tsx`                  | 修改：注册新菜单项           |
+| `package.json`                                        | 修改：添加 `bookmarks` 权限  |
 
 ---
 
 ### Task 1: 添加 bookmarks 权限
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: 在 package.json 中添加 bookmarks 权限**
@@ -66,6 +67,7 @@ git commit -m "feat: 添加 bookmarks 权限以支持智能书签搜索"
 ### Task 2: 类型定义与 Storage 常量
 
 **Files:**
+
 - Create: `src/services/bookmark-search/types.ts`
 - Create: `src/services/bookmark-search/storage.ts`
 
@@ -142,6 +144,7 @@ git commit -m "feat: 添加书签搜索类型定义与 storage 常量"
 ### Task 3: 书签服务 — 读取、扁平化、预过滤
 
 **Files:**
+
 - Create: `src/services/bookmark-search/bookmarks.ts`
 
 - [ ] **Step 1: 创建书签服务**
@@ -151,10 +154,7 @@ git commit -m "feat: 添加书签搜索类型定义与 storage 常量"
 ```typescript
 import type { FlatBookmark } from "./types";
 
-export function flattenBookmarks(
-  nodes: chrome.bookmarks.BookmarkTreeNode[],
-  parentPath = ""
-): FlatBookmark[] {
+export function flattenBookmarks(nodes: chrome.bookmarks.BookmarkTreeNode[], parentPath = ""): FlatBookmark[] {
   const result: FlatBookmark[] = [];
   let index = 0;
 
@@ -245,6 +245,7 @@ git commit -m "feat: 实现书签读取、扁平化与预过滤服务"
 ### Task 4: Prompt 组装与结果解析
 
 **Files:**
+
 - Create: `src/services/bookmark-search/prompt.ts`
 
 - [ ] **Step 1: 创建 Prompt 服务**
@@ -254,10 +255,7 @@ git commit -m "feat: 实现书签读取、扁平化与预过滤服务"
 ```typescript
 import type { BookmarkSearchMatch, FlatBookmark } from "./types";
 
-export function buildBookmarkSearchPrompt(
-  bookmarks: FlatBookmark[],
-  query: string
-): string {
+export function buildBookmarkSearchPrompt(bookmarks: FlatBookmark[], query: string): string {
   const bookmarkLines = bookmarks
     .map((b) => `${b.index + 1}. ${b.title} | ${b.url} | 目录: ${b.path || "(根目录)"}`)
     .join("\n");
@@ -328,6 +326,7 @@ git commit -m "feat: 实现书签搜索 prompt 组装与结果解析"
 ### Task 5: Background Message Handler — 书签搜索
 
 **Files:**
+
 - Create: `src/background/messages/bookmarkSearch.ts`
 
 - [ ] **Step 1: 创建搜索 message handler**
@@ -450,6 +449,7 @@ git commit -m "feat: 实现书签搜索 background message handler"
 ### Task 6: Background Message Handler — 模型连接测试
 
 **Files:**
+
 - Create: `src/background/messages/bookmarkSearchTestModel.ts`
 
 - [ ] **Step 1: 创建连接测试 handler**
@@ -465,10 +465,10 @@ import { isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 export type BookmarkSearchTestModelReqBody = { config: GenericModelConfig };
 export type BookmarkSearchTestModelResBody = { success: true } | { success: false; message: string };
 
-const handler: PlasmoMessaging.MessageHandler<
-  BookmarkSearchTestModelReqBody,
-  BookmarkSearchTestModelResBody
-> = async (req, res) => {
+const handler: PlasmoMessaging.MessageHandler<BookmarkSearchTestModelReqBody, BookmarkSearchTestModelResBody> = async (
+  req,
+  res
+) => {
   const config = req.body?.config;
 
   if (!config) {
@@ -518,6 +518,7 @@ git commit -m "feat: 实现书签搜索模型连接测试 handler"
 ### Task 7: 模型配置 UI 组件
 
 **Files:**
+
 - Create: `src/options/components/bookmark-search-settings.tsx`
 
 - [ ] **Step 1: 创建模型配置组件**
@@ -734,6 +735,7 @@ git commit -m "feat: 实现书签搜索模型配置 UI 组件"
 ### Task 8: 书签搜索路由页面
 
 **Files:**
+
 - Create: `src/options/routes/bookmarks/index.tsx`
 
 - [ ] **Step 1: 创建路由页面**
@@ -1014,6 +1016,7 @@ git commit -m "feat: 实现智能书签搜索页面"
 ### Task 9: 注册侧边栏导航
 
 **Files:**
+
 - Modify: `src/options/components/sidebar.tsx`
 
 - [ ] **Step 1: 在侧边栏添加书签搜索菜单项**
@@ -1036,7 +1039,7 @@ import { Bookmark, GalleryVerticalEnd } from "lucide-react";
       智能书签
     </Link>
   </SidebarMenuButton>
-</SidebarMenuItem>
+</SidebarMenuItem>;
 ```
 
 - [ ] **Step 2: 运行 verify**

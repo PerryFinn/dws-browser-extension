@@ -5,6 +5,7 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
+      "!.agents/skills/**/*",
       "!.plasmo/**/*",
       "!.output/**/*",
       "!.wxt/**/*",

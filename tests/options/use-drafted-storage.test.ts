@@ -145,21 +145,29 @@ const flushEffects = async () => {
     await Promise.resolve();
   });
 };
+function DraftHookHarness({ storage, onRender }: { storage: FakeStorage; onRender: (state: HookState) => void }) {
+  const state = useDraftedStorageValue<string>({
+    storage: storage as never,
+    storageKey: STORAGE_KEY,
+    defaultValue: "default-template"
+  });
+  onRender(state);
+  return null;
+}
 const renderDraftHook = async (storage: FakeStorage) => {
   const dom = setupDom();
   let root: Root | null = null;
   let latestState: HookState | null = null;
-  function Harness() {
-    latestState = useDraftedStorageValue<string>({
-      storage: storage as never,
-      storageKey: STORAGE_KEY,
-      defaultValue: "default-template"
-    });
-    return null;
-  }
   await act(async () => {
     root = createRoot(dom.container);
-    root.render(React.createElement(Harness));
+    root.render(
+      React.createElement(DraftHookHarness, {
+        storage,
+        onRender: (state) => {
+          latestState = state;
+        }
+      })
+    );
   });
   return {
     getState: () => {

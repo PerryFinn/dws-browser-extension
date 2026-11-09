@@ -46,6 +46,7 @@
 ### Task 1: 扩展 SWQA Prompt 共享逻辑
 
 **Files:**
+
 - Modify: `src/popup/swqa/prompt.ts`
 - Create: `src/popup/swqa/prompt.test.ts`
 - Reference: `docs/superpowers/specs/2026-03-11-swqa-prompt-templates-design.md`
@@ -53,6 +54,7 @@
 - [ ] **Step 1: 先写 Prompt 规则的失败测试**
 
 在 `src/popup/swqa/prompt.test.ts` 中先写失败用例，至少覆盖：
+
 - `getDefaultPromptTemplate("create")` 返回 spec 中定义的完整新增模板文本
 - `getDefaultPromptTemplate("update")` 返回 spec 中定义的完整更新模板文本
 - `resolvePromptTemplateForCopy(undefined, purpose)` 回退到对应默认模板
@@ -77,6 +79,7 @@ export const getDefaultPromptTemplate = (purpose: SwqaPromptPurpose) =>
 ```
 
 要求：
+
 - “新增”模板直接写入 spec 中的完整默认文案，不自行删减句子。
 - “更新”模板直接写入 spec 中的完整 8 步默认文案。
 - 保留 `buildPrompt`，但改为接受任意模板字符串和 fallback 结果。
@@ -105,6 +108,7 @@ export const resolvePromptTemplateForCopy = (template: string | null | undefined
 ```
 
 要求：
+
 - 不要在这个阶段写 UI 逻辑。
 - 只把“空字符串/纯空白 -> fallback 默认模板”编码为共享规则。
 
@@ -126,6 +130,7 @@ git commit -m "refactor: expand swqa prompt template helpers"
 ### Task 2: 为 SWQA Prompt 模板加入迁移感知初始化
 
 **Files:**
+
 - Create: `src/storages/swqa-prompt-template.ts`
 - Create: `src/storages/swqa-prompt-template.test.ts`
 - Modify: `src/storages/index.ts`
@@ -142,6 +147,7 @@ Expected: 至少 1 个用例失败，且失败原因是迁移 helper 尚未实�
 - [ ] **Step 2: 提取 SWQA 专属 storage helper，并在默认值中注册新 key**
 
 在 `src/storages/swqa-prompt-template.ts` 中定义：
+
 - storage key 常量
 - 默认模板映射
 - 迁移决策 pure helper
@@ -172,12 +178,14 @@ export const resolveSwqaPromptTemplateState = ({ createTemplate, updateTemplate,
 ```
 
 实现要求：
+
 - 任一新 key 已存在时，以其自身值为准，即使它是空字符串或纯空白。
 - `swqaPromptTemplate` 只能回填 `swqaCreatePromptTemplate`，不能回填 update。
 - 两个新 key 都缺失且 old key 存在时：迁入 create，update 写默认值。
 - 旧 key 保留，不做删除。
 
 必须显式覆盖以下 6 种状态：
+
 - `create 存在 / update 存在 / old 任意` -> 直接保留 create/update，不参考 old
 - `create 存在 / update 不存在 / old 任意` -> 保留 create；update 写更新默认模板
 - `create 不存在 / update 存在 / old 存在` -> create 迁入 old；保留 update
@@ -191,15 +199,18 @@ Run: `node --import tsx --test src/storages/swqa-prompt-template.test.ts`
 Expected: 全部通过，6 种状态和空字符串语义都符合 spec。
 
 修改 `src/background/index.ts`：
+
 - `chrome.runtime.onStartup` 中 `await initLocalStorage()`
 - `chrome.runtime.onInstalled` 中无论 `install` 还是 `update` 都执行 `await initLocalStorage()`
 
 这样可以覆盖：
+
 - 浏览器重启后的常规启动
 - 扩展升级后的迁移入口
 - 新安装用户的默认值写入
 
 补充约束：
+
 - popup 与 options 不实现各自的迁移逻辑。
 - popup 与 options 只在用户交互修改模板时写 storage，不能因为首次渲染读到默认值而主动回写。
 
@@ -208,6 +219,7 @@ Expected: 全部通过，6 种状态和空字符串语义都符合 spec。
 使用扩展 service worker 的调试环境验证迁移入口，而不是只看类型检查。
 
 验证方法：
+
 1. 进入扩展的 background/service worker 调试控制台
 2. 对每一种状态组合，先清空相关 key，再按场景写入旧值或新值
 3. 通过重新加载 unpacked extension 触发 `onInstalled(update)`，或在 service worker console 中直接调用导出的初始化函数，只保留一种固定方式并全程沿用
@@ -222,6 +234,7 @@ Expected: 全部通过，6 种状态和空字符串语义都符合 spec。
 
 Run: `pnpm verify`
 Expected:
+
 - `biome check --write .` 完成且无报错
 - `tsc --noEmit` 退出码为 0
 
@@ -237,6 +250,7 @@ git commit -m "feat: migrate swqa prompt templates into dual storage keys"
 ### Task 3: 改造 popup 为单按钮双模板模式
 
 **Files:**
+
 - Modify: `src/popup/index.tsx`
 - Modify: `src/popup/swqa/prompt.ts`
 - Reference: `src/components/ui/tooltip.tsx`
@@ -251,6 +265,7 @@ const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("update");
 ```
 
 要求：
+
 - 不要把用途写入 storage。
 - popup 每次打开都回到 `更新`。
 
@@ -264,11 +279,13 @@ const [storedUpdatePromptTemplate, setStoredUpdatePromptTemplate] = useStorage(.
 ```
 
 并通过 `promptPurpose` 派生：
+
 - 当前显示的 storage 原值 `storedTemplate`
 - 当前写入的 setter
 - 当前复制时才使用的 `templateForCopy`
 
 要求：
+
 - 不要在 `useStorage` 解构时直接用 `defaultCreatePromptTemplate` / `defaultUpdatePromptTemplate` 作为渲染默认值。
 - 输入框显示的是 storage 原值；如果 storage 里是空字符串，输入框就显示空字符串。
 - 只有复制动作才调用 `resolvePromptTemplateForCopy` 做 fallback。
@@ -290,24 +307,29 @@ const promptText = buildPrompt({
 ```
 
 要求：
+
 - textarea 仍显示 storage 原值。
 - 复制 toast 文案同步改成 `已复制更新 Prompt` / `已复制新增 Prompt`。
 
 - [ ] **Step 4: 在 popup 中加入用途横向单选和 tooltip**
 
 在 `Prompt 模板（持久化保存，可编辑占位符）` 上方或同分组内加入横向单选：
+
 - `更新`
 - `新增`
 
 直接复用：
+
 - `TooltipProvider` / `Tooltip` / `TooltipTrigger` / `TooltipContent`
 - `RadioGroup` / `RadioField` / `Radio`
 
 同时把复制按钮改成动态文案：
+
 - `复制更新 Prompt`
 - `复制新增 Prompt`
 
 UI 要求：
+
 - 现有 `复制 JSON` 区块保持不动。
 - popup 至少补齐两处 tooltip：
   - `用途` 单选的 tooltip
@@ -329,6 +351,7 @@ git commit -m "feat: add swqa prompt purpose switching in popup"
 ### Task 4: 在 options 设置页加入 SWQA Prompt 模板编辑入口
 
 **Files:**
+
 - Modify: `src/options/routes/settings/base/index.tsx`
 - Reference: `src/components/catalyst-ui-kit/fieldset.tsx`
 - Reference: `src/components/catalyst-ui-kit/radio.tsx`
@@ -340,6 +363,7 @@ git commit -m "feat: add swqa prompt purpose switching in popup"
 在 `src/options/routes/settings/base/index.tsx` 中增加一个新的 `Fieldset`，避免把 SWQA 配置混进“版本检查”或“功能开关”。
 
 分组内容至少包括：
+
 - `用途` 横向单选
 - `Prompt 模板（持久化保存，可编辑占位符）`
 - 占位符提示 `{{json}} / {{url}} / {{interfaceId}}`
@@ -355,6 +379,7 @@ const [storedUpdatePromptTemplate, , updatePromptTemplateSetter] = useStorage(..
 ```
 
 要求：
+
 - 默认用途同样是 `更新`。
 - options 页编辑的就是 popup 使用的同两份 storage 数据。
 - 输入框使用现成的 `Textarea` 组件，不继续使用裸 `textarea`。
@@ -363,6 +388,7 @@ const [storedUpdatePromptTemplate, , updatePromptTemplateSetter] = useStorage(..
 - [ ] **Step 3: 为设置页补 tooltip 和说明文案，但不要承诺系统强制行为**
 
 设置页可以复用 popup 的 tooltip 文案，但要保持同一口径：
+
 - “默认更新模板会引导模型先搜索现有实现……”
 - “若你已自定义模板，则以当前模板内容为准”
 
@@ -383,6 +409,7 @@ git commit -m "feat: add swqa prompt template settings"
 ### Task 5: 完成变更记录、全量校验和手动 smoke
 
 **Files:**
+
 - Create: `.changeset/swqa-prompt-templates.md`
 - Modify: `src/popup/index.tsx`
 - Modify: `src/options/routes/settings/base/index.tsx`
@@ -393,6 +420,7 @@ git commit -m "feat: add swqa prompt template settings"
 - [ ] **Step 1: 添加 changeset**
 
 创建一个 `patch` 级别的 changeset，摘要聚焦：
+
 - SWQA Prompt 模板支持“更新 / 新增”双场景
 - 更新模板可在 popup 和 options 中持久化编辑
 
@@ -400,12 +428,14 @@ git commit -m "feat: add swqa prompt template settings"
 
 Run: `pnpm verify`
 Expected:
+
 - `biome check --write .` 完成且无报错
 - `tsc --noEmit` 退出码为 0
 
 - [ ] **Step 3: 手动 smoke 验证 popup**
 
 在已运行的开发环境中手动验证：
+
 1. 打开 `swqa.gz.cvte.cn/interface/:id` 页面
 2. 打开扩展 popup，确认默认用途为 `更新`
 3. 在尚未点击 `提取并清洗` 前，确认页面始终只有一个 Prompt 复制按钮，默认文案为 `复制更新 Prompt`，且处于禁用态
@@ -432,6 +462,7 @@ Expected:
 - [ ] **Step 5: 手动 smoke 验证旧模板迁移**
 
 以一个包含旧 key 的升级态做验证：
+
 1. 在扩展 storage 中只保留旧 `swqaPromptTemplate`，移除 `swqaCreatePromptTemplate` / `swqaUpdatePromptTemplate`
 2. 触发扩展重新加载或执行升级初始化入口
 3. 打开 popup 或 options，确认：

@@ -12,26 +12,27 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|---------------|
-| `src/background/generic-api-doc/provider.ts` | 迁移 AI SDK 7 结构化输出 API |
-| `tests/background/generic-api-doc/provider.test.ts` | 验证 `Output.object` schema/name 与返回值处理 |
-| `biome.jsonc` | 迁移 Biome 2.5 recommended preset |
-| `package.json` / `pnpm-lock.yaml` | 固化依赖升级，移除冗余类型与旧 Tailwind 构建依赖 |
-| `src/wxt/content-shadow-ui.tsx` | 拆分 Shadow DOM 与 document 级 CSS |
-| `tests/wxt/content-shadow-ui.test.tsx` | 验证 `@property` 注入和卸载清理 |
-| `wxt.config.ts` | 注册 `@tailwindcss/vite` 插件 |
-| `src/style.css` | Tailwind v4 CSS-first 主题、插件和基础样式 |
-| `src/global.d.ts` | 删除 daisyUI 旧版类型补丁 |
-| `tailwind.config.ts` | 删除，配置迁入 CSS |
-| `postcss.config.js` | 删除，Vite 插件接管 Tailwind 构建 |
-| `src/**/*.tsx` | 迁移 Tailwind v4 不兼容候选类语法 |
+| File                                                | Responsibility                                   |
+| --------------------------------------------------- | ------------------------------------------------ |
+| `src/background/generic-api-doc/provider.ts`        | 迁移 AI SDK 7 结构化输出 API                     |
+| `tests/background/generic-api-doc/provider.test.ts` | 验证 `Output.object` schema/name 与返回值处理    |
+| `biome.jsonc`                                       | 迁移 Biome 2.5 recommended preset                |
+| `package.json` / `pnpm-lock.yaml`                   | 固化依赖升级，移除冗余类型与旧 Tailwind 构建依赖 |
+| `src/wxt/content-shadow-ui.tsx`                     | 拆分 Shadow DOM 与 document 级 CSS               |
+| `tests/wxt/content-shadow-ui.test.tsx`              | 验证 `@property` 注入和卸载清理                  |
+| `wxt.config.ts`                                     | 注册 `@tailwindcss/vite` 插件                    |
+| `src/style.css`                                     | Tailwind v4 CSS-first 主题、插件和基础样式       |
+| `src/global.d.ts`                                   | 删除 daisyUI 旧版类型补丁                        |
+| `tailwind.config.ts`                                | 删除，配置迁入 CSS                               |
+| `postcss.config.js`                                 | 删除，Vite 插件接管 Tailwind 构建                |
+| `src/**/*.tsx`                                      | 迁移 Tailwind v4 不兼容候选类语法                |
 
 ---
 
 ### Task 1: 修复现有依赖升级的兼容问题
 
 **Files:**
+
 - Modify: `tests/background/generic-api-doc/provider.test.ts`
 - Modify: `src/background/generic-api-doc/provider.ts`
 - Modify: `biome.jsonc`
@@ -152,6 +153,7 @@ rtk git commit -m "fix: 修复依赖升级后的兼容问题"
 ### Task 2: 为 Tailwind v4 的 Shadow DOM 文档级规则补充回归测试
 
 **Files:**
+
 - Create: `tests/wxt/content-shadow-ui.test.tsx`
 - Modify: `src/wxt/content-shadow-ui.tsx`
 
@@ -271,6 +273,7 @@ rtk git commit -m "fix: 兼容 Shadow DOM 文档级样式"
 ### Task 3: 运行官方升级器并切换到 Tailwind CSS v4 构建链路
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 - Modify: `wxt.config.ts`
@@ -417,6 +420,7 @@ Expected: 构建成功；若 Tailwind 报 unknown utility/candidate，进入 Tas
 ### Task 4: 清理 Tailwind v4 不兼容模板语法
 
 **Files:**
+
 - Modify as reported: `src/components/catalyst-ui-kit/{avatar,badge,button,checkbox,description-list,dialog,dropdown,input,listbox,radio,select,switch,table,textarea}.tsx`
 - Modify as reported: `src/components/ui/{badge,button,input,sheet,sidebar,switch}.tsx`
 - Modify as reported: `src/components/complex-ui/{expandable,text-generate-effect,background-beams-with-collision}.tsx`
@@ -483,6 +487,7 @@ rtk git commit -m "chore: 升级 Tailwind CSS 至 v4"
 ### Task 5: 完整验证、检查提交并推送
 
 **Files:**
+
 - Verify only
 
 - [ ] **Step 1: 验证 lockfile 可冻结安装**

@@ -3,9 +3,11 @@
 ## 1. 接口概述
 
 ### 1.1 功能描述
+
 为浏览器扩展提供版本更新检查服务，支持动态配置更新信息和下载地址。
 
 ### 1.2 业务价值
+
 - 自动检测扩展更新，提升用户体验
 - 可配置的更新提示和下载链接
 
@@ -13,13 +15,13 @@
 
 ### 2.1 基本信息
 
-| 属性 | 值 |
-|------|-----|
-| **接口名称** | 获取扩展版本信息 |
-| **请求方式** | `GET` |
-| **接口路径** | `/extension/info` |
-| **完整 URL** | `http://172.20.124.81:12306/extension/info` |
-| **Content-Type** | `application/json` |
+| 属性             | 值                                          |
+| ---------------- | ------------------------------------------- |
+| **接口名称**     | 获取扩展版本信息                            |
+| **请求方式**     | `GET`                                       |
+| **接口路径**     | `/extension/info`                           |
+| **完整 URL**     | `http://172.20.124.81:12306/extension/info` |
+| **Content-Type** | `application/json`                          |
 
 ### 2.2 请求参数
 
@@ -41,11 +43,11 @@
 
 #### 响应字段定义
 
-| 字段名 | 类型 | 必填 | 说明 | 示例 |
-|--------|------|------|------|------|
-| `version` | string | **是** | 最新版本号（语义化版本） | `"1.3.0"` |
-| `downloadUrl` | string | 否 | 下载链接，为空时使用扩展主页 | `"http://cdn.example.com/ext-1.3.0.zip"` |
-| `message` | string | 否 | 更新说明，支持纯文本 | `"修复已知问题，提升稳定性"` |
+| 字段名        | 类型   | 必填   | 说明                         | 示例                                     |
+| ------------- | ------ | ------ | ---------------------------- | ---------------------------------------- |
+| `version`     | string | **是** | 最新版本号（语义化版本）     | `"1.3.0"`                                |
+| `downloadUrl` | string | 否     | 下载链接，为空时使用扩展主页 | `"http://cdn.example.com/ext-1.3.0.zip"` |
+| `message`     | string | 否     | 更新说明，支持纯文本         | `"修复已知问题，提升稳定性"`             |
 
 #### 错误响应
 
@@ -77,11 +79,11 @@
 
 前端实现了双层缓存机制：
 
-| 场景 | 缓存时间 | 触发条件 |
-|------|----------|----------|
-| 成功响应 | 6 小时（可配置） | 默认行为 |
-| 失败响应 | 5 分钟（固定） | 网络错误或格式错误 |
-| 强制检查 | 跳过缓存 | 用户点击"重新检查" |
+| 场景     | 缓存时间         | 触发条件           |
+| -------- | ---------------- | ------------------ |
+| 成功响应 | 6 小时（可配置） | 默认行为           |
+| 失败响应 | 5 分钟（固定）   | 网络错误或格式错误 |
+| 强制检查 | 跳过缓存         | 用户点击"重新检查" |
 
 失败缓存不会启动后台定时器；5 分钟后再次打开 popup/options 或点击重新检查等触发版本检查时，会重新请求接口。
 
@@ -128,21 +130,21 @@ VALUES
 
 ### 5.1 技术栈推荐
 
-| 层级 | 推荐方案 | 备选方案 |
-|------|----------|----------|
+| 层级          | 推荐方案          | 备选方案                |
+| ------------- | ----------------- | ----------------------- |
 | **语言/框架** | Node.js + Express | Python FastAPI / Go Gin |
-| **数据库** | PostgreSQL | MySQL / SQLite |
-| **缓存** | Redis | 内存缓存（小规模） |
-| **部署** | Docker + Nginx | 直接部署 |
+| **数据库**    | PostgreSQL        | MySQL / SQLite          |
+| **缓存**      | Redis             | 内存缓存（小规模）      |
+| **部署**      | Docker + Nginx    | 直接部署                |
 
 ### 5.2 核心实现逻辑（伪代码）
 
 ```javascript
 // GET /extension/info
-app.get('/extension/info', async (req, res) => {
+app.get("/extension/info", async (req, res) => {
   try {
     // 1. 尝试从缓存获取
-    const cached = await cache.get('extension:latest');
+    const cached = await cache.get("extension:latest");
     if (cached) {
       return res.json(cached);
     }
@@ -158,7 +160,7 @@ app.get('/extension/info', async (req, res) => {
     `);
 
     if (!latestVersion) {
-      return res.status(404).json({ error: 'No version found' });
+      return res.status(404).json({ error: "No version found" });
     }
 
     // 3. 构造响应
@@ -169,15 +171,15 @@ app.get('/extension/info', async (req, res) => {
     };
 
     // 4. 写入缓存（TTL: 1 小时）
-    await cache.set('extension:latest', response, 'EX', 3600);
+    await cache.set("extension:latest", response, "EX", 3600);
 
     // 5. 返回响应
     res.json(response);
   } catch (error) {
-    console.error('Version check failed:', error);
+    console.error("Version check failed:", error);
     res.status(500).json({
-      error: 'Internal Server Error',
-      message: '无法获取版本信息'
+      error: "Internal Server Error",
+      message: "无法获取版本信息"
     });
   }
 });
@@ -187,23 +189,23 @@ app.get('/extension/info', async (req, res) => {
 
 为支持动态管理，可扩展以下接口：
 
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| `/admin/versions` | `GET` | 获取版本列表 |
-| `/admin/versions` | `POST` | 创建新版本 |
-| `/admin/versions/:id` | `PUT` | 更新版本信息 |
-| `/admin/versions/:id` | `DELETE` | 删除版本 |
-| `/admin/versions/:id/activate` | `POST` | 激活版本 |
-| `/admin/versions/:id/deactivate` | `POST` | 停用版本 |
+| 接口                             | 方法     | 说明         |
+| -------------------------------- | -------- | ------------ |
+| `/admin/versions`                | `GET`    | 获取版本列表 |
+| `/admin/versions`                | `POST`   | 创建新版本   |
+| `/admin/versions/:id`            | `PUT`    | 更新版本信息 |
+| `/admin/versions/:id`            | `DELETE` | 删除版本     |
+| `/admin/versions/:id/activate`   | `POST`   | 激活版本     |
+| `/admin/versions/:id/deactivate` | `POST`   | 停用版本     |
 
 ## 6. 配置管理
 
 ### 6.1 前端可配置项
 
-| 配置项 | 存储位置 | 默认值 | 说明 |
-|--------|----------|--------|------|
-| `versionCheckUrl` | LocalStorage | `http://172.20.124.81:12306/extension/info` | 检查更新的 URL |
-| `versionCheckTtlMinutes` | LocalStorage | `360`（6 小时） | 缓存有效期（分钟） |
+| 配置项                   | 存储位置     | 默认值                                      | 说明               |
+| ------------------------ | ------------ | ------------------------------------------- | ------------------ |
+| `versionCheckUrl`        | LocalStorage | `http://172.20.124.81:12306/extension/info` | 检查更新的 URL     |
+| `versionCheckTtlMinutes` | LocalStorage | `360`（6 小时）                             | 缓存有效期（分钟） |
 
 ### 6.2 配置界面位置
 
@@ -213,12 +215,12 @@ app.get('/extension/info', async (req, res) => {
 
 ### 7.1 前端容错机制
 
-| 错误类型 | 处理方式 | 重试策略 |
-|----------|----------|----------|
-| 网络超时 | 请求超过 10 秒主动中止，并记录错误 | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
-| HTTP 错误（4xx/5xx） | 记录状态码 | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
-| JSON 解析失败 | 记录错误信息 | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
-| 字段格式错误 | `version` 缺失、为空或不是合法语义化版本时记录格式错误 | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
+| 错误类型             | 处理方式                                               | 重试策略                                    |
+| -------------------- | ------------------------------------------------------ | ------------------------------------------- |
+| 网络超时             | 请求超过 10 秒主动中止，并记录错误                     | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
+| HTTP 错误（4xx/5xx） | 记录状态码                                             | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
+| JSON 解析失败        | 记录错误信息                                           | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
+| 字段格式错误         | `version` 缺失、为空或不是合法语义化版本时记录格式错误 | 写入 5 分钟失败缓存，之后下次触发检查时重试 |
 
 ### 7.2 后端监控建议
 
@@ -276,13 +278,13 @@ curl -X GET "http://172.20.124.81:12306/extension/info"
 
 ### 10.2 边界测试
 
-| 场景 | 预期行为 |
-|------|----------|
-| 数据库无记录 | 返回 404 |
-| `version` 字段为空 | 返回 500 |
-| `downloadUrl` 为空 | 前端回退到 homepage |
-| 网络超时 | 请求超过 10 秒主动中止，写入失败缓存；之后下次触发检查时重试 |
-| 版本号格式错误 | 写入失败缓存，5 分钟内不重复请求；之后下次触发检查时重试 |
+| 场景               | 预期行为                                                     |
+| ------------------ | ------------------------------------------------------------ |
+| 数据库无记录       | 返回 404                                                     |
+| `version` 字段为空 | 返回 500                                                     |
+| `downloadUrl` 为空 | 前端回退到 homepage                                          |
+| 网络超时           | 请求超过 10 秒主动中止，写入失败缓存；之后下次触发检查时重试 |
+| 版本号格式错误     | 写入失败缓存，5 分钟内不重复请求；之后下次触发检查时重试     |
 
 ---
 

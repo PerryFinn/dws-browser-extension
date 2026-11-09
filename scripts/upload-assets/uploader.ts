@@ -189,7 +189,7 @@ export class Uploader {
             const total = progressEvent.total ?? totalSize;
             if (onProgress && total) {
               const progress = (progressEvent.loaded / total) * 100;
-              onProgress(progress >= 100 ? 100 : progress, fileName);
+              onProgress(Math.min(progress, 100), fileName);
             }
           }
         });

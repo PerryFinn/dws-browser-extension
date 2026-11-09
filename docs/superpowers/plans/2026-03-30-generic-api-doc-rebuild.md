@@ -72,6 +72,7 @@
 ## Task 1: 建立 Generic session 与 storage 合同
 
 **Files:**
+
 - Create: `src/generic-api-doc/session.ts`
 - Create: `src/generic-api-doc/session.test.ts`
 - Modify: `src/storages/generic-api-doc.ts`
@@ -202,6 +203,7 @@ export const canTransitionGenericCaptureSession = (
 ```
 
 并继续实现：
+
 - `markGenericCaptureSessionPicking`
 - `markGenericCaptureSessionPicked`
 - `markGenericCaptureSessionExtracting`
@@ -211,6 +213,7 @@ export const canTransitionGenericCaptureSession = (
 - `isGenericCaptureSessionBoundToTab`
 
 要求：
+
 - 进入 `picked` 时清空 `result` 与 `error`
 - 进入 `error` 时保留最近一次 `capture`
 - 进入 `done` 时保留 `capture`
@@ -232,6 +235,7 @@ export const GENERIC_CAPTURE_SESSION_STORAGE_KEY = "genericApiDocCaptureSession"
 ```
 
 要求：
+
 - session 默认值使用 `createEmptyGenericCaptureSession`
 - 不把 session 放进 `syncStorage`
 
@@ -253,6 +257,7 @@ git commit -m "feat: add generic capture session state"
 ## Task 2: 实现 DOM 摘要与最小化采集清洗
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 - Create: `src/generic-api-doc/dom-summary.ts`
@@ -357,6 +362,7 @@ export interface GenericSanitizedCapture {
 ```
 
 要求：
+
 - `source` 继续复用现有 Generic source 类型
 - 不把原始 HTML 放入共享 capture 类型
 
@@ -366,12 +372,16 @@ export interface GenericSanitizedCapture {
 
 ```ts
 const collectHeadingTexts = (root: HTMLElement): string[] => {
-  return Array.from(root.querySelectorAll("h1, h2, h3")).map((node) => node.textContent?.trim() ?? "").filter(Boolean);
+  return Array.from(root.querySelectorAll("h1, h2, h3"))
+    .map((node) => node.textContent?.trim() ?? "")
+    .filter(Boolean);
 };
 
 const collectTableHeaders = (root: HTMLElement): string[] => {
   return Array.from(root.querySelectorAll("table")).flatMap((table) =>
-    Array.from(table.querySelectorAll("th")).map((th) => th.textContent?.trim() ?? "").filter(Boolean)
+    Array.from(table.querySelectorAll("th"))
+      .map((th) => th.textContent?.trim() ?? "")
+      .filter(Boolean)
   );
 };
 
@@ -426,15 +436,7 @@ export const sanitizePickedElement = ({
   };
 };
 
-export const sanitizeSelectionText = ({
-  text,
-  url,
-  title
-}: {
-  text: string;
-  url: string;
-  title: string;
-}) => {
+export const sanitizeSelectionText = ({ text, url, title }: { text: string; url: string; title: string }) => {
   const visibleText = normalizeVisibleText(text);
   if (!visibleText) {
     throw new Error("当前页面没有可用的选中文本");
@@ -452,6 +454,7 @@ export const sanitizeSelectionText = ({
 ```
 
 要求：
+
 - 复制一份节点再删噪，避免直接破坏页面原 DOM
 - `previewText` 截断到 240 个字符
 - `domSummary` 只走结构摘要，不拼 HTML
@@ -474,6 +477,7 @@ git commit -m "feat: add generic capture sanitization"
 ## Task 3: 收紧 provider 边界并改造背景提取消息
 
 **Files:**
+
 - Modify: `src/background/generic-api-doc/provider.ts`
 - Modify: `src/background/generic-api-doc/provider.test.ts`
 - Modify: `src/background/messages/genericExtractApiDoc.ts`
@@ -498,10 +502,19 @@ test("extractGenericApiDoc 会忽略模型返回的 source 并使用本地 sourc
     }
   });
 
-  const result = await extractGenericApiDoc(createConfig("openai-compatible"), {
-    source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" },
-    capture: { visibleText: "GET /api/user/detail", previewText: "GET /api/user/detail", domSummary: null, pickedAt: 1 }
-  }, dependencies);
+  const result = await extractGenericApiDoc(
+    createConfig("openai-compatible"),
+    {
+      source: { url: "https://example.com/users", title: "Users", mode: "generic-dom" },
+      capture: {
+        visibleText: "GET /api/user/detail",
+        previewText: "GET /api/user/detail",
+        domSummary: null,
+        pickedAt: 1
+      }
+    },
+    dependencies
+  );
 
   assert.equal(result.source.url, "https://example.com/users");
   assert.equal(result.source.mode, "generic-dom");
@@ -581,6 +594,7 @@ export const extractGenericApiDoc = async (
 ```
 
 要求：
+
 - 新 schema 去掉 `source`
 - `buildGenericExtractionPrompt` 继续展示本地 `source`
 - 最终 `normalize` 前和 `normalize` 后都以本地 `source` 为准
@@ -634,6 +648,7 @@ try {
 ```
 
 要求：
+
 - `extracting` 失败时保留 `capture`
 - `success` 时回写 `done`
 - 不再从 `popup` 直接接收整份 capture context
@@ -656,6 +671,7 @@ git commit -m "feat: move generic extraction to session flow"
 ## Task 4: 把 `popup` 改成 session 驱动并允许先采集后配置
 
 **Files:**
+
 - Create: `src/generic-api-doc/session-view.ts`
 - Create: `src/generic-api-doc/session-view.test.ts`
 - Modify: `src/popup/generic/panel.tsx`
@@ -729,7 +745,8 @@ export const deriveGenericPanelState = ({
   tab: chrome.tabs.Tab | null;
   isConfigComplete: boolean;
 }) => {
-  const isTabMismatch = !!session.source && (!!tab?.id && (tab.id !== session.source.tabId || tab.url !== session.source.url));
+  const isTabMismatch =
+    !!session.source && !!tab?.id && (tab.id !== session.source.tabId || tab.url !== session.source.url);
 
   return {
     isTabMismatch,
@@ -769,6 +786,7 @@ window.close();
 ```
 
 要求：
+
 - 取消 `ensureReadyToCapture` 对模型配置的拦截
 - `handleExtract` 改成发送 `{ sessionId, config }`
 - 当 `isTabMismatch` 为真时，显示显式警告和 `清空并重新采集`
@@ -791,6 +809,7 @@ git commit -m "feat: drive generic popup from session state"
 ## Task 5: 重写页面 picker、删除旧 capture 逻辑并完成验证
 
 **Files:**
+
 - Modify: `src/contents/generic-api-doc-picker.tsx`
 - Delete: `src/generic-api-doc/capture.ts`
 - Delete: `src/generic-api-doc/capture.test.ts`
@@ -842,6 +861,7 @@ const { source, capture } = sanitizeSelectionText({
 ```
 
 要求：
+
 - 页面内轻提示必须可自动消失
 - 失败时写 `error`，但不覆盖旧 `capture`
 - 文件头注释说明为什么这里不能依赖 `popup` 生命周期
@@ -857,7 +877,7 @@ rm src/generic-api-doc/capture.test.ts
 
 新增 `.changeset/generic-api-doc-rebuild.md`：
 
-```md
+```text
 ---
 "efficiency-assistant-extension": patch
 ---
