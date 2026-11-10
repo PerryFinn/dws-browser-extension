@@ -41,7 +41,7 @@ const allowedTransitions: Record<GenericCaptureSessionStatus, GenericCaptureSess
   picking: ["picked", "error"],
   picked: ["extracting", "picking"],
   extracting: ["done", "error"],
-  done: ["picking"],
+  done: ["extracting", "picking"],
   error: ["extracting", "picking"]
 };
 

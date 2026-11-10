@@ -5,14 +5,8 @@ import {
   markGenericCaptureSessionPicked,
   markGenericCaptureSessionPicking
 } from "@/generic-api-doc/session";
-import type { GenericExtractionResult, GenericModelConfig } from "@/generic-api-doc/types";
+import type { GenericExtractionResult } from "@/generic-api-doc/types";
 
-const createConfig = (): GenericModelConfig => ({
-  apiType: "openai-compatible",
-  baseUrl: "https://example.com/v1",
-  modelId: "gpt-test",
-  apiKey: "sk-test"
-});
 test("executeGenericExtractApiDoc 提取失败时保留 capture 并回写 error", async () => {
   const session = markGenericCaptureSessionPicked(
     markGenericCaptureSessionPicking(createEmptyGenericCaptureSession("session-1")),
@@ -32,9 +26,8 @@ test("executeGenericExtractApiDoc 提取失败时保留 capture 并回写 error"
   const states: string[] = [];
   const result = await executeGenericExtractApiDoc({
     session,
-    config: createConfig(),
     onSessionUpdate(next) {
-      states.push(next.status);
+      states.push(next.type);
     },
     extract() {
       throw new Error("provider timeout");
@@ -69,9 +62,8 @@ test("executeGenericExtractApiDoc 提取成功时回写 done 并返回结果", a
   const states: string[] = [];
   const result = await executeGenericExtractApiDoc({
     session,
-    config: createConfig(),
     onSessionUpdate(next) {
-      states.push(next.status);
+      states.push(next.type);
     },
     extract(input) {
       expect(input.source.url).toBe("https://example.com/users");
@@ -86,9 +78,8 @@ test("executeGenericExtractApiDoc 在 session 缺少可用采集结果时直接�
   const states: string[] = [];
   const result = await executeGenericExtractApiDoc({
     session: createEmptyGenericCaptureSession("session-3"),
-    config: createConfig(),
     onSessionUpdate(next) {
-      states.push(next.status);
+      states.push(next.type);
     },
     extract() {
       throw new Error("should not run");

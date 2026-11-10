@@ -12,4 +12,6 @@ export interface BookmarkSearchMatch {
   reason: string;
 }
 
+export type BookmarkSearchResult = FlatBookmark & BookmarkSearchMatch;
+
 export type BookmarkSearchModelConfig = GenericModelConfig;

@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 import { expect, test } from "vitest";
 import type { StorageCallback, StorageCallbackMap } from "@/lib/extension-storage";
 import { useDraftedStorageValue } from "@/options/use-drafted-storage";
+import { renderElement } from "../helpers/react";
 
 const STORAGE_KEY = "drafted-setting";
 type GlobalThisWithActEnvironment = typeof globalThis & {
@@ -145,11 +146,20 @@ const flushEffects = async () => {
     await Promise.resolve();
   });
 };
-function DraftHookHarness({ storage, onRender }: { storage: FakeStorage; onRender: (state: HookState) => void }) {
+function DraftHookHarness({
+  storage,
+  onRender,
+  isEqual
+}: {
+  storage: FakeStorage;
+  onRender: (state: HookState) => void;
+  isEqual?: (saved: string, draft: string) => boolean;
+}) {
   const state = useDraftedStorageValue<string>({
     storage: storage as never,
     storageKey: STORAGE_KEY,
-    defaultValue: "default-template"
+    defaultValue: "default-template",
+    isEqual
   });
   onRender(state);
   return null;
@@ -273,5 +283,53 @@ test("useDraftedStorageValue 在 hydration 期间收到外部更新时不被过�
     expect(harness.getState().isDirty).toBe(false);
   } finally {
     await harness.cleanup();
+  }
+});
+
+test("编辑与外部更新在同一轮发生时保留刚输入的草稿", async () => {
+  const storage = new FakeStorage({ [STORAGE_KEY]: "saved-template" });
+  const harness = await renderDraftHook(storage);
+  try {
+    await act(async () => {
+      harness.getState().setDraftValue("new-local-draft");
+      storage.emitExternal(STORAGE_KEY, "external-template");
+    });
+    expect(harness.getState().draftValue).toBe("new-local-draft");
+    expect(harness.getState().savedValue).toBe("external-template");
+    expect(harness.getState().isDirty).toBe(true);
+  } finally {
+    await harness.cleanup();
+  }
+});
+
+test("更换比较函数不重新加载草稿，外部更新使用最新比较策略", async () => {
+  const storage = new FakeStorage({ [STORAGE_KEY]: "saved-template" });
+  let state!: HookState;
+  const onRender = (value: HookState) => {
+    state = value;
+  };
+  const page = await renderElement(React.createElement(DraftHookHarness, { storage, onRender, isEqual: Object.is }));
+  try {
+    await act(async () => state.setDraftValue("SAVED-TEMPLATE"));
+    await page.render(
+      React.createElement(DraftHookHarness, { storage, onRender, isEqual: (saved, draft) => saved === draft })
+    );
+    expect(state.draftValue).toBe("SAVED-TEMPLATE");
+    expect(state.isDirty).toBe(true);
+
+    await page.render(
+      React.createElement(DraftHookHarness, {
+        storage,
+        onRender,
+        isEqual: (saved, draft) => saved.toLowerCase() === draft.toLowerCase()
+      })
+    );
+    expect(state.draftValue).toBe("SAVED-TEMPLATE");
+    expect(state.isDirty).toBe(false);
+    await act(async () => storage.emitExternal(STORAGE_KEY, "new-saved-template"));
+    expect(state.draftValue).toBe("new-saved-template");
+    expect(state.savedValue).toBe("new-saved-template");
+  } finally {
+    await page.cleanup();
   }
 });

@@ -31,6 +31,13 @@
     "attributePosition": "auto",
     "bracketSpacing": true
   },
+  "overrides": [
+    {
+      "includes": [".changeset/*.md"],
+      // Changesets 依赖起始 YAML frontmatter，Markdown 格式化会将包名误转成标题。
+      "formatter": { "enabled": false }
+    }
+  ],
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,

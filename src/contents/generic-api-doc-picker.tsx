@@ -1,17 +1,10 @@
 import { useEffect } from "react";
 import { resolveGenericPickerTabId } from "@/generic-api-doc/picker-message";
 import { sanitizePickedElement, sanitizeSelectionText } from "@/generic-api-doc/sanitize";
-import {
-  doesGenericCaptureSessionMatchAttempt,
-  type GenericCaptureSession,
-  markGenericCaptureSessionError,
-  markGenericCaptureSessionPicked
-} from "@/generic-api-doc/session";
+import { sendGenericCaptureSessionCommand } from "@/generic-api-doc/session-command";
 import type { GenericPickerMessage, GenericPickerResponse, GenericSanitizedCapture } from "@/generic-api-doc/types";
-import { storage } from "@/storages";
-import { GENERIC_CAPTURE_SESSION_STORAGE_KEY } from "@/storages/generic-api-doc";
 
-// 页面采集不能依赖 popup 生命周期，因为用户一旦回到页面点击，popup 就会自动关闭，只能由页面脚本接管并直接写 session。
+// popup 关闭后由页面脚本继续采集，通过 background 的串行入口提交 session。
 
 const PICKER_OVERLAY_ID = "__generic-api-doc-picker-overlay__";
 const PICKER_NOTICE_ID = "__generic-api-doc-picker-notice__";
@@ -134,19 +127,6 @@ const cleanupActivePicker = () => {
   hidePickerOverlay();
 };
 
-const readActiveGenericCaptureSession = async (
-  sessionId: string,
-  attemptId: string
-): Promise<GenericCaptureSession> => {
-  const session = (await storage.get(GENERIC_CAPTURE_SESSION_STORAGE_KEY)) as GenericCaptureSession | undefined;
-
-  if (!session || !doesGenericCaptureSessionMatchAttempt(session, { sessionId, attemptId })) {
-    throw new Error("当前采集会话已失效，请重新打开插件后重试");
-  }
-
-  return session;
-};
-
 const persistPickedSession = async (input: {
   sessionId: string;
   attemptId: string;
@@ -154,14 +134,13 @@ const persistPickedSession = async (input: {
   source: { url: string; title: string; mode: "generic-dom" | "generic-selection" };
   capture: GenericSanitizedCapture;
 }) => {
-  // 页面脚本只允许写回当前激活的 session，避免旧 popup 或旧页面结果串写到新的采集流程里。
-  const session = await readActiveGenericCaptureSession(input.sessionId, input.attemptId);
-
   if (typeof input.tabId !== "number") {
     throw new Error("未找到当前标签页信息");
   }
 
-  const nextSession = markGenericCaptureSessionPicked(session, {
+  await sendGenericCaptureSessionCommand({
+    type: "picked",
+    target: { sessionId: input.sessionId, attemptId: input.attemptId },
     source: {
       tabId: input.tabId,
       url: input.source.url,
@@ -170,15 +149,11 @@ const persistPickedSession = async (input: {
     },
     capture: input.capture
   });
-
-  await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, nextSession);
 };
 
 const persistPickerError = async (sessionId: string, attemptId: string, message: string) => {
   try {
-    const session = await readActiveGenericCaptureSession(sessionId, attemptId);
-    const nextSession = markGenericCaptureSessionError(session, message);
-    await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, nextSession);
+    await sendGenericCaptureSessionCommand({ type: "error", target: { sessionId, attemptId }, message });
   } catch (error) {
     console.warn("[generic-api-doc-picker] failed to persist error", error);
   }
@@ -248,7 +223,7 @@ const startSessionBackedPicker = (sessionId: string, attemptId: string, tabId?: 
   startDomPicker({
     async onPicked(target) {
       try {
-        // 点选完成后立即在页面侧完成 sanitize 并落 storage，popup 重新打开时直接从 session 恢复。
+        // 页面侧完成 sanitize，再交给 background 写入，popup 重新打开时从 session 恢复。
         const result = sanitizePickedElement({
           element: target,
           url: window.location.href,

@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink, Loader2, Search } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import type { BookmarkSearchReqBody, BookmarkSearchResBody } from "@/background/messages/bookmarkSearch";
 import { Button } from "@/components/catalyst-ui-kit/button";
 import { Field, Label } from "@/components/catalyst-ui-kit/fieldset";
 import { Input } from "@/components/catalyst-ui-kit/input";
 import type { GenericModelConfig } from "@/generic-api-doc/types";
+import { useAsyncTask } from "@/hooks/use-async-task";
 import { sendToBackground } from "@/lib/extension-messaging";
 import { useStorage } from "@/lib/extension-storage-hook";
 import { BookmarkSearchSettings } from "@/options/components/bookmark-search-settings";
@@ -23,34 +24,27 @@ export const Route = createFileRoute("/bookmarks/")({
   component: BookmarkSearchPage
 });
 
-interface SearchResultItem {
-  index: number;
-  reason: string;
-  title: string;
-  url: string;
-  path: string;
-}
+const emptySearchHistory: string[] = [];
 
 function BookmarkSearchPage() {
   const [query, setQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<SearchResultItem[]>([]);
-  const [truncated, setTruncated] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const { state: search, run: runSearch } = useAsyncTask<Extract<BookmarkSearchResBody, { success: true }>>();
   const [expandedReasons, setExpandedReasons] = useState<Set<number>>(new Set());
-  const searchIdRef = useRef(0);
 
-  const [modelConfig] = useStorage<GenericModelConfig>(
+  const [modelConfig, , modelConfigState] = useStorage<GenericModelConfig>(
     { key: BOOKMARK_SEARCH_MODEL_CONFIG_KEY, instance: storage },
     bookmarkSearchModelConfigDefault
   );
 
   const [searchHistory, , searchHistorySetter] = useStorage<string[]>(
     { key: BOOKMARK_SEARCH_HISTORY_KEY, instance: storage },
-    []
+    emptySearchHistory
   );
 
-  const isConfigComplete = isGenericModelConfigComplete(modelConfig);
+  const isConfigComplete = !modelConfigState.isLoading && isGenericModelConfigComplete(modelConfig);
+  const isSearching = search.status === "pending";
+  const results = search.data?.matches ?? [];
+  const truncated = search.data?.truncated ?? false;
 
   const addToHistory = useCallback(
     (q: string) => {
@@ -75,37 +69,26 @@ function BookmarkSearchPage() {
         return;
       }
 
-      const currentSearchId = ++searchIdRef.current;
-
-      setIsSearching(true);
-      setHasSearched(true);
-      setResults([]);
       setExpandedReasons(new Set());
 
-      try {
+      const outcome = await runSearch(async () => {
         const response = await sendToBackground<BookmarkSearchReqBody, BookmarkSearchResBody>({
           name: "bookmarkSearch" as never,
           body: { config: modelConfig, query: q }
         });
 
-        if (currentSearchId !== searchIdRef.current) return;
-
         if (!response.success) {
-          toast.error(response.message);
-          return;
+          throw new Error(response.message);
         }
-
-        setResults(response.matches as SearchResultItem[]);
-        setTruncated(response.truncated);
+        return response;
+      });
+      if (outcome?.status === "success") {
         addToHistory(q);
-      } catch (error) {
-        if (currentSearchId !== searchIdRef.current) return;
-        toast.error(error instanceof Error ? error.message : String(error));
-      } finally {
-        setIsSearching(false);
+      } else if (outcome?.status === "error") {
+        toast.error(outcome.error);
       }
     },
-    [query, isConfigComplete, modelConfig, addToHistory]
+    [query, isConfigComplete, modelConfig, addToHistory, runSearch]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -149,9 +132,12 @@ function BookmarkSearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isSearching}
           />
-          <Button onClick={() => void handleSearch()} disabled={isSearching || !query.trim() || !isConfigComplete}>
+          <Button
+            aria-label="搜索书签"
+            onClick={() => void handleSearch()}
+            disabled={!query.trim() || !isConfigComplete}
+          >
             {isSearching ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
           </Button>
         </div>
@@ -180,14 +166,20 @@ function BookmarkSearchPage() {
         </div>
       )}
 
-      {!isSearching && hasSearched && results.length === 0 && (
+      {search.status === "error" && (
+        <div role="alert" className="rounded-lg border border-red-200 p-4 text-sm text-red-600 dark:text-red-400">
+          {search.error}
+        </div>
+      )}
+
+      {search.status === "success" && results.length === 0 && (
         <div className="py-8 text-center text-zinc-400 dark:text-zinc-500">
           <p>未找到相关书签</p>
           <p className="mt-1 text-sm">试试换个描述方式？</p>
         </div>
       )}
 
-      {!isSearching && results.length > 0 && (
+      {search.status === "success" && results.length > 0 && (
         <div className="space-y-3">
           {truncated && <p className="text-xs text-amber-600 dark:text-amber-400">书签数量较多，结果可能不完整。</p>}
           {results.map((r, i) => (

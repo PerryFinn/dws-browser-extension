@@ -5,6 +5,7 @@ import checkVersion from "./checkVersion";
 import download from "./download";
 import exportXLSX from "./exportXLSX";
 import fetch from "./fetch";
+import genericCaptureSession from "./genericCaptureSession";
 import genericExtractApiDoc from "./genericExtractApiDoc";
 import genericSelfCheckCurrentCapture from "./genericSelfCheckCurrentCapture";
 import genericTestModelConfig from "./genericTestModelConfig";
@@ -22,6 +23,7 @@ export const backgroundMessageHandlers = {
   download,
   exportXLSX,
   fetch,
+  genericCaptureSession,
   genericExtractApiDoc,
   genericSelfCheckCurrentCapture,
   genericTestModelConfig,

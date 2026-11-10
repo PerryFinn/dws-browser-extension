@@ -1,13 +1,12 @@
 import { Storage } from "@/lib/extension-storage";
 import { GITLAB_PROJECT_CUSTOM_NAMES_STORAGE_KEY, gitlabProjectCustomNamesDefaultValue } from "@/utils/gitlab";
 import {
-  GENERIC_CAPTURE_SESSION_STORAGE_KEY,
   GENERIC_MODEL_CONFIG_STORAGE_KEY,
   GENERIC_PROMPT_TEMPLATE_STORAGE_KEY,
-  genericApiDocCaptureSessionStorageDefaultValue,
   genericApiDocModelConfigDefaultValue,
   genericApiDocStorageDefaultValues
 } from "./generic-api-doc";
+import { updateGenericCaptureSession } from "./generic-capture-session";
 import { SWQA_PROMPT_TEMPLATES_STORAGE_KEY, swqaPromptTemplatesDefaultValue } from "./swqa-prompt-template";
 
 export const storage = new Storage({ area: "local" });
@@ -62,9 +61,6 @@ export const localStorageInitialValue = {
   [GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]: {
     defaultValue: genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   },
-  [GENERIC_CAPTURE_SESSION_STORAGE_KEY]: {
-    defaultValue: genericApiDocCaptureSessionStorageDefaultValue
-  },
   config: {
     defaultValue: {
       isOpenWindowConfig: true // 该配置在 MAIN 不可用
@@ -91,6 +87,7 @@ const cleanupLegacyLocalStorage = async () => {
 
 export const initLocalStorage = async () => {
   await cleanupLegacyLocalStorage();
+  await updateGenericCaptureSession({ type: "initialize" });
 
   for (const [key, { defaultValue }] of Object.entries(localStorageInitialValue)) {
     const currentValue = await storage.get(key);
@@ -102,9 +99,10 @@ export const initLocalStorage = async () => {
 
 export const resetLocalStorage = async () => {
   await cleanupLegacyLocalStorage();
-  await Promise.all(
-    Object.entries(localStorageInitialValue).map(([key, { defaultValue }]) =>
+  await Promise.all([
+    updateGenericCaptureSession({ type: "reset" }),
+    ...Object.entries(localStorageInitialValue).map(([key, { defaultValue }]) =>
       storage.set(key, defaultValue).catch((e) => console.error(`Failed to reset ${key}:`, e))
     )
-  );
+  ]);
 };

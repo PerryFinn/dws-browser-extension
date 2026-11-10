@@ -134,6 +134,16 @@ type GenericCaptureSession = {
 5. `extracting -> error`
 6. `error -> extracting`
 7. 任意状态都可以显式 `reset` 回到 `idle`
+8. `done -> extracting`，使用已保留的 capture 重新生成结果
+9. `picked / done / error -> picking`，发起新一轮采集
+
+popup 的临时操作状态为 `idle / capturing / extracting`，不能同时处于采集和提取中。持久化 session 决定跨窗口恢复与允许的业务动作；局部操作状态只覆盖消息、存储等待期间的按钮反馈。
+
+采集初始化写入 `picking` 期间，若切换模式或标签页使当前操作失效，且消息尚未交给页面脚本，写入完成后应恢复采集前的 session。恢复前核对 storage 仍是同一 `sessionId / attemptId` 的 `picking`，不得覆盖后续清空、新采集或页面写回的状态。
+
+background 是 session 的唯一写入方。popup 和页面脚本通过 `genericCaptureSession` 消息提交采集、回滚或清空动作；初始化和模型结果也经过同一个串行入口。每个动作的读取、`sessionId / attemptId` 校验、状态转换和写入在队列内完成，模型请求在队列外运行。这样 reset 与结果提交无论按哪种顺序到达，清空完成后旧请求都不能复活旧 session。
+
+存储中保留原有 session 格式和 key。队列只管理当前后台实例内尚未完成的短操作，不作为 session 的持久化副本；后台重启后仍从 storage 读取状态。一个动作失败后，后续动作仍可执行。
 
 恢复原则：
 

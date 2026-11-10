@@ -149,6 +149,12 @@ test("markGenericCaptureSessionDone 会写入 result 并保留 capture", () => {
   expect(session.result).toBe(result);
   expect(session.error).toBe(null);
   expect(session.capture).toBe(capture);
+
+  const retried = markGenericCaptureSessionExtracting(session);
+  expect(retried.status).toBe("extracting");
+  expect(retried.capture).toBe(capture);
+  expect(retried.result).toBeNull();
+  expect(retried.error).toBeNull();
 });
 test("关键非法 helper 调用会抛错", () => {
   expect(() => markGenericCaptureSessionExtracting(createEmptyGenericCaptureSession("session-7"))).toThrow();

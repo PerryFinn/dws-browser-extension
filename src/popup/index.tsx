@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAsyncTask } from "@/hooks/use-async-task";
 import { sendToBackground } from "@/lib/extension-messaging";
 
 import "@/style.css";
@@ -7,29 +8,22 @@ import "react-toastify/dist/ReactToastify.css";
 import type { ActiveTabIdReqBody, ActiveTabIdResBody } from "@/background/messages/getActiveTab";
 import { GenericPanel } from "./generic/panel";
 import { SwqaPanel } from "./swqa/panel";
-import { type ParsedSwqaUrl, parseSwqaInterfaceUrl } from "./swqa/url";
+import { parseSwqaInterfaceUrl } from "./swqa/url";
 
 function IndexPopup() {
-  const [tab, setTab] = useState<ActiveTabIdResBody | null>(null);
-  const [parsedUrl, setParsedUrl] = useState<ParsedSwqaUrl | null>(null);
-  const [pageError, setPageError] = useState<string | null>(null);
+  const { state: activeTab, run: readActiveTab } = useAsyncTask<ActiveTabIdResBody>({ keepPreviousData: true });
+  const tab = activeTab.status === "error" ? null : activeTab.data;
+  const parsedUrl = useMemo(() => parseSwqaInterfaceUrl(tab?.url), [tab?.url]);
+  const pageError = activeTab.error;
   const [forceGeneric, setForceGeneric] = useState(false);
 
   const refreshActiveTab = useCallback(async () => {
-    try {
-      const activeTab = await sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({
+    await readActiveTab(() =>
+      sendToBackground<ActiveTabIdReqBody, ActiveTabIdResBody>({
         name: "getActiveTab"
-      });
-      setTab(activeTab);
-      const parsed = parseSwqaInterfaceUrl(activeTab?.url);
-      setParsedUrl(parsed);
-      setPageError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setPageError(message);
-      setParsedUrl(null);
-    }
-  }, []);
+      })
+    );
+  }, [readActiveTab]);
 
   useEffect(() => {
     void refreshActiveTab();
@@ -40,6 +34,7 @@ function IndexPopup() {
   if (isSwqaPage && !forceGeneric) {
     return (
       <SwqaPanel
+        key={`${tab?.id}:${parsedUrl.url}`}
         tab={tab}
         parsedUrl={parsedUrl}
         pageError={pageError}

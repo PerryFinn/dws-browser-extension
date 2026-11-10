@@ -44,12 +44,14 @@ export const useStorage = <T>(
 
   useEffect(() => {
     let isActive = true;
+    let hasObservedStorageUpdate = false;
     const callbackMap: StorageCallbackMap = {
       [key]: ({ newValue }) => {
         if (!isActive) {
           return;
         }
 
+        hasObservedStorageUpdate = true;
         const nextValue = typeof newValue === "undefined" ? defaultValue : (newValue as T);
         valueRef.current = nextValue;
         setValue(nextValue);
@@ -62,7 +64,7 @@ export const useStorage = <T>(
     void instance
       .get<T>(key)
       .then((storedValue) => {
-        if (!isActive) {
+        if (!isActive || hasObservedStorageUpdate) {
           return;
         }
 
@@ -71,7 +73,7 @@ export const useStorage = <T>(
         setValue(nextValue);
       })
       .catch(() => {
-        if (!isActive) {
+        if (!isActive || hasObservedStorageUpdate) {
           return;
         }
 

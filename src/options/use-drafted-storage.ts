@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useEffectEvent, useState } from "react";
 import type { Storage, StorageCallbackMap } from "@/lib/extension-storage";
 
 export interface UseDraftedStorageValueOptions<T> {
@@ -8,25 +8,38 @@ export interface UseDraftedStorageValueOptions<T> {
   isEqual?: (savedValue: T, draftValue: T) => boolean;
 }
 
+interface DraftStorageState<T> {
+  status: "hydrating" | "ready" | "saving";
+  savedValue: T;
+  draftValue: T;
+}
+
 export const useDraftedStorageValue = <T>({
   storage,
   storageKey,
   defaultValue,
   isEqual = Object.is
 }: UseDraftedStorageValueOptions<T>) => {
-  const [savedValue, setSavedValue] = useState<T>(defaultValue);
-  const [draftValue, setDraftValue] = useState<T>(defaultValue);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const isDirtyRef = useRef(false);
+  const [state, setState] = useState<DraftStorageState<T>>({
+    status: "hydrating",
+    savedValue: defaultValue,
+    draftValue: defaultValue
+  });
+  const { status, savedValue, draftValue } = state;
 
-  useEffect(() => {
-    isDirtyRef.current = isHydrated && !isEqual(savedValue, draftValue);
-  }, [draftValue, isEqual, isHydrated, savedValue]);
+  const applyStorageUpdate = useEffectEvent((nextValue: T) => {
+    setState((current) => ({
+      ...current,
+      savedValue: nextValue,
+      draftValue:
+        current.status !== "hydrating" && !isEqual(current.savedValue, current.draftValue)
+          ? current.draftValue
+          : nextValue
+    }));
+  });
 
   useEffect(() => {
     let isActive = true;
-    let isHydrationComplete = false;
     let hasObservedStorageUpdateDuringHydration = false;
     const callbackMap: StorageCallbackMap = {
       [storageKey]: ({ newValue }) => {
@@ -34,51 +47,28 @@ export const useDraftedStorageValue = <T>({
           return;
         }
 
-        if (!isHydrationComplete) {
-          hasObservedStorageUpdateDuringHydration = true;
-        }
-
+        hasObservedStorageUpdateDuringHydration = true;
         const nextValue = (typeof newValue === "undefined" ? defaultValue : newValue) as T;
-        setSavedValue(nextValue);
-
-        if (!isDirtyRef.current) {
-          setDraftValue(nextValue);
-        }
+        applyStorageUpdate(nextValue);
       }
     };
 
-    setIsHydrated(false);
+    setState((current) => ({ ...current, status: "hydrating" }));
     storage.watch(callbackMap);
 
+    const finishHydration = (storedValue?: T) => {
+      if (!isActive) return;
+      const nextValue = typeof storedValue === "undefined" ? defaultValue : storedValue;
+      setState((current) =>
+        hasObservedStorageUpdateDuringHydration
+          ? { ...current, status: "ready" }
+          : { status: "ready", savedValue: nextValue, draftValue: nextValue }
+      );
+    };
     void storage
-      .get(storageKey)
-      .then((storedValue) => {
-        if (!isActive) {
-          return;
-        }
-
-        if (!hasObservedStorageUpdateDuringHydration) {
-          const nextValue = (typeof storedValue === "undefined" ? defaultValue : storedValue) as T;
-          setSavedValue(nextValue);
-          setDraftValue(nextValue);
-        }
-
-        isHydrationComplete = true;
-        setIsHydrated(true);
-      })
-      .catch(() => {
-        if (!isActive) {
-          return;
-        }
-
-        if (!hasObservedStorageUpdateDuringHydration) {
-          setSavedValue(defaultValue);
-          setDraftValue(defaultValue);
-        }
-
-        isHydrationComplete = true;
-        setIsHydrated(true);
-      });
+      .get<T>(storageKey)
+      .then(finishHydration)
+      .catch(() => finishHydration());
 
     return () => {
       isActive = false;
@@ -86,24 +76,27 @@ export const useDraftedStorageValue = <T>({
     };
   }, [defaultValue, storage, storageKey]);
 
-  const isDirty = useMemo(() => {
-    return isHydrated && !isEqual(savedValue, draftValue);
-  }, [draftValue, isEqual, isHydrated, savedValue]);
+  const setDraftValue = useCallback<Dispatch<SetStateAction<T>>>((valueOrUpdater) => {
+    setState((current) => ({
+      ...current,
+      draftValue:
+        typeof valueOrUpdater === "function" ? (valueOrUpdater as (value: T) => T)(current.draftValue) : valueOrUpdater
+    }));
+  }, []);
 
   const resetDraft = () => {
-    setDraftValue(savedValue);
+    setState((current) => ({ ...current, draftValue: current.savedValue }));
   };
 
   const saveDraft = async () => {
-    setIsSaving(true);
+    setState((current) => ({ ...current, status: "saving" }));
 
     try {
       await storage.set(storageKey, draftValue);
-      setSavedValue(draftValue);
-      setDraftValue(draftValue);
+      setState((current) => ({ ...current, savedValue: draftValue }));
       return draftValue;
     } finally {
-      setIsSaving(false);
+      setState((current) => ({ ...current, status: "ready" }));
     }
   };
 
@@ -111,9 +104,10 @@ export const useDraftedStorageValue = <T>({
     savedValue,
     draftValue,
     setDraftValue,
-    isHydrated,
-    isSaving,
-    isDirty,
+    status,
+    isHydrated: status !== "hydrating",
+    isSaving: status === "saving",
+    isDirty: status !== "hydrating" && !isEqual(savedValue, draftValue),
     resetDraft,
     saveDraft
   };

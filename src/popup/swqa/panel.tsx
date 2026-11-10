@@ -14,6 +14,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UpdateNotice } from "@/components/update-notice";
+import { useAsyncTask } from "@/hooks/use-async-task";
 import { sendToBackground } from "@/lib/extension-messaging";
 import { useStorage } from "@/lib/extension-storage-hook";
 import { openBaseSettingsTab } from "@/popup/open-options";
@@ -31,8 +32,6 @@ import {
 } from "./prompt";
 import type { ParsedSwqaUrl } from "./url";
 
-type ExtractState = "idle" | "loading" | "success" | "error";
-
 const CVTE_KB_LOGIN_URL = "https://kb.cvte.com/pages/viewpage.action?pageId=540149803";
 const promptPurposeOptions: SwqaPromptPurpose[] = ["create", "update"];
 
@@ -45,9 +44,9 @@ export interface SwqaPanelProps {
 }
 
 export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }: SwqaPanelProps) {
-  const [extractState, setExtractState] = useState<ExtractState>("idle");
-  const [error, setError] = useState<string | null>(pageError ?? null);
-  const [cleaned, setCleaned] = useState<CleanedSwqaInterfaceDetail | null>(null);
+  const { state: extraction, run: runExtract } = useAsyncTask<CleanedSwqaInterfaceDetail>({ keepPreviousData: true });
+  const cleaned = extraction.data;
+  const error = extraction.error ?? pageError ?? null;
   const [promptPurpose, setPromptPurpose] = useState<SwqaPromptPurpose>("create");
   const [storedPromptTemplates, , storedPromptTemplatesState] = useStorage(
     { key: SWQA_PROMPT_TEMPLATES_STORAGE_KEY, instance: storage },
@@ -87,32 +86,24 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
     if (!parsedUrl?.ok || !tab?.id) {
       return;
     }
+    const tabId = tab.id;
 
-    setExtractState("loading");
-    setError(null);
-
-    try {
+    const outcome = await runExtract(async () => {
       const response = await sendToBackground<SwqaGetInterfaceDetailReqBody, SwqaGetInterfaceDetailResBody>({
         name: "swqaGetInterfaceDetail",
-        body: { tabId: tab.id, interfaceId: parsedUrl.interfaceId }
+        body: { tabId, interfaceId: parsedUrl.interfaceId }
       });
 
       if (!response.success) {
-        setExtractState("error");
-        setError(response.message);
-        toast.error(response.message);
-        return;
+        throw new Error(response.message);
       }
 
-      const cleanedData = cleanSwqaInterfaceDetail(response.data);
-      setCleaned(cleanedData);
-      setExtractState("success");
+      return cleanSwqaInterfaceDetail(response.data);
+    });
+    if (outcome?.status === "success") {
       toast.success("提取并清洗成功");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-      setExtractState("error");
-      toast.error(message);
+    } else if (outcome?.status === "error") {
+      toast.error(outcome.error);
     }
   };
 
@@ -146,7 +137,7 @@ export function SwqaPanel({ tab, parsedUrl, pageError, onRefresh, onUseGeneric }
   };
 
   const isReady = parsedUrl?.ok === true;
-  const isLoading = extractState === "loading";
+  const isLoading = extraction.status === "pending";
   const disableExtract = !isReady || isLoading;
   const disableJsonCopy = !cleanedJsonText || isLoading;
   const disablePromptCopy = !isPromptTemplatesHydrated || !promptText || isLoading;

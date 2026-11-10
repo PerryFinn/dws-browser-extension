@@ -198,7 +198,7 @@ export function GenericApiDocSettings({ onUnsavedChangesChange }: GenericApiDocS
           <Label htmlFor="generic-provider-type">API 类型</Label>
           <Description>
             {isModelConfigHydrated
-              ? "修改后点击保存才会生效；测试连接和样例自检只使用已保存配置。"
+              ? "修改后点击保存才会生效；测试连接使用当前填写的配置，样例自检使用已保存配置。"
               : "正在加载已保存模型配置，加载完成前不可编辑。"}
           </Description>
           <Select

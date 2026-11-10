@@ -1,32 +1,39 @@
 import { Check, Copy } from "lucide-react";
-import { type MouseEventHandler, useCallback, useState } from "react";
+import { type MouseEventHandler, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useAsyncTask } from "@/hooks/use-async-task";
 import { copyToClipboard } from "@/utils";
 
 const CopyButton: React.FC<{ text?: string }> = ({ text }) => {
-  const [copied, setCopiedState] = useState(false);
+  const { state, run, reset } = useAsyncTask<void>();
+  const copied = state.status === "success";
+  const isCopying = state.status === "pending";
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(reset, 1000);
+    return () => clearTimeout(timer);
+  }, [copied, reset]);
   const handleCopy: MouseEventHandler<HTMLButtonElement> = useCallback(
     async (e) => {
-      try {
-        e.preventDefault();
-        e.stopPropagation();
-        if (copied || typeof text !== "string") return;
-        await copyToClipboard(text);
-        setCopiedState(true);
-        setTimeout(() => {
-          setCopiedState(false);
-        }, 1000);
-      } catch (error) {
-        console.error("CopyButton 发生了错误: ", error);
+      e.preventDefault();
+      e.stopPropagation();
+      if (copied || isCopying || typeof text !== "string") return;
+      const outcome = await run(async () => {
+        if (!(await copyToClipboard(text))) throw new Error("复制失败，请重试");
+      });
+      if (outcome?.status === "error") {
+        console.error("CopyButton 发生了错误: ", outcome.error);
       }
     },
-    [text, copied]
+    [text, copied, isCopying, run]
   );
 
   return (
     <Button
       size="icon"
-      className="text-xs/5 text-gray-500 hover:text-gray-700 size-fit bg-transparent hover:bg-transparent"
+      aria-label={copied ? "已复制" : "复制"}
+      disabled={isCopying}
+      className="text-xs/5 text-gray-500 hover:text-gray-700 size-fit bg-transparent hover:bg-transparent disabled:pointer-events-auto"
       onClick={handleCopy}
     >
       {copied ? <Check size={12} /> : <Copy size={12} />}

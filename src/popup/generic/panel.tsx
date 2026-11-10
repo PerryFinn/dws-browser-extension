@@ -21,11 +21,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { UpdateNotice } from "@/components/update-notice";
 import { bindGenericPickerSession } from "@/generic-api-doc/picker-message";
 import { buildGenericPrompt, resolveGenericPromptTemplateForCopy } from "@/generic-api-doc/prompt";
-import {
-  type GenericCaptureSession,
-  markGenericCaptureSessionPicking,
-  resetGenericCaptureSession
-} from "@/generic-api-doc/session";
+import type { GenericCaptureSession } from "@/generic-api-doc/session";
+import { sendGenericCaptureSessionCommand } from "@/generic-api-doc/session-command";
 import { deriveGenericPanelState } from "@/generic-api-doc/session-view";
 import type { GenericModelConfig, GenericPickerMessage, GenericPickerResponse } from "@/generic-api-doc/types";
 import { sendToBackground } from "@/lib/extension-messaging";
@@ -105,13 +102,15 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     { key: GENERIC_PROMPT_TEMPLATE_STORAGE_KEY, instance: storage },
     genericApiDocStorageDefaultValues[GENERIC_PROMPT_TEMPLATE_STORAGE_KEY]
   );
-  const [session, , sessionSetter] = useStorage<GenericCaptureSession>(
+  const [session] = useStorage<GenericCaptureSession>(
     { key: GENERIC_CAPTURE_SESSION_STORAGE_KEY, instance: storage },
     genericApiDocCaptureSessionStorageDefaultValue
   );
   const [transientError, setTransientError] = useState<string | null>(pageError ?? null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isExtracting, setIsExtracting] = useState(false);
+  const [operation, setOperation] = useState<"idle" | "capturing" | "extracting">("idle");
+  const isCapturing = operation === "capturing";
+  const isExtracting = operation === "extracting";
+  const operationIdRef = useRef(0);
   const shouldResetPickerOnUnmountRef = useRef(true);
   const quickExtractButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -120,7 +119,9 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
   }, [pageError]);
 
   useEffect(() => {
+    setOperation("idle");
     return () => {
+      operationIdRef.current += 1;
       if (tab?.id && shouldResetPickerOnUnmountRef.current) {
         void chrome.tabs
           .sendMessage(tab.id, { type: "generic-picker:reset" } satisfies GenericPickerMessage)
@@ -209,42 +210,65 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
     return true;
   };
 
-  const handleCapture = async (message: GenericPickerMessage) => {
-    if (!ensureReadyToCapture()) {
-      return;
-    }
-
-    const previousSession = session;
-    // popup 先把 session 标记成 picking，再把 sessionId 交给页面脚本接管，避免 popup 关闭后状态丢失。
-    const pickingSession = markGenericCaptureSessionPicking(session);
-    await sessionSetter.setStoreValue(pickingSession);
-    setIsCapturing(true);
+  const beginOperation = (next: "capturing" | "extracting") => {
+    const id = ++operationIdRef.current;
+    setOperation(next);
     setTransientError(null);
+    return id;
+  };
 
-    const response = await sendPickerMessage(
-      bindGenericPickerSession(message, pickingSession.sessionId, pickingSession.attemptId, tab?.id)
-    );
+  const finishOperation = (id: number) => {
+    if (id === operationIdRef.current) setOperation("idle");
+  };
 
-    if (!response.success) {
-      await sessionSetter.setStoreValue(previousSession);
-      setIsCapturing(false);
-      setTransientError(response.message);
-      toast.error(response.message);
-      return;
+  const captureSession = async (message: GenericPickerMessage, operationId: number) => {
+    const previousSession = session;
+    // background 完成 picking 写入后，再把本次 attempt 交给页面脚本接管。
+    const pickingSession = await sendGenericCaptureSessionCommand({ type: "start", previousSession });
+    const target = { sessionId: pickingSession.sessionId, attemptId: pickingSession.attemptId };
+    try {
+      if (operationId !== operationIdRef.current) {
+        await sendGenericCaptureSessionCommand({ type: "restore", target, previousSession });
+        return null;
+      }
+      const response = await sendPickerMessage(
+        bindGenericPickerSession(message, pickingSession.sessionId, pickingSession.attemptId, tab?.id)
+      );
+      if (operationId !== operationIdRef.current) return null;
+      if (!response.success) throw new Error(response.message);
+      return pickingSession;
+    } catch (error) {
+      if (operationId !== operationIdRef.current) return null;
+      await sendGenericCaptureSessionCommand({ type: "restore", target, previousSession }).catch(() => {});
+      throw error;
     }
+  };
 
-    setIsCapturing(false);
+  const reportError = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    setTransientError(message);
+    toast.error(message);
+  };
 
-    if (message.type === "generic-picker:start") {
-      // 点选模式下 popup 一定会因为回到页面而关闭，这里显式避免卸载时把刚启动的 picker 重置掉。
-      shouldResetPickerOnUnmountRef.current = false;
-      window.close();
+  const handleCapture = async (message: GenericPickerMessage) => {
+    if (!ensureReadyToCapture()) return;
+    const id = beginOperation("capturing");
+    try {
+      if (!(await captureSession(message, id))) return;
+      if (message.type === "generic-picker:start") {
+        // 点选模式下 popup 一定会因为回到页面而关闭，这里显式避免卸载时把刚启动的 picker 重置掉。
+        shouldResetPickerOnUnmountRef.current = false;
+        window.close();
+      }
+    } catch (error) {
+      if (id === operationIdRef.current) reportError(error);
+    } finally {
+      finishOperation(id);
     }
   };
 
   const extractSession = async (sessionToExtract: GenericCaptureSession, successMessage: string) => {
-    setIsExtracting(true);
-    setTransientError(null);
+    const id = beginOperation("extracting");
 
     try {
       const response = await sendToBackground<GenericExtractApiDocReqBody, GenericExtractApiDocResBody>({
@@ -255,6 +279,7 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
           config: modelConfig
         }
       });
+      if (id !== operationIdRef.current) return false;
 
       if (!response.success) {
         setTransientError(response.message);
@@ -265,12 +290,10 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       toast.success(successMessage);
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setTransientError(message);
-      toast.error(message);
+      if (id === operationIdRef.current) reportError(err);
       return false;
     } finally {
-      setIsExtracting(false);
+      finishOperation(id);
     }
   };
 
@@ -304,62 +327,40 @@ export function GenericPanel({ tab, pageError, isSwqaPage, onRefresh, onUseSwqa 
       return;
     }
 
-    const previousSession = session;
-    const pickingSession = markGenericCaptureSessionPicking(session);
-    await sessionSetter.setStoreValue(pickingSession);
-    setIsCapturing(true);
-    setTransientError(null);
+    const id = beginOperation("capturing");
 
-    const response = await sendPickerMessage(
-      bindGenericPickerSession(
-        { type: "generic-picker:read-selection" },
-        pickingSession.sessionId,
-        pickingSession.attemptId,
-        tab?.id
-      )
-    );
-
-    if (!response.success) {
-      await sessionSetter.setStoreValue(previousSession);
-      setIsCapturing(false);
-      setTransientError(response.message);
-      toast.error(response.message);
-      return;
-    }
-
-    let capturedSession: GenericCaptureSession | undefined;
     try {
-      capturedSession = await storage.get<GenericCaptureSession>(GENERIC_CAPTURE_SESSION_STORAGE_KEY);
+      const pickingSession = await captureSession({ type: "generic-picker:read-selection" }, id);
+      if (!pickingSession) return;
+      const capturedSession = await storage.get<GenericCaptureSession>(GENERIC_CAPTURE_SESSION_STORAGE_KEY);
+      if (id !== operationIdRef.current) return;
+      const resolution = resolveQuickExtractSession(capturedSession, pickingSession, tab ?? {});
+      if (!resolution.success) throw new Error(resolution.message);
+      await extractSession(resolution.session, "选区已提取，可以复制了");
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setIsCapturing(false);
-      setTransientError(message);
-      toast.error(message);
-      return;
+      if (id === operationIdRef.current) reportError(error);
+    } finally {
+      finishOperation(id);
     }
-
-    const resolution = resolveQuickExtractSession(capturedSession, pickingSession, tab ?? {});
-    if (!resolution.success) {
-      setIsCapturing(false);
-      setTransientError(resolution.message);
-      toast.error(resolution.message);
-      return;
-    }
-
-    setIsCapturing(false);
-    await extractSession(resolution.session, "选区已提取，可以复制了");
   };
 
   const handleClearSession = async () => {
-    if (tab?.id) {
-      await chrome.tabs
-        .sendMessage(tab.id, { type: "generic-picker:reset" } satisfies GenericPickerMessage)
-        .catch(() => {});
-    }
-
+    // 清空同时作废当前窗口的回调，旧请求不能关闭新操作的 loading 或重新显示旧错误。
+    const id = ++operationIdRef.current;
     shouldResetPickerOnUnmountRef.current = true;
-    await sessionSetter.setStoreValue(resetGenericCaptureSession(session));
     setTransientError(null);
+    try {
+      await sendGenericCaptureSessionCommand({ type: "reset" });
+      if (id === operationIdRef.current && tab?.id) {
+        await chrome.tabs
+          .sendMessage(tab.id, { type: "generic-picker:reset" } satisfies GenericPickerMessage)
+          .catch(() => {});
+      }
+    } catch (error) {
+      if (id === operationIdRef.current) reportError(error);
+    } finally {
+      finishOperation(id);
+    }
   };
 
   const handleCopyJson = async () => {

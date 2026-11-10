@@ -14,6 +14,6 @@ export const useUnsavedChangesGuard = ({
   useBlocker({
     disabled: !isDirty,
     enableBeforeUnload: () => isDirty,
-    shouldBlockFn: () => window.confirm(confirmMessage)
+    shouldBlockFn: () => !window.confirm(confirmMessage)
   });
 };

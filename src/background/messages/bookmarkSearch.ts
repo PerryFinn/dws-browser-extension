@@ -7,7 +7,7 @@ import {
   estimateTokenCount,
   parseBookmarkSearchResponse
 } from "@/services/bookmark-search/prompt";
-import type { BookmarkSearchMatch } from "@/services/bookmark-search/types";
+import type { BookmarkSearchResult } from "@/services/bookmark-search/types";
 import { isGenericModelConfigComplete } from "@/storages/generic-api-doc";
 
 export type BookmarkSearchReqBody = {
@@ -16,7 +16,7 @@ export type BookmarkSearchReqBody = {
 };
 
 export type BookmarkSearchResBody =
-  | { success: true; matches: BookmarkSearchMatch[]; truncated: boolean }
+  | { success: true; matches: BookmarkSearchResult[]; truncated: boolean }
   | { success: false; message: string };
 
 const MAX_PROMPT_TOKENS = 30000;

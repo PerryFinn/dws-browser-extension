@@ -1,11 +1,6 @@
 import { extractGenericApiDoc } from "@/background/generic-api-doc/provider";
-import {
-  doesGenericCaptureSessionMatchAttempt,
-  type GenericCaptureSession,
-  markGenericCaptureSessionDone,
-  markGenericCaptureSessionError,
-  markGenericCaptureSessionExtracting
-} from "@/generic-api-doc/session";
+import { doesGenericCaptureSessionMatchAttempt, type GenericCaptureSession } from "@/generic-api-doc/session";
+import type { GenericCaptureSessionCommand } from "@/generic-api-doc/session-command";
 import type {
   GenericExtractFromSessionInput,
   GenericExtractionResult,
@@ -14,6 +9,7 @@ import type {
 import type { ExtensionMessaging } from "@/lib/extension-messaging";
 import { storage } from "@/storages";
 import { GENERIC_CAPTURE_SESSION_STORAGE_KEY, isGenericModelConfigComplete } from "@/storages/generic-api-doc";
+import { updateGenericCaptureSession } from "@/storages/generic-capture-session";
 
 export interface GenericExtractApiDocReqBody {
   sessionId: string;
@@ -26,8 +22,7 @@ export type GenericExtractApiDocResBody =
 
 interface ExecuteGenericExtractApiDocOptions {
   session: GenericCaptureSession;
-  config: GenericModelConfig;
-  onSessionUpdate: (next: GenericCaptureSession) => void | Promise<void>;
+  onSessionUpdate: (command: GenericCaptureSessionCommand) => void | Promise<void>;
   extract: (input: GenericExtractFromSessionInput) => Promise<GenericExtractionResult>;
 }
 
@@ -35,19 +30,15 @@ const MISSING_CAPTURE_MESSAGE = "缺少可用的采集结果";
 
 export const executeGenericExtractApiDoc = async ({
   session,
-  config,
   onSessionUpdate,
   extract
 }: ExecuteGenericExtractApiDocOptions): Promise<GenericExtractApiDocResBody> => {
-  void config;
-
   if (!session.source || !session.capture) {
     return { success: false, message: MISSING_CAPTURE_MESSAGE };
   }
 
-  const extractingSession = markGenericCaptureSessionExtracting(session);
-  // 状态回写统一经过调用方，保证 storage/session 与纯执行逻辑解耦。
-  await onSessionUpdate(extractingSession);
+  const target = { sessionId: session.sessionId, attemptId: session.attemptId };
+  await onSessionUpdate({ type: "extracting", target });
 
   const input: GenericExtractFromSessionInput = {
     source: {
@@ -60,15 +51,11 @@ export const executeGenericExtractApiDoc = async ({
 
   try {
     const data = await extract(input);
-    const doneSession = markGenericCaptureSessionDone(extractingSession, data);
-    // 成功结果写回时保留原 capture，供后续重试或展示复用。
-    await onSessionUpdate(doneSession);
+    await onSessionUpdate({ type: "done", target, result: data });
     return { success: true, data };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const errorSession = markGenericCaptureSessionError(extractingSession, message);
-    // 失败状态只写 error/result，不清空 capture。
-    await onSessionUpdate(errorSession);
+    await onSessionUpdate({ type: "error", target, message });
     return { success: false, message };
   }
 };
@@ -114,9 +101,8 @@ const handler: ExtensionMessaging.MessageHandler<GenericExtractApiDocReqBody, Ge
   try {
     const result = await executeGenericExtractApiDoc({
       session,
-      config,
-      async onSessionUpdate(next) {
-        await storage.set(GENERIC_CAPTURE_SESSION_STORAGE_KEY, next);
+      async onSessionUpdate(command) {
+        await updateGenericCaptureSession(command);
       },
       extract(input) {
         return extractGenericApiDoc(config, input);
